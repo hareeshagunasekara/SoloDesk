@@ -1,0 +1,36 @@
+{
+  "name": "solodesk",
+  "version": "1.0.0",
+  "description": "A comprehensive desk management application",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "start": "cd server && npm start"
+  },
+  "keywords": [
+    "desk",
+    "management",
+    "react",
+    "express",
+    "mongodb"
+  ],
+  "author": "SoloDesk Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "dependencies": {
+    "gsap": "^3.13.0",
+    "react-hot-toast": "^2.5.2"
+  }
+}
