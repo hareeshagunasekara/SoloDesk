@@ -53,9 +53,19 @@ const Register = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const result = await registerUser(data);
+      // Prepare payload for backend (exclude confirmPassword)
+      const payload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        // Only include phone if provided
+        ...(data.phone ? { phone: data.phone } : {})
+      };
+      const result = await registerUser(payload);
       if (result.success) {
-        navigate('/dashboard');
+        // Redirect to login page after successful registration
+        navigate('/login');
       } else {
         setError('root', {
           type: 'manual',
@@ -382,6 +392,36 @@ const Register = () => {
                       className="text-red-400 text-sm"
                     >
                       {errors.confirmPassword.message}
+                    </motion.p>
+                  )}
+                </div>
+
+                {/* Phone field (optional) */}
+                <div className="space-y-2">
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
+                    <input
+                      type="tel"
+                      {...register('phone', {
+                        pattern: {
+                          value: /^\+?[0-9\-\s()]{7,20}$/,
+                          message: 'Invalid phone number',
+                        },
+                      })}
+                      placeholder="Phone (optional)"
+                      className={cn(
+                        'w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
+                        errors.phone ? 'border-red-400' : 'border-white/20'
+                      )}
+                    />
+                  </div>
+                  {errors.phone && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-400 text-sm"
+                    >
+                      {errors.phone.message}
                     </motion.p>
                   )}
                 </div>

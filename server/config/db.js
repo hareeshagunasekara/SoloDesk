@@ -2,7 +2,13 @@ const mongoose = require('mongoose')
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://hareeshanavodi:ES0t3JHKUSMaLH82@solodesk.0tpgn3y.mongodb.net/')
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://hareeshanavodi:solodesk123@solodesk.0tpgn3y.mongodb.net/SoloDesk?retryWrites=true&w=majority', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    })
 
     console.log(`📦 MongoDB connected: ${conn.connection.host}`)
   } catch (error) {

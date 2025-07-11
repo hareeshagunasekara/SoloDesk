@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, userAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -69,20 +69,24 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
+      console.log('AuthContext: Checking authentication, token exists:', !!token);
+      
       if (token) {
         try {
+          console.log('AuthContext: Token found, validating with server...');
           dispatch({ type: 'AUTH_START' });
-          const response = await authAPI.refreshToken();
-          const { user, token: newToken } = response.data;
+          const response = await authAPI.getCurrentUser();
+          const { user } = response.data;
           
-          localStorage.setItem('token', newToken);
+          console.log('AuthContext: Server validation successful, user:', user.email);
           localStorage.setItem('user', JSON.stringify(user));
           
           dispatch({
             type: 'AUTH_SUCCESS',
-            payload: { user, token: newToken },
+            payload: { user, token },
           });
         } catch (error) {
+          console.error('AuthContext: Server validation failed:', error.response?.data?.message);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           dispatch({
@@ -91,6 +95,7 @@ export const AuthProvider = ({ children }) => {
           });
         }
       } else {
+        console.log('AuthContext: No token found, setting as not authenticated');
         dispatch({ type: 'AUTH_FAILURE', payload: null });
       }
     };
@@ -98,28 +103,68 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  // Listen for logout events from API interceptor
+  useEffect(() => {
+    const handleLogoutEvent = (event) => {
+      console.log('Logout event received:', event.detail);
+      dispatch({ type: 'LOGOUT' });
+    };
+
+    window.addEventListener('auth:logout', handleLogoutEvent);
+
+    return () => {
+      window.removeEventListener('auth:logout', handleLogoutEvent);
+    };
+  }, []);
+
   const login = async (credentials) => {
+    console.log('=== AuthContext Login Debug ===');
+    console.log('1. Login function called with credentials:', { email: credentials.email });
+    
     try {
+      console.log('2. Dispatching AUTH_START...');
       dispatch({ type: 'AUTH_START' });
-      const response = await authAPI.login(credentials);
-      const { user, token } = response.data;
       
+      console.log('3. Making API call to /auth/login...');
+      const response = await authAPI.login(credentials);
+      console.log('4. API response received:', response.data);
+      
+      const { user, token } = response.data;
+      console.log('5. Extracted user and token from response');
+      console.log('6. User data:', user);
+      console.log('7. Token exists:', !!token);
+      console.log('8. Token preview:', token ? token.substring(0, 50) + '...' : 'none');
+      
+      console.log('9. Storing token in localStorage...');
       localStorage.setItem('token', token);
+      console.log('10. Storing user in localStorage...');
       localStorage.setItem('user', JSON.stringify(user));
       
+      console.log('11. Dispatching AUTH_SUCCESS...');
       dispatch({
         type: 'AUTH_SUCCESS',
         payload: { user, token },
       });
       
+      console.log('12. Showing success toast...');
       toast.success('Welcome back!');
-      return { success: true };
+      
+      console.log('13. Returning success result...');
+      return { success: true, user };
     } catch (error) {
+      console.error('=== AuthContext Login Error ===');
+      console.error('Error details:', error);
+      console.error('Response data:', error.response?.data);
+      console.error('Response status:', error.response?.status);
+      
       const errorMessage = error.response?.data?.message || 'Login failed';
+      console.log('Dispatching AUTH_FAILURE with message:', errorMessage);
+      
       dispatch({
         type: 'AUTH_FAILURE',
         payload: errorMessage,
       });
+      
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -129,18 +174,17 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'AUTH_START' });
       const response = await authAPI.register(userData);
-      const { user, token } = response.data;
+      const { user } = response.data;
       
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
+      // Don't store token or authenticate user after registration
+      // Just show success message and return success
       dispatch({
-        type: 'AUTH_SUCCESS',
-        payload: { user, token },
+        type: 'AUTH_FAILURE',
+        payload: null, // Clear any previous errors
       });
       
-      toast.success('Account created successfully!');
-      return { success: true };
+      toast.success('Account created successfully! Please log in to continue.');
+      return { success: true, user };
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed';
       dispatch({
@@ -167,8 +211,8 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (data) => {
     try {
-      const response = await authAPI.updateProfile(data);
-      const updatedUser = response.data;
+      const response = await userAPI.updateProfile(data);
+      const updatedUser = response.data.user;
       
       localStorage.setItem('user', JSON.stringify(updatedUser));
       dispatch({
@@ -187,7 +231,7 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (data) => {
     try {
-      await authAPI.changePassword(data);
+      await userAPI.changePassword(data);
       toast.success('Password changed successfully');
       return { success: true };
     } catch (error) {

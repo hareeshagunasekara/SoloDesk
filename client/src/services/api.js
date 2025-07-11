@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { clearAuthData } from '../utils/tokenUtils'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
 
 // Create axios instance
 const api = axios.create({
@@ -15,23 +16,66 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
-    if (token) {
+    console.log('=== API Request Debug ===')
+    console.log('URL:', config.url)
+    console.log('Method:', config.method)
+    console.log('Token exists:', !!token)
+    console.log('Token length:', token ? token.length : 0)
+    console.log('Token preview:', token ? token.substring(0, 50) + '...' : 'none')
+    console.log('Current headers:', config.headers)
+    
+    // Special handling for login requests
+    if (config.url === '/auth/login') {
+      console.log('🔐 LOGIN REQUEST - No token needed for authentication')
+    } else if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('🔑 Adding Authorization header:', config.headers.Authorization ? 'Bearer ' + token.substring(0, 50) + '...' : 'not set')
+    } else {
+      console.warn('⚠️ No token found in localStorage for request:', config.url)
     }
+    
+    console.log('Final headers:', config.headers)
+    console.log('========================')
+    
     return config
   },
   (error) => {
+    console.error('Request interceptor error:', error)
     return Promise.reject(error)
   }
 )
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('=== API Response Debug ===')
+    console.log('URL:', response.config.url)
+    console.log('Status:', response.status)
+    console.log('Response data keys:', Object.keys(response.data || {}))
+    
+    // Special handling for login responses
+    if (response.config.url === '/auth/login') {
+      console.log('🔐 LOGIN RESPONSE - Token received:', !!response.data?.token)
+      if (response.data?.token) {
+        console.log('🔑 Token preview:', response.data.token.substring(0, 50) + '...')
+      }
+    }
+    
+    console.log('========================')
+    return response
+  },
   (error) => {
+    console.error('=== API Response Error ===')
+    console.error('URL:', error.config?.url)
+    console.error('Status:', error.response?.status)
+    console.error('Error message:', error.response?.data?.message)
+    
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      console.error('🚫 401 Unauthorized - Clearing auth data and redirecting to login')
+      // Clear auth data using utility function
+      clearAuthData()
+      
+      // Redirect to login
       window.location.href = '/login'
     }
     return Promise.reject(error)
@@ -43,7 +87,7 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
-  refreshToken: () => api.post('/auth/refresh'),
+  getCurrentUser: () => api.get('/auth/me'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
   verifyEmail: (token) => api.post('/auth/verify-email', { token }),
@@ -54,10 +98,10 @@ export const authAPI = {
 export const userAPI = {
   getProfile: () => api.get('/users/profile'),
   updateProfile: (data) => api.put('/users/profile', data),
-  updateAvatar: (formData) => api.put('/users/avatar', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
-  changePassword: (data) => api.put('/users/change-password', data),
+  updateAvatar: (data) => api.put('/users/avatar', data),
+  updateLogo: (data) => api.put('/users/logo', data),
+  changePassword: (data) => api.put('/users/password', data),
+  deleteAccount: (data) => api.delete('/users/account', { data }),
   getNotifications: () => api.get('/users/notifications'),
   markNotificationRead: (id) => api.put(`/users/notifications/${id}/read`),
   markAllNotificationsRead: () => api.put('/users/notifications/read-all'),
@@ -171,6 +215,29 @@ export const dashboardAPI = {
   getClientMetrics: () => api.get('/dashboard/client-metrics'),
 }
 
+// Analytics API
+export const analyticsAPI = {
+  getAnalytics: (params) => api.get('/analytics', { params }),
+  getRevenueData: (params) => api.get('/analytics/revenue', { params }),
+  getClientMetrics: (params) => api.get('/analytics/clients', { params }),
+  getProjectMetrics: (params) => api.get('/analytics/projects', { params }),
+  getTimeMetrics: (params) => api.get('/analytics/time', { params }),
+  exportReport: (params) => api.get('/analytics/export', { params }),
+}
+
+// Auto Messages API
+export const autoMessagesAPI = {
+  getMessages: (params) => api.get('/auto-messages', { params }),
+  getById: (id) => api.get(`/auto-messages/${id}`),
+  create: (data) => api.post('/auto-messages', data),
+  update: (id, data) => api.put(`/auto-messages/${id}`, data),
+  delete: (id) => api.delete(`/auto-messages/${id}`),
+  toggleActive: (id) => api.put(`/auto-messages/${id}/toggle`),
+  sendTest: (id) => api.post(`/auto-messages/${id}/test`),
+  duplicate: (id) => api.post(`/auto-messages/${id}/duplicate`),
+  getTemplates: () => api.get('/auto-messages/templates'),
+}
+
 // Settings API
 export const settingsAPI = {
   getGeneral: () => api.get('/settings/general'),
@@ -185,6 +252,14 @@ export const settingsAPI = {
   inviteTeamMember: (data) => api.post('/settings/team/invite', data),
   removeTeamMember: (id) => api.delete(`/settings/team/${id}`),
 }
+
+// Standalone exports for convenience
+export const getUserProfile = () => userAPI.getProfile()
+export const updateUserProfile = (data) => userAPI.updateProfile(data)
+export const updateUserAvatar = (data) => userAPI.updateAvatar(data)
+export const updateUserLogo = (data) => userAPI.updateLogo(data)
+export const changePassword = (data) => userAPI.changePassword(data)
+export const deleteAccount = (data) => userAPI.deleteAccount(data)
 
 // File Upload API
 export const fileAPI = {

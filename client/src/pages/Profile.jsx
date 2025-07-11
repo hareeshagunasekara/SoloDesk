@@ -1,382 +1,2460 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useAuth } from '../context/AuthContext';
-import { cn, generateInitials } from '../utils/cn';
-import Button from '../components/Button';
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
+import { getUserProfile, updateUserProfile, updateUserAvatar, updateUserLogo, changePassword, deleteAccount } from '../services/api';
+import { toast } from 'react-hot-toast';
+import AnimatedBackground from '../components/AnimatedBackground';
+import { isTokenValid, isTokenExpiringSoon } from '../utils/tokenUtils';
+import '../styles/Profile.css';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  Globe, 
+  Building, 
+  Lock, 
+  Eye, 
+  EyeOff,
   Camera,
   Save,
-  Edit,
-  Shield,
+  X,
+  Trash2,
+  Settings,
+  CreditCard,
+  Clock,
   Bell,
+  FileText,
+  Users,
+  ChevronRight,
+  Upload,
+  Shield,
   Palette,
-  Globe as GlobeIcon,
+  RefreshCw,
+  Monitor,
+  AlertTriangle
 } from 'lucide-react';
 
 const Profile = () => {
-  const { user, updateProfile } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: user?.firstName || 'John',
-    lastName: user?.lastName || 'Doe',
-    email: user?.email || 'john.doe@example.com',
-    phone: user?.phone || '+1 (555) 123-4567',
-    company: user?.company || 'SoloDesk',
-    website: user?.website || 'https://solodesk.com',
-    address: user?.address || '123 Business St, San Francisco, CA 94105',
-    bio: user?.bio || 'Freelance web developer and designer with 5+ years of experience.',
-    timezone: user?.timezone || 'America/Los_Angeles',
-    currency: user?.currency || 'USD',
-    hourlyRate: user?.hourlyRate || 75,
+  const { user, token, updateProfile, logout, isAuthenticated, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile'); // Track active tab
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  // Format last login date
+  const formatLastLogin = (lastLoginDate) => {
+    if (!lastLoginDate) return 'Never';
+    
+    const date = new Date(lastLoginDate);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+  };
+  const [showClientPreviewModal, setShowClientPreviewModal] = useState(false);
+
+  // Track unsaved changes for each section
+  const [unsavedChanges, setUnsavedChanges] = useState({
+    profile: false,
+    logoSocials: false,
+    preferences: false,
+    security: false
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Track which fields are being edited
+  const [editingFields, setEditingFields] = useState({});
+
+  // Form state
+  const [formData, setFormData] = useState({
+    profilePicture: '',
+    businessLogo: '',
+    fullName: '',
+    businessName: '',
+    email: '',
+    phone: '',
+    website: '',
+    bio: '',
+    freelancerType: '',
+    address: '',
+    country: '',
+    socialLinks: {
+      linkedin: '',
+      twitter: '',
+      instagram: '',
+      facebook: '',
+      website: ''
+    },
+    preferences: {
+      currency: 'USD',
+      dateFormat: 'MM/DD/YYYY',
+      timeFormat: '12h',
+      invoicePrefix: 'INV',
+      paymentTerms: 30,
+      serviceRate: 100,
+      autoReminders: true
+    }
+  });
+
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  // Tab configuration
+  const tabs = [
+    {
+      id: 'profile',
+      title: 'Profile & Business',
+      subtitle: 'Personal & company info',
+      icon: User,
+      color: 'from-[#BC96E6] to-[#FFD166]'
+    },
+    {
+      id: 'logo-socials',
+      title: 'Logo & Socials',
+      subtitle: 'Brand identity & social links',
+      icon: Palette,
+      color: 'from-[#FFD166] to-[#BC96E6]'
+    },
+    {
+      id: 'preferences',
+      title: 'Business Preferences',
+      subtitle: 'Currency, rates & settings',
+      icon: Settings,
+      color: 'from-[#FFD166] to-[#BC96E6]'
+    },
+    {
+      id: 'security',
+      title: 'Security',
+      subtitle: 'Password & account safety',
+      icon: Shield,
+      color: 'from-[#FF6B6B] to-[#FFD166]'
+    },
+    {
+      id: 'previews',
+      title: 'Client Previews',
+      subtitle: 'How clients see your info',
+      icon: Monitor,
+      color: 'from-[#BC96E6] to-[#FFD166]'
+    }
+  ];
+
+  // Enhanced authentication check
+  const isReadyToFetch = () => {
+    const tokenValid = token && isTokenValid(token);
+    const authReady = !authLoading && isAuthenticated;
+    console.log('=== Profile JWT Token Flow Check ===');
+    console.log('1. Token exists:', !!token);
+    console.log('2. Token valid:', tokenValid);
+    console.log('3. Auth loading:', authLoading);
+    console.log('4. Is authenticated:', isAuthenticated);
+    console.log('5. Auth ready:', authReady);
+    console.log('6. Final result:', tokenValid && authReady);
+    
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('7. Token payload:', {
+          userId: payload.userId,
+          exp: new Date(payload.exp * 1000).toLocaleString(),
+          iat: new Date(payload.iat * 1000).toLocaleString()
+        });
+      } catch (error) {
+        console.error('8. Token decode error:', error);
+      }
+    }
+    console.log('=====================================');
+    
+    return tokenValid && authReady;
   };
 
-  const handleSave = async () => {
-    try {
-      await updateProfile(formData);
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
+  // Fetch user profile with enhanced token validation
+  const { data: profile, isLoading, error } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: async () => {
+      console.log('=== Profile API Call ===');
+      console.log('1. Starting profile fetch...');
+      console.log('2. Token valid check:', isTokenValid(token));
+      console.log('3. Token preview:', token ? token.substring(0, 50) + '...' : 'none');
+      
+      if (!isTokenValid(token)) {
+        console.error('4. Token validation failed - throwing error');
+        throw new Error('Token is invalid or expired');
+      }
+      
+      console.log('4. Token valid - making API call');
+      const result = await getUserProfile();
+      console.log('5. API call successful:', result);
+      console.log('6. API response data:', result.data);
+      console.log('7. API response user object:', result.data?.user);
+      console.log('8. API response lastLogin:', result.data?.user?.lastLogin);
+      console.log('9. API response formattedLastLogin:', result.data?.user?.formattedLastLogin);
+      console.log('10. Returning result.data:', result.data);
+      return result.data;
+    },
+    enabled: isReadyToFetch(),
+    retry: (failureCount, error) => {
+      console.log('=== Profile Query Retry ===');
+      console.log('Failure count:', failureCount);
+      console.log('Error:', error.message);
+      
+      // Don't retry if token is invalid
+      if (error.message === 'Token is invalid or expired') {
+        console.log('Not retrying - token is invalid');
+        return false;
+      }
+      
+      const shouldRetry = failureCount < 2;
+      console.log('Should retry:', shouldRetry);
+      return shouldRetry;
+    },
+    onSuccess: (response) => {
+      console.log('=== Profile Query Success ===');
+      console.log('1. Profile response received:', response);
+      console.log('2. Response type:', typeof response);
+      console.log('3. Response keys:', Object.keys(response || {}));
+      
+      // Extract the actual data from the Axios response
+      const data = response.data;
+      console.log('4. Extracted data:', data);
+      console.log('5. Data keys:', Object.keys(data || {}));
+      
+      // Update form data with fetched profile
+      if (data && data.user) {
+              console.log('6. Updating form data with user data...');
+      const userData = data.user;
+      console.log('7. User data lastLogin:', userData?.lastLogin);
+      console.log('8. User data formattedLastLogin:', userData?.formattedLastLogin);
+      
+      setFormData(prev => ({
+        ...prev,
+        profilePicture: userData?.avatar || '',
+        businessLogo: userData?.logo || '',
+        fullName: userData?.fullName || `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
+        businessName: userData?.businessName || '',
+        email: userData?.email || '',
+        phone: userData?.phone || '',
+        website: userData?.website || '',
+        bio: userData?.bio || '',
+        freelancerType: userData?.freelancerType || '',
+        address: userData?.address || '',
+        country: userData?.country || '',
+        socialLinks: {
+          linkedin: userData?.socialLinks?.linkedin || '',
+          twitter: userData?.socialLinks?.twitter || '',
+          instagram: userData?.socialLinks?.instagram || '',
+          facebook: userData?.socialLinks?.facebook || '',
+          website: userData?.socialLinks?.website || ''
+        },
+        preferences: {
+          currency: userData?.preferredCurrency || 'USD',
+          dateFormat: userData?.dateFormat || 'MM/DD/YYYY',
+          timeFormat: userData?.timeFormat || '12h',
+          invoicePrefix: userData?.invoicePrefix || 'INV',
+          paymentTerms: userData?.paymentTerms || '30',
+          serviceRate: typeof userData?.defaultServiceRate === 'number' ? userData.defaultServiceRate : 100,
+          autoReminders: typeof userData?.autoReminders === 'boolean' ? userData.autoReminders : true
+        }
+      }));
+      console.log('9. Form data updated successfully');
+      } else {
+        console.log('6. No user data found in response');
+      }
+    },
+    onError: (error) => {
+      console.error('=== Profile Query Error ===');
+      console.error('1. Error details:', error);
+      console.error('2. Error message:', error.message);
+      console.error('3. Response status:', error.response?.status);
+      console.error('4. Response data:', error.response?.data);
+      console.error('5. Current state:', {
+        token: token ? 'exists' : 'missing',
+        tokenValid: isTokenValid(token),
+        isAuthenticated,
+        authLoading
+      });
+      
+      // If token is invalid, redirect to login
+      if (error.message === 'Token is invalid or expired' || error.response?.status === 401) {
+        console.error('6. Token invalid - redirecting to login');
+        toast.error('Session expired. Please log in again.');
+        logout();
+      }
     }
+  });
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: updateUserProfile,
+    onSuccess: (data) => {
+      toast.success('Profile updated successfully!');
+      updateProfile(data.user);
+      setHasChanges(false);
+      queryClient.invalidateQueries(['userProfile']);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    }
+  });
+
+  // Change password mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => {
+      toast.success('Password changed successfully!');
+      setShowPasswordModal(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to change password');
+    }
+  });
+
+  // Update avatar mutation
+  const updateAvatarMutation = useMutation({
+    mutationFn: updateUserAvatar,
+    onSuccess: (data) => {
+      toast.success('Avatar updated successfully!');
+      updateProfile(data.user);
+      queryClient.invalidateQueries(['userProfile']);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update avatar');
+    }
+  });
+
+  // Update logo mutation
+  const updateLogoMutation = useMutation({
+    mutationFn: updateUserLogo,
+    onSuccess: (data) => {
+      toast.success('Logo updated successfully!');
+      updateProfile(data.user);
+      queryClient.invalidateQueries(['userProfile']);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update logo');
+    }
+  });
+
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      toast.success('Account deleted successfully');
+      logout();
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete account');
+    }
+  });
+
+  // Debug function to check token status
+  const debugTokenStatus = () => {
+    const storedToken = localStorage.getItem('token');
+    console.log('=== Detailed Token Debug Info ===');
+    console.log('1. AuthContext token exists:', !!token);
+    console.log('2. localStorage token exists:', !!storedToken);
+    console.log('3. AuthContext token valid:', isTokenValid(token));
+    console.log('4. localStorage token valid:', isTokenValid(storedToken));
+    console.log('5. isAuthenticated:', isAuthenticated);
+    console.log('6. authLoading:', authLoading);
+    
+    // Detailed token analysis
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Date.now() / 1000;
+        const timeUntilExpiry = payload.exp - now;
+        
+        console.log('7. Token Analysis:');
+        console.log('   - User ID:', payload.userId);
+        console.log('   - Issued at:', new Date(payload.iat * 1000).toLocaleString());
+        console.log('   - Expires at:', new Date(payload.exp * 1000).toLocaleString());
+        console.log('   - Time until expiry:', Math.floor(timeUntilExpiry / 60), 'minutes');
+        console.log('   - Is expired:', payload.exp < now);
+        console.log('   - Is expiring soon (< 5 min):', timeUntilExpiry < 300);
+      } catch (error) {
+        console.error('8. Token decode error:', error);
+      }
+    }
+    
+    // Compare tokens
+    if (token && storedToken) {
+      console.log('9. Token comparison:');
+      console.log('   - Tokens match:', token === storedToken);
+      console.log('   - AuthContext token length:', token.length);
+      console.log('   - localStorage token length:', storedToken.length);
+    }
+    
+    console.log('=====================================');
+  };
+
+  // Test API connection with detailed logging
+  const testAPIConnection = async () => {
+    console.log('=== API Connection Test ===');
+    console.log('1. Starting API connection test...');
+    console.log('2. Current token:', token ? 'exists' : 'missing');
+    console.log('3. Token valid:', isTokenValid(token));
+    
+    try {
+      console.log('4. Making API call to getUserProfile...');
+      const response = await getUserProfile();
+      console.log('5. API call successful!');
+      console.log('6. Response data:', response);
+      console.log('7. Response type:', typeof response);
+      console.log('8. Response keys:', Object.keys(response || {}));
+      toast.success('API connection working!');
+    } catch (error) {
+      console.error('5. API call failed!');
+      console.error('6. Error type:', error.constructor.name);
+      console.error('7. Error message:', error.message);
+      console.error('8. Response status:', error.response?.status);
+      console.error('9. Response data:', error.response?.data);
+      console.error('10. Request config:', error.config);
+      toast.error('API connection failed: ' + (error.response?.data?.message || error.message));
+    }
+    console.log('==============================');
+  };
+
+  // New function to analyze JWT token in detail
+  const analyzeJWTToken = () => {
+    console.log('=== JWT Token Analysis ===');
+    
+    if (!token) {
+      console.log('No token available for analysis');
+      return;
+    }
+    
+    try {
+      const parts = token.split('.');
+      console.log('1. Token structure:');
+      console.log('   - Parts count:', parts.length);
+      console.log('   - Header length:', parts[0]?.length || 0);
+      console.log('   - Payload length:', parts[1]?.length || 0);
+      console.log('   - Signature length:', parts[2]?.length || 0);
+      
+      // Decode header
+      const header = JSON.parse(atob(parts[0]));
+      console.log('2. Token header:', header);
+      
+      // Decode payload
+      const payload = JSON.parse(atob(parts[1]));
+      console.log('3. Token payload:', payload);
+      
+      // Time analysis
+      const now = Date.now() / 1000;
+      const timeUntilExpiry = payload.exp - now;
+      const timeSinceIssued = now - payload.iat;
+      
+      console.log('4. Time analysis:');
+      console.log('   - Current time:', new Date(now * 1000).toLocaleString());
+      console.log('   - Issued:', new Date(payload.iat * 1000).toLocaleString());
+      console.log('   - Expires:', new Date(payload.exp * 1000).toLocaleString());
+      console.log('   - Age:', Math.floor(timeSinceIssued / 60), 'minutes');
+      console.log('   - Time until expiry:', Math.floor(timeUntilExpiry / 60), 'minutes');
+      console.log('   - Is expired:', payload.exp < now);
+      console.log('   - Is expiring soon (< 5 min):', timeUntilExpiry < 300);
+      
+      // Validation results
+      console.log('5. Validation results:');
+      console.log('   - isTokenValid():', isTokenValid(token));
+      console.log('   - isTokenExpiringSoon(5 min):', isTokenExpiringSoon(token, 5));
+      console.log('   - isTokenExpiringSoon(10 min):', isTokenExpiringSoon(token, 10));
+      
+    } catch (error) {
+      console.error('Token analysis failed:', error);
+    }
+    
+    console.log('==========================');
+  };
+
+  // Handle token expiration and authentication
+  useEffect(() => {
+    console.log('=== Profile Authentication Check ===');
+    console.log('1. Token exists:', !!token);
+    console.log('2. Auth loading:', authLoading);
+    console.log('3. Is authenticated:', isAuthenticated);
+    debugTokenStatus();
+    
+    // Check if token exists and is valid
+    if (!token && !authLoading) {
+      console.log('4. No token found, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
+    // Check if token is valid
+    if (token && !isTokenValid(token)) {
+      console.log('4. Token is invalid or expired, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
+    // Check if token is expiring soon
+    if (token && isTokenExpiringSoon(token, 5)) {
+      console.log('4. Token is expiring soon, showing warning');
+      toast.warning('Your session will expire soon. Please save your work.');
+    }
+
+    // Check if user is authenticated
+    if (!isAuthenticated && !authLoading) {
+      console.log('4. User not authenticated, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
+    console.log('5. Authentication check passed - user is authenticated');
+    console.log('==================================================');
+  }, [token, isAuthenticated, authLoading]);
+
+  // Periodic token validation check
+  useEffect(() => {
+    if (!token || authLoading) {
+      console.log('Periodic token check skipped - no token or auth loading');
+      return;
+    }
+
+    console.log('Setting up periodic token validation (every 60 seconds)');
+    
+    const interval = setInterval(() => {
+      console.log('=== Periodic Token Check ===');
+      console.log('1. Checking token validity...');
+      
+      if (!isTokenValid(token)) {
+        console.log('2. Token expired during session, redirecting to login');
+        window.location.href = '/login';
+      } else if (isTokenExpiringSoon(token, 2)) {
+        console.log('2. Token expiring very soon, showing urgent warning');
+        toast.error('Your session is about to expire! Please save your work immediately.');
+      } else {
+        console.log('2. Token is still valid');
+      }
+      console.log('============================');
+    }, 60000); // Check every minute
+
+    return () => {
+      console.log('Cleaning up periodic token validation');
+      clearInterval(interval);
+    };
+  }, [token, authLoading]);
+
+  // Initialize form data when profile loads
+  useEffect(() => {
+    console.log('Profile useEffect triggered:', { profile, user });
+    
+    // Ensure we have valid data structures
+    const defaultFormData = {
+      profilePicture: '',
+      businessLogo: '',
+      fullName: '',
+      businessName: '',
+      email: '',
+      phone: '',
+      website: '',
+      bio: '',
+      freelancerType: '',
+      address: '',
+      country: '',
+      socialLinks: {
+        linkedin: '',
+        twitter: '',
+        instagram: '',
+        facebook: ''
+      },
+      preferences: {
+        currency: 'USD',
+        dateFormat: 'MM/DD/YYYY',
+        timeFormat: '12h',
+        invoicePrefix: 'INV',
+        paymentTerms: 30,
+        serviceRate: 100,
+        autoReminders: true
+      }
+    };
+    
+    // Use profile data from API if available
+    if (profile?.data?.user && typeof profile.data.user === 'object') {
+      const userData = profile.data.user;
+      console.log('Setting form data with user data from API:', userData);
+      setFormData({
+        ...defaultFormData,
+        profilePicture: safeRender(userData?.avatar) || '',
+        businessLogo: safeRender(userData?.logo) || '',
+        fullName: safeRender(userData?.fullName) || `${safeRender(userData?.firstName) || ''} ${safeRender(userData?.lastName) || ''}`.trim(),
+        businessName: safeRender(userData?.businessName) || '',
+        email: safeRender(userData?.email) || '',
+        phone: safeRender(userData?.phone) || '',
+        website: safeRender(userData?.website) || '',
+        bio: safeRender(userData?.bio) || '',
+        socialLinks: {
+          linkedin: safeRender(userData?.socialLinks?.linkedin) || '',
+          twitter: safeRender(userData?.socialLinks?.twitter) || '',
+          instagram: safeRender(userData?.socialLinks?.instagram) || '',
+          facebook: safeRender(userData?.socialLinks?.facebook) || ''
+        },
+        preferences: {
+          ...defaultFormData.preferences,
+          currency: safeRender(userData?.preferredCurrency) || 'USD',
+          serviceRate: typeof userData?.defaultServiceRate === 'number' ? userData.defaultServiceRate : 100,
+          invoicePrefix: safeRender(userData?.invoicePrefix) || 'INV',
+          paymentTerms: safeRender(userData?.paymentTerms) || '30',
+          autoReminders: typeof userData?.autoReminders === 'boolean' ? userData.autoReminders : true,
+          dateFormat: safeRender(userData?.dateFormat) || 'MM/DD/YYYY',
+          timeFormat: safeRender(userData?.timeFormat) || '12h',
+        },
+        freelancerType: safeRender(userData?.freelancerType) || '',
+        address: safeRender(userData?.address) || '',
+        country: safeRender(userData?.country) || ''
+      });
+    } 
+    // Fallback to user data from AuthContext if API call fails or user is already loaded
+    else if (user && typeof user === 'object' && !profile) {
+      console.log('Using user data from AuthContext as fallback:', user);
+      setFormData({
+        ...defaultFormData,
+        profilePicture: safeRender(user?.avatar) || '',
+        businessLogo: safeRender(user?.logo) || '',
+        fullName: safeRender(user?.fullName) || `${safeRender(user?.firstName) || ''} ${safeRender(user?.lastName) || ''}`.trim(),
+        businessName: safeRender(user?.businessName) || '',
+        email: safeRender(user?.email) || '',
+        phone: safeRender(user?.phone) || '',
+        website: safeRender(user?.website) || '',
+        bio: safeRender(user?.bio) || '',
+        socialLinks: {
+          linkedin: safeRender(user?.socialLinks?.linkedin) || '',
+          twitter: safeRender(user?.socialLinks?.twitter) || '',
+          instagram: safeRender(user?.socialLinks?.instagram) || '',
+          facebook: safeRender(user?.socialLinks?.facebook) || ''
+        },
+        preferences: {
+          ...defaultFormData.preferences,
+          currency: safeRender(user?.preferredCurrency) || 'USD',
+          serviceRate: typeof user?.defaultServiceRate === 'number' ? user.defaultServiceRate : 100,
+          invoicePrefix: safeRender(user?.invoicePrefix) || 'INV',
+          paymentTerms: safeRender(user?.paymentTerms) || '30',
+          autoReminders: typeof user?.autoReminders === 'boolean' ? user.autoReminders : true,
+          dateFormat: safeRender(user?.dateFormat) || 'MM/DD/YYYY',
+          timeFormat: safeRender(user?.timeFormat) || '12h',
+        },
+        freelancerType: safeRender(user?.freelancerType) || '',
+        address: safeRender(user?.address) || '',
+        country: safeRender(user?.country) || ''
+      });
+    } else if (profile && !profile.user) {
+      console.log('Profile data structure:', profile);
+    }
+  }, [profile, user]);
+
+  // Helper function to safely render values
+  const safeRender = (value) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') return '';
+    if (typeof value === 'string' || typeof value === 'number') return value;
+    return String(value);
+  };
+
+  // Handle form changes
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setHasChanges(true);
+    setUnsavedChanges(prev => ({ ...prev, [activeTab]: true }));
+  };
+
+  const handleSocialLinkChange = (platform, value) => {
+    setFormData(prev => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        [platform]: value
+      }
+    }));
+    setHasChanges(true);
+    setUnsavedChanges(prev => ({ ...prev, logoSocials: true }));
+  };
+
+  const handlePreferenceChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      preferences: {
+        ...prev.preferences,
+        [field]: value
+      }
+    }));
+    setHasChanges(true);
+    setUnsavedChanges(prev => ({ ...prev, preferences: true }));
+  };
+
+  // Handle double-click to edit
+  const handleDoubleClick = (fieldName) => {
+    setEditingFields(prev => ({ ...prev, [fieldName]: true }));
+  };
+
+  // Handle field blur (save on blur)
+  const handleFieldBlur = (fieldName) => {
+    setEditingFields(prev => ({ ...prev, [fieldName]: false }));
+  };
+
+  // Save specific section
+  const handleSaveSection = (section) => {
+      // Validate LinkedIn URL if saving logo-socials section
+      if (section === 'logoSocials') {
+        if (formData.socialLinks?.linkedin && !formData.socialLinks.linkedin.startsWith('https://')) {
+          toast.error('LinkedIn URL must start with https://');
+          return;
+        }
+        
+        // Validate other URLs if they have content
+        const urlFields = ['twitter', 'instagram', 'facebook'];
+        for (const field of urlFields) {
+          const value = formData.socialLinks?.[field];
+          if (value && !value.startsWith('https://')) {
+            toast.error(`${field.charAt(0).toUpperCase() + field.slice(1)} URL must start with https://`);
+            return;
+          }
+        }
+        
+        // Validate website URL
+        if (formData.website && !formData.website.startsWith('https://')) {
+          toast.error('Website URL must start with https://');
+          return;
+        }
+      }
+
+      // Validate preferences if saving preferences section
+      if (section === 'preferences') {
+        // Validate required hourly rate
+        if (!formData.preferences?.serviceRate || formData.preferences.serviceRate <= 0) {
+          toast.error('Hourly rate is required and must be greater than 0');
+          return;
+        }
+        
+        // Validate currency is selected
+        if (!formData.preferences?.currency) {
+          toast.error('Please select a currency');
+          return;
+        }
+      }
+
+    updateProfileMutation.mutate({
+      fullName: formData.fullName,
+      businessName: formData.businessName,
+      phone: formData.phone,
+      website: formData.website,
+      bio: formData.bio,
+      freelancerType: formData.freelancerType,
+      address: formData.address,
+      country: formData.country,
+      socialLinks: formData.socialLinks || {},
+      preferredCurrency: formData.preferences?.currency || 'USD',
+        defaultServiceRate: formData.preferences?.serviceRate || 100,
+        invoicePrefix: formData.preferences?.invoicePrefix || 'INV',
+        paymentTerms: formData.preferences?.paymentTerms || '30',
+        autoReminders: formData.preferences?.autoReminders !== undefined ? formData.preferences.autoReminders : true,
+        dateFormat: formData.preferences?.dateFormat || 'MM/DD/YYYY',
+        timeFormat: formData.preferences?.timeFormat || '12h'
+    });
+    setUnsavedChanges(prev => ({ ...prev, [section]: false }));
+  };
+
+  // Save all changes
+  const handleSave = () => {
+    updateProfileMutation.mutate({
+      fullName: formData.fullName,
+      businessName: formData.businessName,
+      phone: formData.phone,
+      website: formData.website,
+      bio: formData.bio,
+      freelancerType: formData.freelancerType,
+      address: formData.address,
+      country: formData.country,
+      socialLinks: formData.socialLinks || {},
+      preferredCurrency: formData.preferences?.currency || 'USD',
+      defaultServiceRate: formData.preferences?.serviceRate || 100,
+      invoicePrefix: formData.preferences?.invoicePrefix || 'INV',
+      paymentTerms: formData.preferences?.paymentTerms || '30',
+      autoReminders: formData.preferences?.autoReminders !== undefined ? formData.preferences.autoReminders : true,
+      dateFormat: formData.preferences?.dateFormat || 'MM/DD/YYYY',
+      timeFormat: formData.preferences?.timeFormat || '12h'
+    });
+    setUnsavedChanges({
+      profile: false,
+      logoSocials: false,
+      preferences: false,
+      security: false
+    });
   };
 
   const handleCancel = () => {
-    setFormData({
-      firstName: user?.firstName || 'John',
-      lastName: user?.lastName || 'Doe',
-      email: user?.email || 'john.doe@example.com',
-      phone: user?.phone || '+1 (555) 123-4567',
-      company: user?.company || 'SoloDesk',
-      website: user?.website || 'https://solodesk.com',
-      address: user?.address || '123 Business St, San Francisco, CA 94105',
-      bio: user?.bio || 'Freelance web developer and designer with 5+ years of experience.',
-      timezone: user?.timezone || 'America/Los_Angeles',
-      currency: user?.currency || 'USD',
-      hourlyRate: user?.hourlyRate || 75,
+    // Reset form data to original values
+    if (profile?.user && typeof profile.user === 'object') {
+      const userData = profile.user;
+      setFormData({
+        profilePicture: userData?.avatar || '',
+        businessLogo: userData?.logo || '',
+        fullName: userData?.fullName || `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
+        businessName: userData?.businessName || '',
+        email: userData?.email || '',
+        phone: userData?.phone || '',
+        website: userData?.website || '',
+        bio: userData?.bio || '',
+        freelancerType: userData?.freelancerType || '',
+        address: userData?.address || '',
+        country: userData?.country || '',
+        socialLinks: {
+          linkedin: userData?.socialLinks?.linkedin || '',
+          twitter: userData?.socialLinks?.twitter || '',
+          instagram: userData?.socialLinks?.instagram || '',
+          facebook: userData?.socialLinks?.facebook || '',
+          website: userData?.socialLinks?.website || ''
+        },
+        preferences: {
+          currency: userData?.preferredCurrency || 'USD',
+          dateFormat: userData?.dateFormat || 'MM/DD/YYYY',
+          timeFormat: userData?.timeFormat || '12h',
+          invoicePrefix: userData?.invoicePrefix || 'INV',
+          paymentTerms: userData?.paymentTerms || '30',
+          serviceRate: userData?.defaultServiceRate || 100,
+          autoReminders: typeof userData?.autoReminders === 'boolean' ? userData.autoReminders : true
+        }
+      });
+    }
+    setHasChanges(false);
+    setUnsavedChanges({
+      profile: false,
+      logoSocials: false,
+      preferences: false,
+      security: false
     });
-    setIsEditing(false);
+    setEditingFields({});
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-card-foreground">Profile</h1>
-          <p className="text-muted-foreground">
-            Manage your account settings and preferences
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          {isEditing ? (
-            <>
-              <Button variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button icon={<Save className="h-4 w-4" />} onClick={handleSave}>
-                Save Changes
-              </Button>
-            </>
-          ) : (
-            <Button icon={<Edit className="h-4 w-4" />} onClick={() => setIsEditing(true)}>
-              Edit Profile
-            </Button>
-          )}
+  // Handle password change
+  const handlePasswordChange = () => {
+    // Validate password length
+    if (passwordData.newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters long');
+      return;
+    }
+    
+    // Validate password confirmation
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    
+    // Validate current password is provided
+    if (!passwordData.currentPassword) {
+      toast.error('Current password is required');
+      return;
+    }
+    
+    changePasswordMutation.mutate({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword
+    });
+  };
+
+  // Handle account deletion
+  const handleAccountDeletion = () => {
+    if (deleteConfirmation !== 'DELETE') {
+      toast.error('Please type "DELETE" to confirm account deletion');
+      return;
+    }
+    
+    deleteAccountMutation.mutate({ password: deleteConfirmation });
+    setShowDeleteModal(false);
+    setDeleteConfirmation('');
+  };
+
+  // Handle file uploads
+  const handleFileUpload = (type, file) => {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const fileData = e.target.result;
+      
+      if (type === 'avatar') {
+        setFormData(prev => ({ ...prev, profilePicture: fileData }));
+        updateAvatarMutation.mutate({ avatar: fileData });
+      } else if (type === 'logo') {
+        setFormData(prev => ({ ...prev, businessLogo: fileData }));
+        updateLogoMutation.mutate({ logo: fileData });
+      }
+      setHasChanges(true);
+      setUnsavedChanges(prev => ({ ...prev, [activeTab]: true }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Show loading state while authentication is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading your profile...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Personal Information</h3>
-            </div>
-            <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="label">First Name</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="input"
-                  />
-                </div>
-                <div>
-                  <label className="label">Last Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="input"
-                  />
-                </div>
-                <div>
-                  <label className="label">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="input"
-                  />
-                </div>
-                <div>
-                  <label className="label">Phone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="input"
-                  />
-                </div>
-                <div>
-                  <label className="label">Company</label>
-                  <input
-                    type="text"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="input"
-                  />
-                </div>
-                <div>
-                  <label className="label">Website</label>
-                  <input
-                    type="url"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="input"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="label">Address</label>
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    rows={3}
-                    className="textarea"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="label">Bio</label>
-                  <textarea
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    rows={4}
-                    className="textarea"
-                    placeholder="Tell us about yourself..."
-                  />
-                </div>
-              </div>
-            </div>
+  // Redirect to login if not authenticated
+  if (!isAuthenticated || !token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-white mx-auto mb-4" />
+          <p className="text-white text-lg mb-4">You need to be logged in to view your profile.</p>
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="bg-[#FFD166] text-[#210B2C] px-6 py-2 rounded-lg font-semibold hover:bg-[#FFD166]/90 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-content">
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="loading-container">
+        <div className="loading-content">
+          <p className="loading-text">Failed to load profile</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="save-button"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user data is not available
+  if (!user && !profile) {
+    return (
+      <div className="loading-container">
+        <div className="loading-content">
+          <p className="loading-text">Loading user data...</p>
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
+
+
+
+  // Ensure form data is properly initialized
+  if (!formData || typeof formData !== 'object') {
+    console.log('Form data not initialized:', formData);
+    return (
+      <div className="loading-container">
+        <div className="loading-content">
+          <p className="loading-text">Initializing form data...</p>
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Ensure nested objects exist
+  if (!formData.socialLinks || typeof formData.socialLinks !== 'object') {
+    formData.socialLinks = { linkedin: '', twitter: '', instagram: '', facebook: '', website: '' };
+  }
+  
+  if (!formData.preferences || typeof formData.preferences !== 'object') {
+    formData.preferences = {
+      currency: 'USD',
+      dateFormat: 'MM/DD/YYYY',
+      timeFormat: '12h',
+      invoicePrefix: 'INV',
+      paymentTerms: 30,
+      serviceRate: 100,
+      autoReminders: true
+    };
+  }
+
+  return (
+    <div className="profile-container">
+      {/* Animated Background */}
+      <AnimatedBackground />
+      
+      {/* Content Overlay */}
+      <div className="profile-content">
+        {/* Header */}
+        <div className="profile-header">
+          <div>
+            <h1 className="profile-title">Profile Settings</h1>
+            <p className="profile-subtitle">Double-click any field to edit • Save changes per section or all at once</p>
           </div>
+        </div>
+          
 
-          {/* Business Settings */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Business Settings</h3>
-            </div>
-            <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="label">Timezone</label>
-                  <select
-                    name="timezone"
-                    value={formData.timezone}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="select"
-                  >
-                    <option value="America/Los_Angeles">Pacific Time</option>
-                    <option value="America/New_York">Eastern Time</option>
-                    <option value="America/Chicago">Central Time</option>
-                    <option value="America/Denver">Mountain Time</option>
-                    <option value="Europe/London">London</option>
-                    <option value="Europe/Paris">Paris</option>
-                    <option value="Asia/Tokyo">Tokyo</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Currency</label>
-                  <select
-                    name="currency"
-                    value={formData.currency}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="select"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD (C$)</option>
-                    <option value="AUD">AUD (A$)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Hourly Rate</label>
-                  <input
-                    type="number"
-                    name="hourlyRate"
-                    value={formData.hourlyRate}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="input"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            </div>
+
+        {/* Tab Navigation */}
+        <div className="tab-container">
+          <div className="tab-nav">
+            {Array.isArray(tabs) && tabs.map((tab) => {
+              if (!tab || typeof tab !== 'object') {
+                console.error('Invalid tab:', tab);
+                return null;
+              }
+              const IconComponent = tab.icon;
+              console.log('Tab:', tab.id, 'Icon:', IconComponent, 'Type:', typeof IconComponent, 'IsFunction:', typeof IconComponent === 'function', 'IsComponent:', typeof IconComponent === 'object');
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`tab-button ${isActive ? 'active' : ''}`}
+                >
+                  {/* Glow effect for active tab */}
+                  {isActive && <div className="tab-glow"></div>}
+                  
+                  {/* Background glow */}
+                  {isActive && <div className="tab-bg-glow"></div>}
+                  
+                  {/* Content */}
+                  <div className="tab-content">
+                    <div className="tab-icon-container">
+                      {IconComponent && (typeof IconComponent === 'function' || typeof IconComponent === 'object') ? (
+                        React.createElement(IconComponent, { className: "tab-icon", size: 24 })
+                      ) : (
+                        <div className="tab-icon" style={{color: 'red', fontSize: '24px'}}>❌</div>
+                      )}
+                    </div>
+                    <div className="tab-text">
+                      <div className="tab-title">
+                        {tab.title || 'Tab'}
+                      </div>
+                      <div className="tab-subtitle">
+                        {tab.subtitle || 'Description'}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Profile Picture */}
-          <div className="card">
-            <div className="card-content text-center">
-              <div className="relative inline-block">
-                <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-4">
-                  <span className="text-3xl font-bold text-accent-foreground">
-                    {generateInitials(`${formData.firstName} ${formData.lastName}`)}
-                  </span>
-                </div>
-                {isEditing && (
-                  <button className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors">
-                    <Camera className="h-4 w-4" />
+        {/* Tab Content */}
+        <div className="tab-content-container">
+          {/* Tab 1: Profile & Business Info */}
+          {activeTab === 'profile' && (
+            <div className="tab-section">
+              {/* Section Header with Save Button */}
+              <div className="section-header">
+                <h3 className="section-title">Basic Information</h3>
+                {unsavedChanges.profile && (
+                  <button
+                    onClick={() => handleSaveSection('profile')}
+                    disabled={updateProfileMutation.isLoading}
+                    className="save-button"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Changes
                   </button>
                 )}
               </div>
-              <h3 className="font-semibold text-card-foreground mb-1">
-                {formData.firstName} {formData.lastName}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {formData.company}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {formData.bio}
-              </p>
+
+              <div className="form-grid">
+                <div className="form-field">
+                  <label className="form-label">Full Name</label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('fullName')}
+                  >
+                    {editingFields.fullName ? (
+                      <input
+                        type="text"
+                        value={formData.fullName}
+                        onChange={(e) => handleInputChange('fullName', e.target.value)}
+                        onBlur={() => handleFieldBlur('fullName')}
+                        className="form-input"
+                        placeholder="Enter your full name"
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="form-display">
+                        {safeRender(formData.fullName) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label className="form-label">Business Name</label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('businessName')}
+                  >
+                    {editingFields.businessName ? (
+                      <input
+                        type="text"
+                        value={formData.businessName}
+                        onChange={(e) => handleInputChange('businessName', e.target.value)}
+                        onBlur={() => handleFieldBlur('businessName')}
+                        className="form-input"
+                        placeholder="Enter business name"
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="form-display">
+                        {safeRender(formData.businessName) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    disabled
+                    className="form-input disabled"
+                    placeholder="Email (cannot be changed)"
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label className="form-label">Phone Number</label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('phone')}
+                  >
+                    {editingFields.phone ? (
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        onBlur={() => handleFieldBlur('phone')}
+                        className="form-input"
+                        placeholder="Enter phone number"
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="form-display">
+                        {safeRender(formData.phone) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-gray-800 font-medium">Freelancer Type</label>
+                  <div 
+                    className="relative cursor-pointer"
+                    onDoubleClick={() => handleDoubleClick('freelancerType')}
+                  >
+                    {editingFields.freelancerType ? (
+                      <input
+                        type="text"
+                        value={formData.freelancerType}
+                        onChange={(e) => handleInputChange('freelancerType', e.target.value)}
+                        onBlur={() => handleFieldBlur('freelancerType')}
+                        className="w-full px-3 py-2 bg-white/90 border border-gray-300 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BC96E6] focus:border-transparent transition-all duration-200 text-sm"
+                        placeholder="Add your role"
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="w-full px-3 py-2 bg-white/90 border border-gray-300 rounded-xl text-gray-800 min-h-[44px] flex items-center text-sm">
+                        {safeRender(formData.freelancerType) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label className="form-label">Country</label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('country')}
+                  >
+                    {editingFields.country ? (
+                      <select
+                        value={formData.country}
+                        onChange={(e) => handleInputChange('country', e.target.value)}
+                        onBlur={() => handleFieldBlur('country')}
+                        className="form-select"
+                        autoFocus
+                      >
+                        <option value="">Select country</option>
+                        <option value="Afghanistan">Afghanistan</option>
+                        <option value="Albania">Albania</option>
+                        <option value="Algeria">Algeria</option>
+                        <option value="Andorra">Andorra</option>
+                        <option value="Angola">Angola</option>
+                        <option value="Antigua and Barbuda">Antigua and Barbuda</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Armenia">Armenia</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Austria">Austria</option>
+                        <option value="Azerbaijan">Azerbaijan</option>
+                        <option value="Bahamas">Bahamas</option>
+                        <option value="Bahrain">Bahrain</option>
+                        <option value="Bangladesh">Bangladesh</option>
+                        <option value="Barbados">Barbados</option>
+                        <option value="Belarus">Belarus</option>
+                        <option value="Belgium">Belgium</option>
+                        <option value="Belize">Belize</option>
+                        <option value="Benin">Benin</option>
+                        <option value="Bhutan">Bhutan</option>
+                        <option value="Bolivia">Bolivia</option>
+                        <option value="Bosnia and Herzegovina">Bosnia and Herzegovina</option>
+                        <option value="Botswana">Botswana</option>
+                        <option value="Brazil">Brazil</option>
+                        <option value="Brunei">Brunei</option>
+                        <option value="Bulgaria">Bulgaria</option>
+                        <option value="Burkina Faso">Burkina Faso</option>
+                        <option value="Burundi">Burundi</option>
+                        <option value="Cabo Verde">Cabo Verde</option>
+                        <option value="Cambodia">Cambodia</option>
+                        <option value="Cameroon">Cameroon</option>
+                        <option value="Canada">Canada</option>
+                        <option value="Central African Republic">Central African Republic</option>
+                        <option value="Chad">Chad</option>
+                        <option value="Chile">Chile</option>
+                        <option value="China">China</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="Comoros">Comoros</option>
+                        <option value="Congo">Congo</option>
+                        <option value="Costa Rica">Costa Rica</option>
+                        <option value="Croatia">Croatia</option>
+                        <option value="Cuba">Cuba</option>
+                        <option value="Cyprus">Cyprus</option>
+                        <option value="Czech Republic">Czech Republic</option>
+                        <option value="Democratic Republic of the Congo">Democratic Republic of the Congo</option>
+                        <option value="Denmark">Denmark</option>
+                        <option value="Djibouti">Djibouti</option>
+                        <option value="Dominica">Dominica</option>
+                        <option value="Dominican Republic">Dominican Republic</option>
+                        <option value="East Timor">East Timor</option>
+                        <option value="Ecuador">Ecuador</option>
+                        <option value="Egypt">Egypt</option>
+                        <option value="El Salvador">El Salvador</option>
+                        <option value="Equatorial Guinea">Equatorial Guinea</option>
+                        <option value="Eritrea">Eritrea</option>
+                        <option value="Estonia">Estonia</option>
+                        <option value="Eswatini">Eswatini</option>
+                        <option value="Ethiopia">Ethiopia</option>
+                        <option value="Fiji">Fiji</option>
+                        <option value="Finland">Finland</option>
+                        <option value="France">France</option>
+                        <option value="Gabon">Gabon</option>
+                        <option value="Gambia">Gambia</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Germany">Germany</option>
+                        <option value="Ghana">Ghana</option>
+                        <option value="Greece">Greece</option>
+                        <option value="Grenada">Grenada</option>
+                        <option value="Guatemala">Guatemala</option>
+                        <option value="Guinea">Guinea</option>
+                        <option value="Guinea-Bissau">Guinea-Bissau</option>
+                        <option value="Guyana">Guyana</option>
+                        <option value="Haiti">Haiti</option>
+                        <option value="Honduras">Honduras</option>
+                        <option value="Hungary">Hungary</option>
+                        <option value="Iceland">Iceland</option>
+                        <option value="India">India</option>
+                        <option value="Indonesia">Indonesia</option>
+                        <option value="Iran">Iran</option>
+                        <option value="Iraq">Iraq</option>
+                        <option value="Ireland">Ireland</option>
+                        <option value="Israel">Israel</option>
+                        <option value="Italy">Italy</option>
+                        <option value="Ivory Coast">Ivory Coast</option>
+                        <option value="Jamaica">Jamaica</option>
+                        <option value="Japan">Japan</option>
+                        <option value="Jordan">Jordan</option>
+                        <option value="Kazakhstan">Kazakhstan</option>
+                        <option value="Kenya">Kenya</option>
+                        <option value="Kiribati">Kiribati</option>
+                        <option value="Kuwait">Kuwait</option>
+                        <option value="Kyrgyzstan">Kyrgyzstan</option>
+                        <option value="Laos">Laos</option>
+                        <option value="Latvia">Latvia</option>
+                        <option value="Lebanon">Lebanon</option>
+                        <option value="Lesotho">Lesotho</option>
+                        <option value="Liberia">Liberia</option>
+                        <option value="Libya">Libya</option>
+                        <option value="Liechtenstein">Liechtenstein</option>
+                        <option value="Lithuania">Lithuania</option>
+                        <option value="Luxembourg">Luxembourg</option>
+                        <option value="Madagascar">Madagascar</option>
+                        <option value="Malawi">Malawi</option>
+                        <option value="Malaysia">Malaysia</option>
+                        <option value="Maldives">Maldives</option>
+                        <option value="Mali">Mali</option>
+                        <option value="Malta">Malta</option>
+                        <option value="Marshall Islands">Marshall Islands</option>
+                        <option value="Mauritania">Mauritania</option>
+                        <option value="Mauritius">Mauritius</option>
+                        <option value="Mexico">Mexico</option>
+                        <option value="Micronesia">Micronesia</option>
+                        <option value="Moldova">Moldova</option>
+                        <option value="Monaco">Monaco</option>
+                        <option value="Mongolia">Mongolia</option>
+                        <option value="Montenegro">Montenegro</option>
+                        <option value="Morocco">Morocco</option>
+                        <option value="Mozambique">Mozambique</option>
+                        <option value="Myanmar">Myanmar</option>
+                        <option value="Namibia">Namibia</option>
+                        <option value="Nauru">Nauru</option>
+                        <option value="Nepal">Nepal</option>
+                        <option value="Netherlands">Netherlands</option>
+                        <option value="New Zealand">New Zealand</option>
+                        <option value="Nicaragua">Nicaragua</option>
+                        <option value="Niger">Niger</option>
+                        <option value="Nigeria">Nigeria</option>
+                        <option value="North Korea">North Korea</option>
+                        <option value="North Macedonia">North Macedonia</option>
+                        <option value="Norway">Norway</option>
+                        <option value="Oman">Oman</option>
+                        <option value="Pakistan">Pakistan</option>
+                        <option value="Palau">Palau</option>
+                        <option value="Palestine">Palestine</option>
+                        <option value="Panama">Panama</option>
+                        <option value="Papua New Guinea">Papua New Guinea</option>
+                        <option value="Paraguay">Paraguay</option>
+                        <option value="Peru">Peru</option>
+                        <option value="Philippines">Philippines</option>
+                        <option value="Poland">Poland</option>
+                        <option value="Portugal">Portugal</option>
+                        <option value="Qatar">Qatar</option>
+                        <option value="Romania">Romania</option>
+                        <option value="Russia">Russia</option>
+                        <option value="Rwanda">Rwanda</option>
+                        <option value="Saint Kitts and Nevis">Saint Kitts and Nevis</option>
+                        <option value="Saint Lucia">Saint Lucia</option>
+                        <option value="Saint Vincent and the Grenadines">Saint Vincent and the Grenadines</option>
+                        <option value="Samoa">Samoa</option>
+                        <option value="San Marino">San Marino</option>
+                        <option value="Sao Tome and Principe">Sao Tome and Principe</option>
+                        <option value="Saudi Arabia">Saudi Arabia</option>
+                        <option value="Senegal">Senegal</option>
+                        <option value="Serbia">Serbia</option>
+                        <option value="Seychelles">Seychelles</option>
+                        <option value="Sierra Leone">Sierra Leone</option>
+                        <option value="Singapore">Singapore</option>
+                        <option value="Slovakia">Slovakia</option>
+                        <option value="Slovenia">Slovenia</option>
+                        <option value="Solomon Islands">Solomon Islands</option>
+                        <option value="Somalia">Somalia</option>
+                        <option value="South Africa">South Africa</option>
+                        <option value="South Korea">South Korea</option>
+                        <option value="South Sudan">South Sudan</option>
+                        <option value="Spain">Spain</option>
+                        <option value="Sri Lanka">Sri Lanka</option>
+                        <option value="Sudan">Sudan</option>
+                        <option value="Suriname">Suriname</option>
+                        <option value="Sweden">Sweden</option>
+                        <option value="Switzerland">Switzerland</option>
+                        <option value="Syria">Syria</option>
+                        <option value="Taiwan">Taiwan</option>
+                        <option value="Tajikistan">Tajikistan</option>
+                        <option value="Tanzania">Tanzania</option>
+                        <option value="Thailand">Thailand</option>
+                        <option value="Togo">Togo</option>
+                        <option value="Tonga">Tonga</option>
+                        <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+                        <option value="Tunisia">Tunisia</option>
+                        <option value="Turkey">Turkey</option>
+                        <option value="Turkmenistan">Turkmenistan</option>
+                        <option value="Tuvalu">Tuvalu</option>
+                        <option value="Uganda">Uganda</option>
+                        <option value="Ukraine">Ukraine</option>
+                        <option value="United Arab Emirates">United Arab Emirates</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="United States">United States</option>
+                        <option value="Uruguay">Uruguay</option>
+                        <option value="Uzbekistan">Uzbekistan</option>
+                        <option value="Vanuatu">Vanuatu</option>
+                        <option value="Vatican City">Vatican City</option>
+                        <option value="Venezuela">Venezuela</option>
+                        <option value="Vietnam">Vietnam</option>
+                        <option value="Yemen">Yemen</option>
+                        <option value="Zambia">Zambia</option>
+                        <option value="Zimbabwe">Zimbabwe</option>
+                      </select>
+                    ) : (
+                      <div className="form-display">
+                        {safeRender(formData.country) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Address/Location</label>
+                <div 
+                  className="form-input-container"
+                  onDoubleClick={() => handleDoubleClick('address')}
+                >
+                  {editingFields.address ? (
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      onBlur={() => handleFieldBlur('address')}
+                      className="form-input"
+                      placeholder="Enter your address or location"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="form-display">
+                                              {safeRender(formData.address) || 'Double-click to edit'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Bio/Description</label>
+                <div 
+                  className="form-input-container"
+                  onDoubleClick={() => handleDoubleClick('bio')}
+                >
+                  {editingFields.bio ? (
+                    <textarea
+                      value={formData.bio}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
+                      onBlur={() => handleFieldBlur('bio')}
+                      rows={4}
+                      className="form-textarea"
+                      placeholder="Tell clients about yourself and your services"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="form-display textarea">
+                                              {safeRender(formData.bio) || 'Double-click to edit'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Business Logo & Social Links */}
+          {activeTab === 'logo-socials' && (
+            <div className="tab-section">
+              {/* Section Header with Save Button */}
+              <div className="section-header">
+                <h3 className="section-title">Brand Identity</h3>
+                {unsavedChanges.logoSocials && (
+                  <button
+                    onClick={() => handleSaveSection('logoSocials')}
+                    disabled={updateProfileMutation.isLoading}
+                    className="save-button"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </button>
+                )}
+              </div>
+
+              <div className="form-grid">
+                {/* Profile Picture Upload */}
+                <div className="upload-section">
+                  <h4 className="upload-title">Profile Picture</h4>
+                  <div className="upload-container">
+                    <div className="upload-image-container">
+                      <img
+                        src={formData.profilePicture || user?.avatar || '/default-avatar.png'}
+                        alt="Profile"
+                        className="upload-image"
+                      />
+                      <label className="upload-button avatar">
+                        <Camera className="w-4 h-4 text-white" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload('avatar', e.target.files?.[0])}
+                          className="upload-input"
+                        />
+                      </label>
+                    </div>
+                    <div className="upload-info">
+                      <p className="upload-description">Upload a professional photo</p>
+                      <p className="upload-hint">Recommended: 400x400px</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Business Logo Upload */}
+                <div className="upload-section">
+                  <h4 className="upload-title">Business Logo</h4>
+                  <div className="upload-container">
+                    <div className="upload-image-container">
+                      <img
+                        src={formData.businessLogo || '/default-logo.png'}
+                        alt="Logo"
+                        className="upload-logo"
+                      />
+                      <label className="upload-button logo">
+                        <Building className="w-4 h-4 text-white" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload('logo', e.target.files?.[0])}
+                          className="upload-input"
+                        />
+                      </label>
+                    </div>
+                    <div className="upload-info">
+                      <p className="upload-description">Upload your business logo</p>
+                      <p className="upload-hint">Recommended: 200x200px</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="upload-section">
+                <h4 className="upload-title">Social Media Links</h4>
+                <div className="social-grid">
+                  <div className="form-field">
+                    <label className="form-label">
+                      LinkedIn
+                      <span className="text-red-400 ml-1">*</span>
+                    </label>
+                    <div 
+                      className="form-input-container"
+                      onDoubleClick={() => handleDoubleClick('linkedin')}
+                    >
+                      {editingFields.linkedin ? (
+                        <input
+                          type="url"
+                          value={formData.socialLinks?.linkedin || ''}
+                          onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)}
+                          onBlur={() => handleFieldBlur('linkedin')}
+                          className={`form-input ${formData.socialLinks?.linkedin && !formData.socialLinks.linkedin.startsWith('https://') ? 'border-red-400' : ''}`}
+                          placeholder="https://linkedin.com/in/..."
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="form-display">
+                          {safeRender(formData.socialLinks?.linkedin) || 'Double-click to edit'}
+                        </div>
+                      )}
+                    </div>
+                    {formData.socialLinks?.linkedin && !formData.socialLinks.linkedin.startsWith('https://') && (
+                      <p className="text-red-400 text-xs mt-1">URL must start with https://</p>
+                    )}
+                  </div>
+
+                  <div className="form-field">
+                    <label className="form-label">Twitter/X</label>
+                    <div 
+                      className="form-input-container"
+                      onDoubleClick={() => handleDoubleClick('twitter')}
+                    >
+                      {editingFields.twitter ? (
+                        <input
+                          type="url"
+                          value={formData.socialLinks?.twitter || ''}
+                          onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
+                          onBlur={() => handleFieldBlur('twitter')}
+                          className="form-input"
+                          placeholder="https://twitter.com/..."
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="form-display">
+                          {safeRender(formData.socialLinks?.twitter) || 'Double-click to edit'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label className="form-label">Instagram</label>
+                    <div 
+                      className="form-input-container"
+                      onDoubleClick={() => handleDoubleClick('instagram')}
+                    >
+                      {editingFields.instagram ? (
+                        <input
+                          type="url"
+                          value={formData.socialLinks?.instagram || ''}
+                          onChange={(e) => handleSocialLinkChange('instagram', e.target.value)}
+                          onBlur={() => handleFieldBlur('instagram')}
+                          className="form-input"
+                          placeholder="https://instagram.com/..."
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="form-display">
+                          {safeRender(formData.socialLinks?.instagram) || 'Double-click to edit'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label className="form-label">Facebook</label>
+                    <div 
+                      className="form-input-container"
+                      onDoubleClick={() => handleDoubleClick('facebook')}
+                    >
+                      {editingFields.facebook ? (
+                        <input
+                          type="url"
+                          value={formData.socialLinks?.facebook || ''}
+                          onChange={(e) => handleSocialLinkChange('facebook', e.target.value)}
+                          onBlur={() => handleFieldBlur('facebook')}
+                          className="form-input"
+                          placeholder="https://facebook.com/..."
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="form-display">
+                          {safeRender(formData.socialLinks?.facebook) || 'Double-click to edit'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label className="form-label">Website URL</label>
+                    <div 
+                      className="form-input-container"
+                      onDoubleClick={() => handleDoubleClick('website')}
+                    >
+                      {editingFields.website ? (
+                        <input
+                          type="url"
+                          value={formData.website || ''}
+                          onChange={(e) => handleInputChange('website', e.target.value)}
+                          onBlur={() => handleFieldBlur('website')}
+                          className="form-input"
+                          placeholder="https://yourwebsite.com"
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="form-display">
+                          {safeRender(formData.website) || 'Double-click to edit'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: Business Preferences */}
+          {activeTab === 'preferences' && (
+            <div className="tab-section">
+              {/* Section Header with Save Button */}
+              <div className="section-header">
+                <h3 className="section-title">Business Settings</h3>
+                {unsavedChanges.preferences && (
+                  <button
+                    onClick={() => handleSaveSection('preferences')}
+                    disabled={updateProfileMutation.isLoading}
+                    className="save-button"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </button>
+                )}
+              </div>
+
+              <div className="form-grid">
+                {/* Currency */}
+                <div className="form-field">
+                  <label className="form-label">Currency</label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('currency')}
+                  >
+                    {editingFields.currency ? (
+                      <select
+                        value={formData.preferences?.currency || ''}
+                        onChange={(e) => handlePreferenceChange('currency', e.target.value)}
+                        onBlur={() => handleFieldBlur('currency')}
+                        className="form-select"
+                        autoFocus
+                      >
+                        <option value="">Select Currency</option>
+                        <option value="USD">USD: US Dollar</option>
+                        <option value="EUR">EUR: Euro</option>
+                        <option value="GBP">GBP: British Pound</option>
+                        <option value="CAD">CAD: Canadian Dollar</option>
+                        <option value="LKR">LKR: Sri Lankan Rupee</option>
+                        <option value="INR">INR: Indian Rupee</option>
+                        <option value="AUD">AUD: Australian Dollar</option>
+                        <option value="JPY">JPY: Japanese Yen</option>
+                      </select>
+                    ) : (
+                      <div className="form-display">
+                        {safeRender(formData.preferences?.currency) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Hourly Rate */}
+                <div className="form-field">
+                  <label className="form-label">
+                    Hourly Rate
+                    <span className="text-red-400 ml-1">*</span>
+                  </label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('serviceRate')}
+                  >
+                    {editingFields.serviceRate ? (
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                          {formData.preferences?.currency === 'USD' ? '$' : 
+                           formData.preferences?.currency === 'EUR' ? '€' : 
+                           formData.preferences?.currency === 'GBP' ? '£' : 
+                           formData.preferences?.currency === 'CAD' ? 'C$' : 
+                           formData.preferences?.currency === 'LKR' ? 'Rs' : 
+                           formData.preferences?.currency === 'INR' ? '₹' : 
+                           formData.preferences?.currency === 'AUD' ? 'A$' : 
+                           formData.preferences?.currency === 'JPY' ? '¥' : '$'}
+                        </span>
+                      <input
+                        type="number"
+                        value={formData.preferences?.serviceRate || ''}
+                        onChange={(e) => handlePreferenceChange('serviceRate', parseFloat(e.target.value))}
+                        onBlur={() => handleFieldBlur('serviceRate')}
+                          className="form-input pl-8"
+                          placeholder="50"
+                          min="0"
+                          step="0.01"
+                        autoFocus
+                      />
+                      </div>
+                    ) : (
+                      <div className="form-display">
+                        {formData.preferences?.currency === 'USD' ? '$' : 
+                         formData.preferences?.currency === 'EUR' ? '€' : 
+                         formData.preferences?.currency === 'GBP' ? '£' : 
+                         formData.preferences?.currency === 'CAD' ? 'C$' : 
+                         formData.preferences?.currency === 'LKR' ? 'Rs' : 
+                         formData.preferences?.currency === 'INR' ? '₹' : 
+                         formData.preferences?.currency === 'AUD' ? 'A$' : 
+                         formData.preferences?.currency === 'JPY' ? '¥' : '$'}{formData.preferences?.serviceRate || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Invoice Prefix */}
+                <div className="form-field">
+                  <label className="form-label">Invoice Prefix</label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('invoicePrefix')}
+                  >
+                    {editingFields.invoicePrefix ? (
+                      <input
+                        type="text"
+                        value={formData.preferences?.invoicePrefix || ''}
+                        onChange={(e) => handlePreferenceChange('invoicePrefix', e.target.value)}
+                        onBlur={() => handleFieldBlur('invoicePrefix')}
+                        className="form-input"
+                        placeholder="INV-"
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="form-display">
+                        {safeRender(formData.preferences?.invoicePrefix) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment Terms */}
+                <div className="form-field">
+                  <label className="form-label">Payment Terms</label>
+                  <div 
+                    className="form-input-container"
+                    onDoubleClick={() => handleDoubleClick('paymentTerms')}
+                  >
+                    {editingFields.paymentTerms ? (
+                      <select
+                        value={formData.preferences?.paymentTerms || ''}
+                        onChange={(e) => handlePreferenceChange('paymentTerms', e.target.value)}
+                        onBlur={() => handleFieldBlur('paymentTerms')}
+                        className="form-select"
+                        autoFocus
+                      >
+                        <option value="">Choose payment terms</option>
+                        <option value="7">Net 7 (7 days)</option>
+                        <option value="15">Net 15</option>
+                        <option value="30">Net 30</option>
+                        <option value="60">Net 60</option>
+                        <option value="0">Due on receipt</option>
+                      </select>
+                    ) : (
+                      <div className="form-display">
+                        {formData.preferences?.paymentTerms === '7' ? 'Net 7 (7 days)' :
+                         formData.preferences?.paymentTerms === '15' ? 'Net 15' :
+                         formData.preferences?.paymentTerms === '30' ? 'Net 30' :
+                         formData.preferences?.paymentTerms === '60' ? 'Net 60' :
+                         formData.preferences?.paymentTerms === '0' ? 'Due on receipt' :
+                         safeRender(formData.preferences?.paymentTerms) || 'Double-click to edit'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Auto Reminders Toggle */}
+              <div className="form-field">
+                <label className="form-label">Auto Reminders</label>
+                <div className="flex items-center space-x-4">
+                <button
+                                      onClick={() => handlePreferenceChange('autoReminders', !formData.preferences?.autoReminders)}
+                                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${
+                      formData.preferences?.autoReminders ? 'bg-[#BC96E6]' : 'bg-white/20'
+                    } hover:scale-105`}
+                >
+                                        <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-200 ${
+                          formData.preferences?.autoReminders ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                </button>
+                  <span className="text-gray-700 text-sm">
+                    {formData.preferences?.autoReminders ? 'ON' : 'OFF'} - For invoice reminders
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: Security */}
+          {activeTab === 'security' && (
+            <div className="tab-section">
+              {/* Section Header */}
+              <div className="section-header">
+                <h3 className="section-title">Account Security</h3>
+                <div className="flex items-center space-x-2 text-gray-600 text-sm">
+                  <Shield className="w-4 h-4" />
+                  <span>Last login: {profile?.user?.formattedLastLogin || formatLastLogin(profile?.user?.lastLogin)}</span>
+                  {profile?.user?.country && (
+                    <span className="text-xs text-gray-500">
+                      ({profile?.user?.country} timezone)
+                    </span>
+                  )}
+                  {console.log('DEBUG Profile: profile?.user?.lastLogin =', profile?.user?.lastLogin, 'profile?.user?.formattedLastLogin =', profile?.user?.formattedLastLogin, 'country =', profile?.user?.country)}
+                </div>
+              </div>
+
+              <div className="form-grid">
+                {/* Password Change Card */}
+                <div className="form-field">
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="p-2 bg-[#BC96E6]/20 rounded-lg">
+                        <Lock className="w-6 h-6 text-[#BC96E6]" />
+                      </div>
+                      <div>
+                                        <h4 className="text-base font-semibold text-gray-800">Password Change</h4>
+                <p className="text-gray-600 text-sm">Update your account password</p>
+                      </div>
+                    </div>
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                      className="px-6 py-3 bg-[#BC96E6] text-white rounded-xl font-medium hover:bg-[#A67CD6] hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+                  >
+                      <Lock className="w-4 h-4" />
+                      <span>Update Password</span>
+                  </button>
+                  </div>
+                </div>
+
+                {/* Account Deletion Card */}
+                <div className="form-field">
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="p-2 bg-red-500/20 rounded-lg">
+                        <Trash2 className="w-6 h-6 text-red-500" />
+                      </div>
+                      <div>
+                        <h4 className="text-base font-semibold text-gray-800">Account Deletion</h4>
+                        <p className="text-gray-600 text-sm">Permanently delete your account</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 mb-4 text-sm">This action cannot be undone. All your data will be permanently deleted.</p>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                      className="px-6 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+                  >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete My Account</span>
+                  </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 5: Client Previews */}
+          {activeTab === 'previews' && (
+            <div className="tab-section">
+              {/* Section Header */}
+              <div className="section-header">
+                <h3 className="section-title">Client Previews</h3>
+                <p className="text-gray-600 text-sm">See how your information appears to clients</p>
+              </div>
+
+              <div className="form-grid">
+                {/* Invoice Header Preview */}
+                <div className="form-field">
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="p-2 bg-[#BC96E6]/20 rounded-lg">
+                        <FileText className="w-6 h-6 text-[#BC96E6]" />
+                      </div>
+                      <div>
+                        <h4 className="text-base font-semibold text-gray-800">Invoice Header Preview</h4>
+                        <p className="text-gray-600 text-sm">How your invoices appear to clients</p>
+                      </div>
+                    </div>
+                    
+                    {/* Invoice Header Mockup */}
+                    <div className="bg-white rounded-xl p-6 shadow-lg">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={formData.businessLogo || '/default-logo.png'}
+                            alt="Business Logo"
+                            className="w-16 h-16 rounded-lg object-cover bg-gray-100"
+                          />
+                          <div>
+                            <h2 className="text-lg font-bold text-gray-900">
+                              {safeRender(formData.businessName) || 'Your Business Name'}
+                            </h2>
+                            <p className="text-gray-600 text-sm">
+                              {safeRender(formData.email) || 'email@example.com'}
+                            </p>
+                            {formData.website && (
+                              <p className="text-gray-600 text-sm">
+                                {safeRender(formData.website)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500">Invoice #</div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {formData.preferences?.invoicePrefix || 'INV'}-2024-001
+                          </div>
+                        </div>
+                      </div>
+                      <div className="border-t border-gray-200 pt-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500">From:</span>
+                            <div className="font-medium text-gray-900">
+                              {safeRender(formData.businessName) || 'Your Business Name'}
+                            </div>
+                            <div className="text-gray-600">
+                              {safeRender(formData.address) || 'Your Address'}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">To:</span>
+                            <div className="font-medium text-gray-900">Client Name</div>
+                            <div className="text-gray-600">Client Address</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Client Portal Preview */}
+                <div className="form-field">
+                  <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="p-2 bg-[#FFD166]/20 rounded-lg">
+                        <Monitor className="w-6 h-6 text-[#FFD166]" />
+                      </div>
+                      <div>
+                        <h4 className="text-base font-semibold text-gray-800">Client Portal Preview</h4>
+                        <p className="text-gray-600 text-sm">How clients see your profile</p>
+                      </div>
+                    </div>
+                    
+                    {/* Mobile Preview */}
+                    <div className="mb-4">
+                      <div className="text-gray-700 text-sm mb-2">Mobile View</div>
+                      <div className="bg-white rounded-xl p-4 shadow-lg max-w-xs mx-auto">
+                        <div className="flex items-center space-x-3 mb-3">
+                      <img
+                        src={formData.profilePicture || user?.avatar || '/default-avatar.png'}
+                        alt="Profile"
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div>
+                            <p className="text-gray-900 font-medium">
+                              {safeRender(formData.fullName) || 'Your Name'}
+                            </p>
+                            <p className="text-gray-600 text-sm">
+                              {safeRender(formData.freelancerType) || 'Freelancer'}
+                            </p>
+                      </div>
+                    </div>
+                        <p className="text-gray-700 text-sm">
+                          {safeRender(formData.bio) || 'No bio added yet'}
+                        </p>
+                  </div>
+                </div>
+
+                    {/* Desktop Preview */}
+                    <div className="mb-4">
+                      <div className="text-gray-700 text-sm mb-2">Desktop View</div>
+                      <div className="bg-white rounded-xl p-6 shadow-lg">
+                        <div className="flex items-start space-x-4">
+                          <img
+                            src={formData.profilePicture || user?.avatar || '/default-avatar.png'}
+                            alt="Profile"
+                            className="w-16 h-16 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-gray-900">
+                              {safeRender(formData.fullName) || 'Your Name'}
+                            </h3>
+                            <p className="text-gray-600 mb-2">
+                              {safeRender(formData.freelancerType) || 'Freelancer'}
+                            </p>
+                            <p className="text-gray-700">
+                              {safeRender(formData.bio) || 'No bio added yet'}
+                            </p>
+                      </div>
+                    </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setShowClientPreviewModal(true)}
+                      className="w-full px-6 py-3 bg-[#FFD166] text-[#210B2C] rounded-xl font-medium hover:bg-[#FFD166]/90 hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <Monitor className="w-4 h-4" />
+                      <span>View as Client</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons - Only show when there are any unsaved changes */}
+        {(unsavedChanges.profile || unsavedChanges.logoSocials || unsavedChanges.preferences || unsavedChanges.security) && (
+          <div className="action-buttons">
+            <div className="action-buttons-container">
+              <button
+                onClick={handleSave}
+                disabled={updateProfileMutation.isLoading}
+                className="save-all-button"
+              >
+                <Save className="w-5 h-5" />
+                {updateProfileMutation.isLoading ? 'Saving...' : 'Save All Changes'}
+              </button>
+              <button
+                onClick={handleCancel}
+                className="cancel-button"
+              >
+                Cancel All Changes
+              </button>
             </div>
           </div>
+        )}
+      </div>
 
-          {/* Contact Information */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Contact Information</h3>
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-[#BC96E6]/20 rounded-lg">
+                  <Lock className="w-6 h-6 text-[#BC96E6]" />
+                </div>
+              <h3 className="modal-title">Change Password</h3>
+              </div>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="modal-close"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
-            <div className="card-content space-y-4">
-              <div className="flex items-center space-x-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    Email
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formData.email}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    Phone
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formData.phone}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <GlobeIcon className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    Website
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formData.website}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    Address
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formData.address}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Quick Actions */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Quick Actions</h3>
+            <div className="modal-content space-y-6">
+              {/* Current Password */}
+              <div className="modal-field">
+                <label className="modal-label">Current Password</label>
+                <div className="modal-input-container">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    className="modal-input"
+                    placeholder="Enter current password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="modal-toggle"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div className="modal-field">
+                <label className="modal-label">New Password</label>
+                <div className="modal-input-container">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    className="modal-input"
+                    placeholder="Enter new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="modal-toggle"
+                  >
+                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {passwordData.newPassword && passwordData.newPassword.length < 8 && (
+                  <p className="text-red-400 text-xs mt-1">Password must be at least 8 characters</p>
+                )}
+              </div>
+
+              {/* Confirm New Password */}
+              <div className="modal-field">
+                <label className="modal-label">Confirm New Password</label>
+                <div className="modal-input-container">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    className="modal-input"
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="modal-toggle"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
+                  <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
+                )}
+              </div>
             </div>
-            <div className="card-content space-y-3">
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                icon={<Shield className="h-4 w-4" />}
-                iconPosition="left"
+
+            <div className="modal-actions">
+              <button
+                onClick={handlePasswordChange}
+                disabled={changePasswordMutation.isLoading || 
+                         passwordData.newPassword.length < 8 || 
+                         passwordData.newPassword !== passwordData.confirmPassword ||
+                         !passwordData.currentPassword}
+                className="modal-primary-button"
               >
-                Change Password
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                icon={<Bell className="h-4 w-4" />}
-                iconPosition="left"
+                {changePasswordMutation.isLoading ? 'Changing...' : 'Change Password'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                  setShowPassword(false);
+                  setShowNewPassword(false);
+                  setShowConfirmPassword(false);
+                }}
+                className="modal-secondary-button"
               >
-                Notification Settings
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                icon={<Palette className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                Appearance
-              </Button>
+                Cancel
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-red-500/20 rounded-lg">
+                  <AlertTriangle className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className="modal-title">Delete Account</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation('');
+                }}
+                className="modal-close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="modal-content space-y-6">
+              <div className="text-center">
+                <div className="p-4 bg-red-500/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Trash2 className="w-8 h-8 text-red-500" />
+                </div>
+                <h4 className="text-base font-semibold text-gray-800 mb-2">Permanently Delete Account</h4>
+                <p className="text-gray-600 text-sm mb-6">
+                  This action cannot be undone. All your data, including projects, clients, invoices, and settings will be permanently deleted.
+                </p>
+              </div>
+
+              <div className="modal-field">
+                <label className="modal-label">
+                  Type "DELETE" to confirm
+                  <span className="text-red-400 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  className="modal-input"
+                  placeholder="Type DELETE to confirm"
+                />
+                {deleteConfirmation && deleteConfirmation !== 'DELETE' && (
+                  <p className="text-red-400 text-xs mt-1">Please type "DELETE" exactly to confirm</p>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation('');
+                }}
+                className="modal-secondary-button"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAccountDeletion}
+                disabled={deleteConfirmation !== 'DELETE'}
+                className="modal-danger-button"
+              >
+                Delete My Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Client Preview Simulation Modal */}
+      {showClientPreviewModal && (
+        <div className="modal-overlay">
+          <div className="modal-container max-w-4xl">
+            <div className="modal-header">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-[#FFD166]/20 rounded-lg">
+                  <Monitor className="w-6 h-6 text-[#FFD166]" />
+                </div>
+                <h3 className="modal-title">Client View Simulation</h3>
+              </div>
+              <button
+                onClick={() => setShowClientPreviewModal(false)}
+                className="modal-close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="modal-content">
+              {/* Client Portal Header */}
+              <div className="bg-gradient-to-r from-[#210B2C] to-[#210B2C]/90 rounded-xl p-6 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={formData.businessLogo || '/default-logo.png'}
+                      alt="Business Logo"
+                      className="w-12 h-12 rounded-lg object-cover bg-white/10"
+                    />
+                    <div>
+                      <h2 className="text-xl font-bold text-white">
+                        {safeRender(formData.businessName) || 'Your Business Name'}
+                      </h2>
+                      <p className="text-white/60 text-sm">
+                        Client Portal
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right text-white/60 text-sm">
+                    <div>Welcome, Client</div>
+                    <div>Dashboard</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Client Profile View */}
+              <div className="bg-white rounded-xl p-8 shadow-lg">
+                <div className="flex items-start space-x-6">
+                  {/* Profile Image */}
+                  <div className="flex-shrink-0">
+                    <img
+                      src={formData.profilePicture || user?.avatar || '/default-avatar.png'}
+                      alt="Profile"
+                      className="w-24 h-24 rounded-full object-cover shadow-lg"
+                    />
+                  </div>
+
+                  {/* Profile Information */}
+                  <div className="flex-1">
+                    <h1 className="text-lg font-bold text-gray-900 mb-2">
+                      {safeRender(formData.fullName) || 'Your Name'}
+                    </h1>
+                    <p className="text-sm text-[#BC96E6] font-medium mb-4">
+                      {safeRender(formData.freelancerType) || 'Freelancer'}
+                    </p>
+                    
+                    {formData.bio && (
+                      <p className="text-gray-700 text-sm mb-6 leading-relaxed">
+                        {safeRender(formData.bio)}
+                      </p>
+                    )}
+
+                    {/* Contact Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {formData.email && (
+                        <div className="flex items-center space-x-3">
+                          <Mail className="w-5 h-5 text-gray-500" />
+                          <span className="text-gray-700">{safeRender(formData.email)}</span>
+                        </div>
+                      )}
+                      {formData.phone && (
+                        <div className="flex items-center space-x-3">
+                          <Phone className="w-5 h-5 text-gray-500" />
+                          <span className="text-gray-700">{safeRender(formData.phone)}</span>
+                        </div>
+                      )}
+                      {formData.website && (
+                        <div className="flex items-center space-x-3">
+                          <Globe className="w-5 h-5 text-gray-500" />
+                          <span className="text-gray-700">{safeRender(formData.website)}</span>
+                        </div>
+                      )}
+                      {formData.address && (
+                        <div className="flex items-center space-x-3">
+                          <Building className="w-5 h-5 text-gray-500" />
+                          <span className="text-gray-700">{safeRender(formData.address)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Social Links */}
+                    {formData.socialLinks && Object.values(formData.socialLinks).some(link => link) && (
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3">Connect</h3>
+                        <div className="flex space-x-4">
+                          {formData.socialLinks.linkedin && (
+                            <a href={formData.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                              LinkedIn
+                            </a>
+                          )}
+                          {formData.socialLinks.twitter && (
+                            <a href={formData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                              Twitter
+                            </a>
+                          )}
+                          {formData.socialLinks.instagram && (
+                            <a href={formData.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                              Instagram
+                            </a>
+                          )}
+                          {formData.socialLinks.facebook && (
+                            <a href={formData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                              Facebook
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Client Actions */}
+              <div className="mt-6 flex justify-center space-x-4">
+                <button className="px-6 py-3 bg-[#BC96E6] text-white rounded-xl font-medium hover:bg-[#A67CD6] transition-colors">
+                  Book Consultation
+                </button>
+                <button className="px-6 py-3 bg-[#FFD166] text-[#210B2C] rounded-xl font-medium hover:bg-[#FFD166]/90 transition-colors">
+                  View Portfolio
+                </button>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                onClick={() => setShowClientPreviewModal(false)}
+                className="modal-secondary-button"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -28,9 +28,12 @@ import Invoices from '../pages/Invoices';
 import InvoiceDetail from '../pages/InvoiceDetail';
 import Payments from '../pages/Payments';
 import TimeTracking from '../pages/TimeTracking';
+import Analytics from '../pages/Analytics';
+import AutoMessages from '../pages/AutoMessages';
 import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
 import NotFound from '../pages/NotFound';
+import Onboarding from '../pages/Onboarding';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -97,19 +100,15 @@ const AppRoutes = () => {
         path="/forgot-password"
         element={
           <PublicRoute>
-            <AuthLayout>
-              <ForgotPassword />
-            </AuthLayout>
+            <ForgotPassword />
           </PublicRoute>
         }
       />
       <Route
-        path="/reset-password"
+        path="/reset-password/:token"
         element={
           <PublicRoute>
-            <AuthLayout>
-              <ResetPassword />
-            </AuthLayout>
+            <ResetPassword />
           </PublicRoute>
         }
       />
@@ -236,6 +235,26 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <SidebarLayout>
+              <Analytics />
+            </SidebarLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <SidebarLayout>
+              <AutoMessages />
+            </SidebarLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -252,6 +271,14 @@ const AppRoutes = () => {
             <SidebarLayout>
               <Settings />
             </SidebarLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <Onboarding />
           </ProtectedRoute>
         }
       />
