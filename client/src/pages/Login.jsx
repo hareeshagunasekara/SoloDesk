@@ -20,7 +20,7 @@ import logo from '../assets/logo.png';
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -33,6 +33,29 @@ const Login = () => {
 
   const email = watch('email');
   const password = watch('password');
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
+  // Don't render the form if already authenticated or still loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
 
   const features = [
     {
@@ -55,23 +78,48 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
+    console.log('=== Login Flow Debug ===');
+    console.log('1. Form submitted with email:', data.email);
+    
     try {
+      console.log('2. Calling login function from AuthContext...');
       const result = await login(data);
+      console.log('3. Login result:', result);
+      
       if (result.success) {
-        navigate('/dashboard');
+        console.log('4. Login successful, user data:', result.user);
+        
+        // Check token storage
+        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        console.log('5. Token stored in localStorage:', !!storedToken);
+        console.log('6. User stored in localStorage:', !!storedUser);
+        console.log('7. Token preview:', storedToken ? storedToken.substring(0, 50) + '...' : 'none');
+        
+        // Handle navigation based on onboarding status
+        if (!result.user.onboarding?.isCompleted) {
+          console.log('8. Redirecting to onboarding...');
+          navigate('/onboarding');
+        } else {
+          console.log('8. Redirecting to dashboard...');
+          navigate('/dashboard');
+        }
       } else {
+        console.log('4. Login failed:', result.error);
         setError('root', {
           type: 'manual',
           message: result.error,
         });
       }
     } catch (error) {
+      console.error('3. Login error:', error);
       setError('root', {
         type: 'manual',
         message: 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setIsSubmitting(false);
+      console.log('=== Login Flow Complete ===');
     }
   };
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -42,6 +42,20 @@ import '../styles/Home.css';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Handle hash navigation when page loads
+    if (location.hash === '#features') {
+      const featuresSection = document.getElementById('features');
+      if (featuresSection) {
+        // Small delay to ensure the page is fully loaded
+        setTimeout(() => {
+          featuresSection.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location.hash]);
 
   const handleAnimationComplete = () => {
     console.log('Hero animation completed!');
@@ -464,7 +478,7 @@ const Home = () => {
       </section>
 
       {/* What We Do Section */}
-      <section className="section-container what-we-do-section">
+      <section id="features" className="section-container what-we-do-section">
         {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div

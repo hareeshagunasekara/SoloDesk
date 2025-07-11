@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 const generateToken = require('../utils/generateToken')
 const logger = require('../utils/logger')
+const { sendResetEmail, generateResetToken } = require('../services/emailService')
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -29,8 +30,7 @@ const register = async (req, res) => {
     const token = generateToken(user._id)
 
     // Update last login
-    user.lastLogin = new Date()
-    await user.save()
+    await user.updateLastLogin()
 
     logger.info(`New user registered: ${email}`)
 
@@ -42,7 +42,13 @@ const register = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
-        fullName: user.fullName
+        fullName: user.fullName,
+        onboarding: user.onboarding,
+        businessName: user.businessName,
+        country: user.country,
+        logo: user.logo,
+        preferredCurrency: user.preferredCurrency,
+        defaultServiceRate: user.defaultServiceRate
       },
       token
     })
@@ -80,8 +86,12 @@ const login = async (req, res) => {
     const token = generateToken(user._id)
 
     // Update last login
-    user.lastLogin = new Date()
-    await user.save()
+    console.log('=== Login Debug ===');
+    console.log('1. Before updateLastLogin - lastLogin:', user.lastLogin);
+    console.log('2. Calling updateLastLogin...');
+    await user.updateLastLogin()
+    console.log('3. After updateLastLogin - lastLogin:', user.lastLogin);
+    console.log('4. User saved successfully');
 
     logger.info(`User logged in: ${email}`)
 
@@ -93,7 +103,13 @@ const login = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
-        fullName: user.fullName
+        fullName: user.fullName,
+        onboarding: user.onboarding,
+        businessName: user.businessName,
+        country: user.country,
+        logo: user.logo,
+        preferredCurrency: user.preferredCurrency,
+        defaultServiceRate: user.defaultServiceRate
       },
       token
     })
@@ -124,7 +140,17 @@ const getCurrentUser = async (req, res) => {
         fullName: user.fullName,
         isEmailVerified: user.isEmailVerified,
         lastLogin: user.lastLogin,
-        createdAt: user.createdAt
+        formattedLastLogin: user.formattedLastLogin,
+        createdAt: user.createdAt,
+        onboarding: user.onboarding,
+        businessName: user.businessName,
+        website: user.website,
+        bio: user.bio,
+        socialLinks: user.socialLinks,
+        country: user.country,
+        logo: user.logo,
+        preferredCurrency: user.preferredCurrency,
+        defaultServiceRate: user.defaultServiceRate
       }
     })
   } catch (error) {
@@ -138,7 +164,19 @@ const getCurrentUser = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, phone, address } = req.body
+    const { 
+      firstName, 
+      lastName, 
+      phone, 
+      address, 
+      businessName, 
+      website, 
+      bio, 
+      socialLinks,
+      country,
+      preferredCurrency,
+      defaultServiceRate
+    } = req.body
 
     const user = await User.findById(req.user._id)
     if (!user) {
@@ -150,6 +188,13 @@ const updateProfile = async (req, res) => {
     if (lastName) user.lastName = lastName
     if (phone) user.phone = phone
     if (address) user.address = address
+    if (businessName) user.businessName = businessName
+    if (website) user.website = website
+    if (bio) user.bio = bio
+    if (socialLinks) user.socialLinks = socialLinks
+    if (country) user.country = country
+    if (preferredCurrency) user.preferredCurrency = preferredCurrency
+    if (defaultServiceRate !== undefined) user.defaultServiceRate = defaultServiceRate
 
     await user.save()
 
@@ -166,7 +211,15 @@ const updateProfile = async (req, res) => {
         phone: user.phone,
         address: user.address,
         avatar: user.avatar,
-        fullName: user.fullName
+        fullName: user.fullName,
+        businessName: user.businessName,
+        website: user.website,
+        bio: user.bio,
+        socialLinks: user.socialLinks,
+        country: user.country,
+        logo: user.logo,
+        preferredCurrency: user.preferredCurrency,
+        defaultServiceRate: user.defaultServiceRate
       }
     })
   } catch (error) {
@@ -206,6 +259,94 @@ const changePassword = async (req, res) => {
   }
 }
 
+// @desc    Forgot password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+
+    // Find user by email
+    const user = await User.findOne({ email })
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      return res.json({ 
+        success: true, 
+        message: 'If an account with that email exists, a password reset link has been sent.' 
+      })
+    }
+
+    // Generate reset token
+    const resetToken = generateResetToken()
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+    // Save reset token to user
+    user.passwordResetToken = resetToken
+    user.passwordResetExpires = resetTokenExpiry
+    await user.save()
+
+    // Send reset email
+    try {
+      await sendResetEmail(email, resetToken, user.firstName)
+      logger.info(`Password reset email sent to: ${email}`)
+    } catch (emailError) {
+      logger.error('Failed to send reset email:', emailError)
+      // Clear the reset token if email fails
+      user.passwordResetToken = undefined
+      user.passwordResetExpires = undefined
+      await user.save()
+      
+      return res.status(500).json({ 
+        message: 'Failed to send reset email. Please try again later.' 
+      })
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'If an account with that email exists, a password reset link has been sent.' 
+    })
+  } catch (error) {
+    logger.error('Forgot password error:', error)
+    res.status(500).json({ message: 'Server error during password reset request' })
+  }
+}
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body
+
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Token and password are required' })
+    }
+
+    // Find user by reset token and check if it's not expired
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: Date.now() }
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' })
+    }
+
+    // Update password
+    user.password = password
+    user.passwordResetToken = undefined
+    user.passwordResetExpires = undefined
+    await user.save()
+
+    logger.info(`Password reset successful for user: ${user.email}`)
+
+    res.json({ success: true, message: 'Password has been reset successfully' })
+  } catch (error) {
+    logger.error('Reset password error:', error)
+    res.status(500).json({ message: 'Server error during password reset' })
+  }
+}
+
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
@@ -228,5 +369,7 @@ module.exports = {
   getCurrentUser,
   updateProfile,
   changePassword,
+  forgotPassword,
+  resetPassword,
   logout
 } 

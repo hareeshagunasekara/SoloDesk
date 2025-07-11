@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Facebook,
   Twitter,
@@ -27,6 +27,22 @@ import logo from '../assets/logo.png';
  */
 
 const Footer = ({ className = '' }) => {
+  const location = useLocation();
+
+  const scrollToFeatures = (e) => {
+    e.preventDefault();
+    if (location.pathname !== '/') {
+      // If not on home page, navigate to home first
+      window.location.href = '/#features';
+    } else {
+      // If already on home page, scroll to features section
+      const featuresSection = document.getElementById('features');
+      if (featuresSection) {
+        featuresSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   const socialLinks = [
     { icon: <Facebook className="h-5 w-5" />, href: '#', label: 'Facebook' },
     { icon: <Twitter className="h-5 w-5" />, href: '#', label: 'Twitter' },
@@ -70,7 +86,7 @@ const Footer = ({ className = '' }) => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-3">
-              <li><Link to="/features" className="text-white/80 hover:text-accent transition-colors">Features</Link></li>
+              <li><button onClick={scrollToFeatures} className="text-white/80 hover:text-accent transition-colors text-left">Features</button></li>
               <li><Link to="/pricing" className="text-white/80 hover:text-accent transition-colors">Pricing</Link></li>
               <li><Link to="/about" className="text-white/80 hover:text-accent transition-colors">About</Link></li>
               <li><Link to="/contact" className="text-white/80 hover:text-accent transition-colors">Contact</Link></li>
