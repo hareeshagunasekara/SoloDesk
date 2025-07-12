@@ -162,7 +162,7 @@ const ResetPassword = () => {
                 >
                   Request new reset link
                 </Link>
-                
+
                 <div className="text-white/60">or</div>
                 
           <Link
@@ -460,7 +460,7 @@ const ResetPassword = () => {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
-                    >
+            >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
@@ -495,7 +495,7 @@ const ResetPassword = () => {
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
-                    >
+            >
                       {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
@@ -519,7 +519,7 @@ const ResetPassword = () => {
                   >
                     <p className="text-sm text-red-400">{errors.root.message}</p>
                   </motion.div>
-                )}
+        )}
 
                 {/* Submit Button */}
                 <motion.button

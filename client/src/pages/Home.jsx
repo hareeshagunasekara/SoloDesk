@@ -37,6 +37,8 @@ import PublicLayout from '../layouts/PublicLayout';
 import BlurText from '../components/BlurText';
 import ScrollFloat from '../components/ScrollFloat';
 import Waves from '../components/Waves';
+import Carousel from '../components/Carousel';
+import meshBackground from '../assets/mesh-340.png';
 
 import '../styles/Home.css';
 
@@ -63,86 +65,49 @@ const Home = () => {
   const features = [
     {
       icon: <Calendar className="h-8 w-8" />,
-      title: 'Integrated Smart Scheduling',
-      description: 'Book smarter, not harder. Clients can view your availability and self-book meetings or sessions, with built-in buffers, auto-reminders, and timezone detection.',
-      color: 'from-purple-500/20 to-purple-600/20',
-      borderColor: 'border-purple-500/30',
+      title: 'Smart Scheduling',
+      description: 'Let bookings run themselves — with availability, timezones, buffers, and reminders baked in.',
+      color: 'from-gray-600/20 to-gray-700/20',
+      borderColor: 'border-gray-600/30',
     },
     {
       icon: <BarChart3 className="h-8 w-8" />,
-      title: 'Business Insights & Analytics',
-      description: 'Know what\'s working. Get simple, visual analytics on your earnings, busiest months, top clients, and most popular services — all in one place.',
-      color: 'from-blue-500/20 to-blue-600/20',
-      borderColor: 'border-blue-500/30',
+      title: 'Visual Insights',
+      description: 'See your growth at a glance — earnings, peak months, top clients, popular services.',
+      color: 'from-gray-500/20 to-gray-600/20',
+      borderColor: 'border-gray-500/30',
     },
     {
       icon: <Brain className="h-8 w-8" />,
-      title: 'AI-Powered Notes & Summaries',
-      description: 'Summarize like a pro. Record and auto-summarize meeting notes, client chats, or project briefs using built-in AI — searchable and organized.',
-      color: 'from-green-500/20 to-green-600/20',
-      borderColor: 'border-green-500/30',
+      title: 'AI Summaries',
+      description: 'Auto-capture and summarize chats, meetings, and notes — all searchable, all sorted.',
+      color: 'from-gray-400/20 to-gray-500/20',
+      borderColor: 'border-gray-400/30',
     },
     {
       icon: <Workflow className="h-8 w-8" />,
-      title: 'Client Workflow Templates',
-      description: 'Repeat without reinventing. Create and reuse customized project workflows for recurring services or client types, with automated task generation.',
-      color: 'from-orange-500/20 to-orange-600/20',
-      borderColor: 'border-orange-500/30',
+      title: 'Workflow Templates',
+      description: 'Skip the setup. Reuse custom workflows for services you offer often.',
+      color: 'from-gray-700/20 to-gray-800/20',
+      borderColor: 'border-gray-700/30',
     },
     {
       icon: <Bell className="h-8 w-8" />,
-      title: 'Unified Notifications Hub',
-      description: 'Stay in the loop. One notification panel for emails, invoices, file uploads, client messages, deadlines — all streamlined, not scattered.',
-      color: 'from-red-500/20 to-red-600/20',
-      borderColor: 'border-red-500/30',
+      title: 'Unified Notifications',
+      description: 'One panel. All alerts. Nothing missed — from invoices to messages.',
+      color: 'from-gray-300/20 to-gray-400/20',
+      borderColor: 'border-gray-300/30',
     },
     {
       icon: <Clock className="h-8 w-8" />,
-      title: 'Time Tracking',
-      description: 'Track time effortlessly with smart timers, project categorization, and detailed reports to optimize your productivity and billing.',
-      color: 'from-indigo-500/20 to-indigo-600/20',
-      borderColor: 'border-indigo-500/30',
+      title: 'Effortless Time Tracking',
+      description: 'Run timers, tag tasks, get reports — bill smarter and work cleaner.',
+      color: 'from-gray-800/20 to-gray-900/20',
+      borderColor: 'border-gray-800/30',
     },
   ];
 
-  const steps = [
-    {
-      icon: <Settings className="h-8 w-8" />,
-      title: 'Set Up Your Workspace',
-      quote: 'Brand it. Own it. Run it your style.',
-      step: '01',
-    },
-    {
-      icon: <Users className="h-8 w-8" />,
-      title: 'Add or Invite Clients',
-      quote: 'Keep client info close, and chaos far.',
-      step: '02',
-    },
-    {
-      icon: <FolderOpen className="h-8 w-8" />,
-      title: 'Create Projects & Tasks',
-      quote: 'From idea to delivery — track every step.',
-      step: '03',
-    },
-    {
-      icon: <Send className="h-8 w-8" />,
-      title: 'Share & Collaborate',
-      quote: 'Your project hub. Their peace of mind.',
-      step: '04',
-    },
-    {
-      icon: <CreditCard className="h-8 w-8" />,
-      title: 'Send Invoices & Get Paid',
-      quote: 'Look professional. Get paid faster.',
-      step: '05',
-    },
-    {
-      icon: <BarChart3 className="h-8 w-8" />,
-      title: 'Stay in Control',
-      quote: 'Work smarter with SoloDesk by your side.',
-      step: '06',
-    },
-  ];
+
 
   return (
     <PublicLayout>
@@ -163,7 +128,7 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-20 left-20 h-32 w-32 rounded-full bg-[#FFD166]/10 blur-xl"
+            className="absolute top-20 left-20 h-32 w-32 rounded-full bg-gray-400/10 blur-xl"
           />
           <motion.div
             animate={{
@@ -175,15 +140,15 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-40 right-32 h-24 w-24 rounded-full bg-[#BC96E6]/15 blur-lg"
+            className="absolute top-40 right-32 h-24 w-24 rounded-full bg-gray-500/15 blur-lg"
           />
         </div>
 
         <div className="relative w-full h-screen flex items-center">
           {/* Full viewport hero waves */}
           <Waves
-            lineColor="#fff"
-            backgroundColor="rgba(255, 255, 255, 0.2)"
+            lineColor="#f3f4f6"
+            backgroundColor="rgba(243, 244, 246, 0.2)"
             waveSpeedX={0.02}
             waveSpeedY={0.01}
             waveAmpX={40}
@@ -219,67 +184,55 @@ const Home = () => {
                   <div className="hero-badge-icon">
                     <Sparkles className="h-5 w-5" />
                   </div>
-                  <BlurText
-                    text="Revolutionary Workspace Management"
-                    delay={300}
-                    animateBy="words"
-                    direction="top"
-                    className="text-lg font-bold tracking-wide uppercase drop-shadow-lg"
-                    duration={1.2}
-                    stagger={0.1}
-                  />
+                  <motion.span
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, delay: 0.6 }}
+                    className="text-lg font-bold tracking-wide uppercase drop-shadow-lg text-gray-300"
+                  >
+                    Elevate Your Workspace. Empower Your Business.
+                  </motion.span>
                 </motion.div>
                 
-                <div className="mb-6">
-                  <BlurText
-                    text="Transform Your"
-                    delay={600}
-                    animateBy="words"
-                    direction="top"
-                    className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#210B2C] drop-shadow-xl mb-2"
-                    duration={1.5}
-                    stagger={0.15}
-                  />
-                  <BlurText
-                    text="Workspace"
-                    delay={900}
-                    animateBy="letters"
-                    direction="bottom"
-                    className="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-[#FFD166] to-[#BC96E6] bg-clip-text text-transparent drop-shadow-lg mb-2"
-                    duration={1.8}
-                    stagger={0.08}
-                  />
-                  <BlurText
-                    text="Experience"
-                    delay={1200}
-                    animateBy="words"
-                    direction="top"
-                    onAnimationComplete={handleAnimationComplete}
-                    className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#210B2C] drop-shadow-xl"
-                    duration={1.2}
-                    stagger={0.1}
-                  />
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, delay: 0.9 }}
+                  className="mb-6"
+                >
+                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 bg-clip-text text-transparent drop-shadow-xl mb-4">
+                    SoloDesk
+                  </h1>
+                </motion.div>
                 
-                <BlurText
-                  text="Smart, seamless desk and workspace management with a dreamy interface that inspires productivity."
-                  delay={1500}
-                  animateBy="words"
-                  direction="bottom"
-                  className="text-lg md:text-xl text-[#210B2C]/90 font-medium mb-8 drop-shadow max-w-2xl mx-auto"
-                  duration={1.5}
-                  stagger={0.1}
-                />
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, delay: 1.2 }}
+                  className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-300/90 mb-6 drop-shadow"
+                >
+                  Smart. Seamless. Beautifully Yours.
+                </motion.h2>
+                
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, delay: 1.5 }}
+                  className="text-lg md:text-xl text-gray-200/90 font-medium mb-8 drop-shadow max-w-3xl mx-auto leading-relaxed"
+                >
+                  A next-gen CRM and workspace command center — built to organize, streamline, and elevate how you work, all from one intuitive dashboard.
+                </motion.p>
                 
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1, delay: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  transition={{ duration: 1, delay: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                   className="hero-buttons"
                 >
                   <Button size="lg" className="hero-primary-button group" asChild>
-                    <Link to="/register">
-                      Get Started
+                    <Link to="/register" className="flex items-center gap-2">
+                      <span>Get Started</span>
+                      <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </Button>
                 </motion.div>
@@ -299,9 +252,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-20 left-20 h-8 w-8 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-10 sm:top-20 left-10 sm:left-20 h-6 w-6 sm:h-8 sm:w-8 bg-gray-100/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Heart className="h-4 w-4 text-[#FFD166]" />
+            <Heart className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
           </motion.div>
           
           <motion.div
@@ -314,9 +267,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute bottom-20 right-20 h-6 w-6 bg-white/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute bottom-10 sm:bottom-20 right-10 sm:right-20 h-5 w-5 sm:h-6 sm:w-6 bg-gray-100/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Coffee className="h-3 w-3 text-[#BC96E6]" />
+            <Coffee className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-500" />
           </motion.div>
           
           <motion.div
@@ -330,9 +283,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-1/3 right-16 h-7 w-7 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-1/3 right-8 sm:right-16 h-6 w-6 sm:h-7 sm:w-7 bg-gray-100/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <BookOpen className="h-3 w-3 text-[#FFD166]" />
+            <BookOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-400" />
           </motion.div>
           
           <motion.div
@@ -346,9 +299,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-1/4 left-12 h-6 w-6 bg-white/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-1/4 left-8 sm:left-12 h-5 w-5 sm:h-6 sm:w-6 bg-gray-100/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Target className="h-3 w-3 text-[#BC96E6]" />
+            <Target className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-500" />
           </motion.div>
           
           <motion.div
@@ -361,9 +314,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute bottom-1/3 left-20 h-7 w-7 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute bottom-1/3 left-12 sm:left-20 h-6 w-6 sm:h-7 sm:w-7 bg-gray-100/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Award className="h-3 w-3 text-[#FFD166]" />
+            <Award className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-400" />
           </motion.div>
           
           <motion.div
@@ -377,9 +330,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-2/3 right-8 h-6 w-6 bg-white/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-2/3 right-4 sm:right-8 h-5 w-5 sm:h-6 sm:w-6 bg-gray-100/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Lightbulb className="h-3 w-3 text-[#BC96E6]" />
+            <Lightbulb className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-500" />
           </motion.div>
           
           <motion.div
@@ -392,9 +345,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-1/2 left-8 h-8 w-8 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-1/2 left-4 sm:left-8 h-6 w-6 sm:h-8 sm:w-8 bg-gray-100/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Shield className="h-4 w-4 text-[#FFD166]" />
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
           </motion.div>
           
           <motion.div
@@ -408,9 +361,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute bottom-16 left-1/3 h-7 w-7 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute bottom-12 sm:bottom-16 left-1/4 sm:left-1/3 h-6 w-6 sm:h-7 sm:w-7 bg-gray-100/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Rocket className="h-3 w-3 text-[#BC96E6]" />
+            <Rocket className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-500" />
           </motion.div>
           
           <motion.div
@@ -423,9 +376,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-3/4 right-1/4 h-6 w-6 bg-white/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-3/4 right-1/5 sm:right-1/4 h-5 w-5 sm:h-6 sm:w-6 bg-gray-100/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Globe className="h-3 w-3 text-[#FFD166]" />
+            <Globe className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-400" />
           </motion.div>
           
           <motion.div
@@ -439,9 +392,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-1/6 right-1/3 h-7 w-7 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-1/6 right-1/4 sm:right-1/3 h-6 w-6 sm:h-7 sm:w-7 bg-gray-100/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Users className="h-3 w-3 text-[#BC96E6]" />
+            <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-500" />
           </motion.div>
           
           <motion.div
@@ -454,9 +407,9 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute top-1/3 left-1/4 h-6 w-6 bg-white/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute top-1/3 left-1/5 sm:left-1/4 h-5 w-5 sm:h-6 sm:w-6 bg-gray-100/10 backdrop-blur-sm rounded-md flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Star className="h-3 w-3 text-[#FFD166]" />
+            <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-400" />
           </motion.div>
           
           <motion.div
@@ -470,93 +423,28 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute bottom-1/4 right-1/3 h-7 w-7 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20 shadow-sm z-20"
+            className="absolute bottom-1/4 right-1/4 sm:right-1/3 h-6 w-6 sm:h-7 sm:w-7 bg-gray-100/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-gray-200/20 shadow-sm z-20"
           >
-            <Zap className="h-3 w-3 text-[#BC96E6]" />
+            <Zap className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-500" />
           </motion.div>
         </div>
       </section>
 
       {/* What We Do Section */}
       <section id="features" className="section-container what-we-do-section">
+        {/* Mesh Background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
+            style={{ backgroundImage: `url(${meshBackground})` }}
+          />
+        </div>
+        
         {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
             animate={{
-              y: [0, -10, 0],
-              opacity: [0.05, 0.1, 0.05],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-20 right-20 h-20 w-20 rounded-full bg-[#FFD166]/5 blur-lg"
-          />
-        </div>
-
-        <div className="section-content">
-          <div className="section-title">
-            <ScrollFloat
-              animationDuration={1.2}
-              ease="back.inOut(2)"
-              scrollStart="center bottom+=50%"
-              scrollEnd="bottom bottom-=40%"
-              stagger={0.03}
-              containerClassName="mb-4"
-              textClassName="text-4xl lg:text-5xl font-bold text-[#FFD166]"
-            >
-              What We Do
-            </ScrollFloat>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="section-description"
-            >
-              Transform your workspace management with our comprehensive suite of tools
-            </motion.p>
-          </div>
-
-          <div className="what-we-do-grid">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="flex justify-center"
-              >
-                <div className="what-we-do-card group">
-                  <div className="what-we-do-card-content">
-                    <div className="what-we-do-icon">
-                      <div className="text-[#FFD166] group-hover:text-white transition-colors duration-300">
-                        {feature.icon}
-                      </div>
-                    </div>
-                    <h3 className="what-we-do-title">
-                      {feature.title}
-                    </h3>
-                    <p className="what-we-do-description">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How SoloDesk Works Section */}
-      <section className="section-container how-it-works-section">
-        {/* Subtle background elements */}
-        <div className="section-background">
-          <motion.div
-            animate={{
-              y: [0, -8, 0],
+              y: [0, -15, 0],
               opacity: [0.03, 0.08, 0.03],
             }}
             transition={{
@@ -564,90 +452,197 @@ const Home = () => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="bg-floating-element bg-floating-yellow top-1/3 left-10 h-16 w-16"
+            className="absolute top-20 right-20 h-24 w-24 rounded-full bg-gray-400/8 blur-xl"
+          />
+          <motion.div
+            animate={{
+              x: [0, 10, 0],
+              y: [0, -8, 0],
+              opacity: [0.02, 0.06, 0.02],
+            }}
+            transition={{
+              duration: 30,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-20 left-20 h-16 w-16 rounded-full bg-gray-500/6 blur-lg"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.01, 0.04, 0.01],
+            }}
+            transition={{
+              duration: 35,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-32 w-32 rounded-full bg-gray-300/4 blur-2xl"
+          />
+        </div>
+
+                <div className="section-content">
+          <div className="flex flex-col lg:flex-row gap-12 items-start">
+            {/* Left 40% - Title and Description */}
+            <div className="w-full lg:w-2/5 lg:sticky lg:top-24">
+              <div className="section-title-left">
+                <ScrollFloat
+                  animationDuration={1.2}
+                  ease="back.inOut(2)"
+                  scrollStart="center bottom+=50%"
+                  scrollEnd="bottom bottom-=40%"
+                  stagger={0.03}
+                  containerClassName="mb-6"
+                  textClassName="text-4xl lg:text-5xl font-bold text-gray-50 drop-shadow-lg"
+                >
+                  What We Do
+                </ScrollFloat>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  className="section-description-left"
+                >
+                  Your smart command center — built to simplify, sync, and supercharge your solo business.
+                </motion.p>
+              </div>
+            </div>
+
+            {/* Right 60% - Features Grid */}
+            <div className="w-full lg:w-3/5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={feature.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <div className="what-we-do-card-compact group h-full">
+                      <div className="what-we-do-card-content-compact">
+                        <div className="what-we-do-icon-compact">
+                          <div className="text-gray-400 group-hover:text-gray-100 transition-colors duration-300">
+                            {feature.icon}
+                          </div>
+                        </div>
+                        <h3 className="what-we-do-title-compact">
+                          {feature.title}
+                        </h3>
+                        <p className="what-we-do-description-compact">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How SoloDesk Works Section */}
+      <section className="section-container how-it-works-section">
+        {/* Mesh Background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
+            style={{ backgroundImage: `url(${meshBackground})` }}
+          />
+        </div>
+        
+        {/* Subtle background elements */}
+        <div className="section-background">
+          <motion.div
+            animate={{
+              y: [0, -12, 0],
+              opacity: [0.02, 0.07, 0.02],
+            }}
+            transition={{
+              duration: 28,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/3 left-10 h-20 w-20 rounded-full bg-gray-400/6 blur-xl"
+          />
+          <motion.div
+            animate={{
+              x: [0, -8, 0],
+              y: [0, 10, 0],
+              opacity: [0.01, 0.05, 0.01],
+            }}
+            transition={{
+              duration: 32,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-1/3 right-16 h-16 w-16 rounded-full bg-gray-500/5 blur-lg"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.05, 1],
+              opacity: [0.015, 0.045, 0.015],
+            }}
+            transition={{
+              duration: 40,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/4 right-1/4 h-24 w-24 rounded-full bg-gray-300/3 blur-2xl"
           />
         </div>
 
         <div className="section-content">
-          <div className="section-title">
-            <ScrollFloat
-              animationDuration={1.2}
-              ease="back.inOut(2)"
-              scrollStart="center bottom+=50%"
-              scrollEnd="bottom bottom-=40%"
-              stagger={0.03}
-              containerClassName="mb-4"
-              textClassName="text-4xl lg:text-5xl font-bold text-[#FFD166]"
-            >
-              How SoloDesk Works
-            </ScrollFloat>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="section-description"
-            >
-              Get started in three simple steps
-            </motion.p>
-          </div>
+          <div className="flex flex-col lg:flex-row gap-12 items-start min-h-[300px]">
+            {/* Left 50% - Title and Description */}
+            <div className="w-full lg:w-1/2 flex items-start justify-center pt-0">
+              <div className="text-right max-w-md">
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  className="text-4xl lg:text-5xl font-bold text-gray-50 drop-shadow-lg mb-6"
+                >
+                  <div className="text-left">
+                    <div>How SoloDesk</div>
+                    <div>Works</div>
+                  </div>
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  className="text-lg text-gray-300/90 font-medium leading-relaxed text-left"
+                >
+                  Your business, beautifully organized — in just a few steps.
+                </motion.p>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {steps.map((step, index) => (
+            {/* Right 50% - Carousel */}
+            <div className="w-full lg:w-1/2 flex items-start justify-center pt-0">
               <motion.div
-                key={step.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
                 viewport={{ once: true }}
-                className="group relative"
+                className="w-full flex justify-center"
+                style={{ height: '350px', position: 'relative' }}
               >
-                {/* Step Card */}
-                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:border-white/30 hover:shadow-2xl group-hover:shadow-[0_0_30px_rgba(255,209,102,0.3),0_0_60px_rgba(188,150,230,0.2)]">
-                  {/* Step Number Badge */}
-                  <div className="absolute -top-3 -left-3 h-8 w-8 rounded-full bg-gradient-to-r from-[#FFD166] to-[#BC96E6] flex items-center justify-center text-white font-bold text-xs shadow-lg">
-                    {step.step}
-                  </div>
-                  
-                  {/* Icon */}
-                  <div className="h-16 w-16 mx-auto flex items-center justify-center mb-4">
-                    <div className="text-[#FFD166] group-hover:text-white transition-colors duration-300">
-                      {step.icon}
-                    </div>
-                  </div>
-                  
-                  {/* Title */}
-                  <h3 className="text-lg font-bold text-card-foreground mb-3 text-center">
-                    {step.title}
-                  </h3>
-                  
-                  {/* Quote */}
-                  <div className="text-sm italic text-[#BC96E6] font-medium text-center leading-relaxed">
-                    "{step.quote}"
-                  </div>
-                </div>
-                
-                {/* Creative Connector */}
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
-                    <div className="flex items-center space-x-1">
-                      <div className="w-6 h-0.5 bg-gradient-to-r from-[#FFD166] to-[#BC96E6] rounded-full"></div>
-                      <div className="w-2 h-2 rounded-full bg-[#FFD166] animate-pulse"></div>
-      </div>
-    </div>
-                )}
-                
-                {/* Mobile Connector (for 2-column layout) */}
-                {index < steps.length - 1 && index % 2 === 0 && (
-                  <div className="hidden md:block lg:hidden absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-3">
-                    <div className="flex flex-col items-center space-y-1">
-                      <div className="w-0.5 h-6 bg-gradient-to-b from-[#FFD166] to-[#BC96E6] rounded-full"></div>
-                      <div className="w-2 h-2 rounded-full bg-[#FFD166] animate-pulse"></div>
-                    </div>
-                  </div>
-                )}
+                <Carousel
+                  baseWidth={500}
+                  autoplay={true}
+                  autoplayDelay={3000}
+                  pauseOnHover={true}
+                  loop={true}
+                  round={false}
+                />
               </motion.div>
-            ))}
+            </div>
           </div>
         </div>
       </section>

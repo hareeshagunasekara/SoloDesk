@@ -34,7 +34,7 @@
 .profile-container {
   min-height: 100vh;
   position: relative;
-  font-family: 'Whyte', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   overflow: hidden;
 }
 
@@ -106,7 +106,7 @@
 
 .debug-summary {
   cursor: pointer;
-  color: var(--accent-purple);
+  color: #6b7280;
 }
 
 .debug-pre {
@@ -175,7 +175,7 @@
 .tab-glow {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--accent-purple-20), var(--accent-yellow-20));
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.2), rgba(75, 85, 99, 0.2));
   border-radius: 1rem;
   filter: blur(4px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -184,7 +184,7 @@
 .tab-bg-glow {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--accent-purple-10), var(--accent-yellow-10));
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(75, 85, 99, 0.1));
   border-radius: 1rem;
 }
 
@@ -212,8 +212,8 @@
 }
 
 .tab-button.active .tab-icon-container {
-  background: linear-gradient(135deg, var(--accent-purple), var(--accent-yellow));
-  box-shadow: 0 10px 15px -3px rgba(212, 198, 228, 0.4);
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  box-shadow: 0 10px 15px -3px rgba(107, 114, 128, 0.3);
   transform: scale(1.1);
   border-color: var(--white-10);
 }
@@ -225,8 +225,8 @@
 }
 
 .tab-button:not(.active):hover .tab-icon-container {
-  background: var(--white-20);
-  border-color: var(--white-30);
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15);
 }
 
@@ -248,8 +248,8 @@
 
 .tab-button.active .tab-icon {
   transform: scale(1.05);
-  color: var(--accent-purple) !important;
-  filter: drop-shadow(0 2px 4px rgba(188, 150, 230, 0.3)) !important;
+  color: #6b7280 !important;
+  filter: drop-shadow(0 2px 4px rgba(107, 114, 128, 0.3)) !important;
   stroke-width: 2px !important;
 }
 
@@ -259,7 +259,7 @@
 }
 
 .tab-button:not(.active):hover .tab-icon {
-  color: var(--accent-purple) !important;
+  color: #6b7280 !important;
   stroke-width: 2px !important;
 }
 
@@ -331,7 +331,7 @@
 
 .save-button {
   padding: 0.375rem 0.75rem;
-  background: var(--accent-purple);
+  background: #6b7280;
   color: var(--white);
   border-radius: 0.5rem;
   font-weight: 500;
@@ -343,7 +343,7 @@
 }
 
 .save-button:hover {
-  background: #A67CD6;
+  background: #4b5563;
   transform: scale(1.05);
 }
 
@@ -413,8 +413,8 @@
 .form-textarea:focus,
 .form-select:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent-purple-20);
-  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+  border-color: #6b7280;
 }
 
 .form-input::placeholder,
@@ -504,19 +504,19 @@
 }
 
 .upload-button.avatar {
-  background: var(--accent-purple);
+  background: #6b7280;
 }
 
 .upload-button.avatar:hover {
-  background: #A67CD6;
+  background: #4b5563;
 }
 
 .upload-button.logo {
-  background: var(--accent-yellow);
+  background: #6b7280;
 }
 
 .upload-button.logo:hover {
-  background: #E6BC5C;
+  background: #4b5563;
 }
 
 .upload-input {
@@ -648,22 +648,22 @@
 
 .save-all-button {
   padding: 0.75rem 1.5rem;
-  background: var(--accent-purple);
+  background: #6b7280;
   color: var(--white);
   border-radius: 9999px;
   font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 10px 15px -3px rgba(188, 150, 230, 0.3);
+  box-shadow: 0 10px 15px -3px rgba(107, 114, 128, 0.3);
   display: flex;
   align-items: center;
   gap: 0.5rem;
   backdrop-filter: blur(4px);
-  border: 1px solid var(--accent-purple);
+  border: 1px solid #6b7280;
   font-size: 0.75rem;
 }
 
 .save-all-button:hover {
-  background: #A67CD6;
+  background: #4b5563;
   transform: scale(1.05);
 }
 
@@ -735,7 +735,7 @@
 }
 
 .modal-close:hover {
-  color: var(--accent-purple);
+  color: #6b7280;
 }
 
 .modal-content {
@@ -775,8 +775,8 @@
 
 .modal-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent-purple-20);
-  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+  border-color: #6b7280;
 }
 
 .modal-input::placeholder {
@@ -793,7 +793,7 @@
 }
 
 .modal-toggle:hover {
-  color: var(--accent-purple);
+  color: #6b7280;
 }
 
 .modal-actions {
@@ -805,18 +805,18 @@
 .modal-primary-button {
   flex: 1;
   padding: 0.625rem 1.25rem;
-  background: var(--accent-purple);
+  background: #6b7280;
   color: var(--white);
   border-radius: 9999px;
   font-weight: 600;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px);
-  border: 1px solid var(--accent-purple);
+  border: 1px solid #6b7280;
   font-size: 0.75rem;
 }
 
 .modal-primary-button:hover {
-  background: #A67CD6;
+  background: #4b5563;
 }
 
 .modal-primary-button:disabled {

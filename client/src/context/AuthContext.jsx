@@ -157,7 +157,21 @@ export const AuthProvider = ({ children }) => {
       console.error('Response data:', error.response?.data);
       console.error('Response status:', error.response?.status);
       
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      let errorMessage = 'Login failed';
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'User not found';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Account not verified. Please check your email.';
+      } else if (error.response?.status === 423) {
+        errorMessage = 'Account suspended. Please contact support.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       console.log('Dispatching AUTH_FAILURE with message:', errorMessage);
       
       dispatch({
@@ -165,7 +179,7 @@ export const AuthProvider = ({ children }) => {
         payload: errorMessage,
       });
       
-      toast.error(errorMessage);
+      // Don't show toast for login errors - let the form handle them
       return { success: false, error: errorMessage };
     }
   };
@@ -186,12 +200,27 @@ export const AuthProvider = ({ children }) => {
       toast.success('Account created successfully! Please log in to continue.');
       return { success: true, user };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      console.error('Registration error:', error);
+      
+      let errorMessage = 'Registration failed';
+      
+      // Handle specific error cases
+      if (error.response?.status === 409) {
+        errorMessage = 'An account with this email already exists';
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || 'Invalid registration data';
+      } else if (error.response?.status === 422) {
+        errorMessage = error.response?.data?.message || 'Validation failed';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       dispatch({
         type: 'AUTH_FAILURE',
         payload: errorMessage,
       });
-      toast.error(errorMessage);
+      
+      // Don't show toast for registration errors - let the form handle them
       return { success: false, error: errorMessage };
     }
   };

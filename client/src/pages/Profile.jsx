@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useAuth } from '../context/AuthContext';
 import { getUserProfile, updateUserProfile, updateUserAvatar, updateUserLogo, changePassword, deleteAccount } from '../services/api';
 import { toast } from 'react-hot-toast';
-import AnimatedBackground from '../components/AnimatedBackground';
 import { isTokenValid, isTokenExpiringSoon } from '../utils/tokenUtils';
 import '../styles/Profile.css';
+import meshBg from '../assets/mesh-bg.png';
 import { 
   User, 
   Mail, 
@@ -128,35 +128,35 @@ const Profile = () => {
       title: 'Profile & Business',
       subtitle: 'Personal & company info',
       icon: User,
-      color: 'from-[#BC96E6] to-[#FFD166]'
+      color: 'from-gray-600 to-gray-700'
     },
     {
       id: 'logo-socials',
       title: 'Logo & Socials',
       subtitle: 'Brand identity & social links',
       icon: Palette,
-      color: 'from-[#FFD166] to-[#BC96E6]'
+      color: 'from-gray-600 to-gray-700'
     },
     {
       id: 'preferences',
       title: 'Business Preferences',
       subtitle: 'Currency, rates & settings',
       icon: Settings,
-      color: 'from-[#FFD166] to-[#BC96E6]'
+      color: 'from-gray-600 to-gray-700'
     },
     {
       id: 'security',
       title: 'Security',
       subtitle: 'Password & account safety',
       icon: Shield,
-      color: 'from-[#FF6B6B] to-[#FFD166]'
+      color: 'from-gray-600 to-gray-700'
     },
     {
       id: 'previews',
       title: 'Client Previews',
       subtitle: 'How clients see your info',
       icon: Monitor,
-      color: 'from-[#BC96E6] to-[#FFD166]'
+      color: 'from-gray-600 to-gray-700'
     }
   ];
 
@@ -914,10 +914,10 @@ const Profile = () => {
   // Show loading state while authentication is being checked
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading your profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 text-lg">Loading your profile...</p>
         </div>
       </div>
     );
@@ -926,13 +926,13 @@ const Profile = () => {
   // Redirect to login if not authenticated
   if (!isAuthenticated || !token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-white mx-auto mb-4" />
-          <p className="text-white text-lg mb-4">You need to be logged in to view your profile.</p>
+          <AlertTriangle className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-700 text-lg mb-4">You need to be logged in to view your profile.</p>
           <button
             onClick={() => window.location.href = '/login'}
-            className="bg-[#FFD166] text-[#210B2C] px-6 py-2 rounded-lg font-semibold hover:bg-[#FFD166]/90 transition-colors"
+            className="bg-gray-800 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
           >
             Go to Login
           </button>
@@ -1013,17 +1013,20 @@ const Profile = () => {
 
   return (
     <div className="profile-container">
-      {/* Animated Background */}
-      <AnimatedBackground />
+      {/* Mesh Background */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-10"
+        style={{ backgroundImage: `url(${meshBg})` }}
+      />
       
       {/* Content Overlay */}
-      <div className="profile-content">
+      <div className="profile-content relative z-10">
         {/* Header */}
         <div className="profile-header">
-          <div>
-            <h1 className="profile-title">Profile Settings</h1>
-            <p className="profile-subtitle">Double-click any field to edit • Save changes per section or all at once</p>
-          </div>
+                      <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
+              <p className="text-gray-700 text-lg leading-relaxed">Tailor your SoloDesk experience • update your details, brand your workspace, and fine-tune preferences for a seamless, professional setup.</p>
+            </div>
         </div>
           
 
@@ -1043,28 +1046,35 @@ const Profile = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`tab-button ${isActive ? 'active' : ''}`}
+                  className={`tab-button transition-all duration-200 ease-in-out ${
+                    isActive 
+                      ? 'bg-gradient-to-r from-gray-600 to-gray-700 shadow-lg scale-105' 
+                      : 'bg-white/80 hover:bg-white hover:shadow-md hover:scale-102 border border-gray-200'
+                  }`}
                 >
                   {/* Glow effect for active tab */}
-                  {isActive && <div className="tab-glow"></div>}
+                  {isActive && <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl opacity-20 blur-sm"></div>}
                   
                   {/* Background glow */}
-                  {isActive && <div className="tab-bg-glow"></div>}
+                  {isActive && <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl opacity-10"></div>}
                   
                   {/* Content */}
-                  <div className="tab-content">
+                  <div className="tab-content relative z-10">
                     <div className="tab-icon-container">
                       {IconComponent && (typeof IconComponent === 'function' || typeof IconComponent === 'object') ? (
-                        React.createElement(IconComponent, { className: "tab-icon", size: 24 })
+                        React.createElement(IconComponent, { 
+                          className: `tab-icon transition-colors duration-200 ${isActive ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`, 
+                          size: 24 
+                        })
                       ) : (
-                        <div className="tab-icon" style={{color: 'red', fontSize: '24px'}}>❌</div>
+                        <div className="tab-icon text-red-500 text-2xl">❌</div>
                       )}
                     </div>
                     <div className="tab-text">
-                      <div className="tab-title">
+                      <div className={`tab-title transition-colors duration-200 ${isActive ? 'text-white' : 'text-gray-800 hover:text-gray-900'}`}>
                         {tab.title || 'Tab'}
                       </div>
-                      <div className="tab-subtitle">
+                      <div className={`tab-subtitle transition-colors duration-200 ${isActive ? 'text-white/80' : 'text-gray-600 hover:text-gray-700'}`}>
                         {tab.subtitle || 'Description'}
                       </div>
                     </div>
@@ -1082,7 +1092,7 @@ const Profile = () => {
             <div className="tab-section">
               {/* Section Header with Save Button */}
               <div className="section-header">
-                <h3 className="section-title">Basic Information</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h3>
                 {unsavedChanges.profile && (
                   <button
                     onClick={() => handleSaveSection('profile')}
@@ -1191,7 +1201,7 @@ const Profile = () => {
                         value={formData.freelancerType}
                         onChange={(e) => handleInputChange('freelancerType', e.target.value)}
                         onBlur={() => handleFieldBlur('freelancerType')}
-                        className="w-full px-3 py-2 bg-white/90 border border-gray-300 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BC96E6] focus:border-transparent transition-all duration-200 text-sm"
+                        className="w-full px-3 py-2 bg-white/90 border border-gray-300 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-200 text-sm"
                         placeholder="Add your role"
                         autoFocus
                       />
@@ -1479,7 +1489,7 @@ const Profile = () => {
             <div className="tab-section">
               {/* Section Header with Save Button */}
               <div className="section-header">
-                <h3 className="section-title">Brand Identity</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Brand Identity</h3>
                 {unsavedChanges.logoSocials && (
                   <button
                     onClick={() => handleSaveSection('logoSocials')}
@@ -1495,7 +1505,7 @@ const Profile = () => {
               <div className="form-grid">
                 {/* Profile Picture Upload */}
                 <div className="upload-section">
-                  <h4 className="upload-title">Profile Picture</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Profile Picture</h4>
                   <div className="upload-container">
                     <div className="upload-image-container">
                       <img
@@ -1503,7 +1513,7 @@ const Profile = () => {
                         alt="Profile"
                         className="upload-image"
                       />
-                      <label className="upload-button avatar">
+                      <label className="upload-button avatar bg-gray-600 hover:bg-gray-700">
                         <Camera className="w-4 h-4 text-white" />
                         <input
                           type="file"
@@ -1522,7 +1532,7 @@ const Profile = () => {
 
                 {/* Business Logo Upload */}
                 <div className="upload-section">
-                  <h4 className="upload-title">Business Logo</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Business Logo</h4>
                   <div className="upload-container">
                     <div className="upload-image-container">
                       <img
@@ -1530,7 +1540,7 @@ const Profile = () => {
                         alt="Logo"
                         className="upload-logo"
                       />
-                      <label className="upload-button logo">
+                      <label className="upload-button logo bg-gray-600 hover:bg-gray-700">
                         <Building className="w-4 h-4 text-white" />
                         <input
                           type="file"
@@ -1550,7 +1560,7 @@ const Profile = () => {
 
               {/* Social Links */}
               <div className="upload-section">
-                <h4 className="upload-title">Social Media Links</h4>
+                <h4 className="text-lg font-semibold text-gray-900 mb-3">Social Media Links</h4>
                 <div className="social-grid">
                   <div className="form-field">
                     <label className="form-label">
@@ -1687,7 +1697,7 @@ const Profile = () => {
             <div className="tab-section">
               {/* Section Header with Save Button */}
               <div className="section-header">
-                <h3 className="section-title">Business Settings</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Business Settings</h3>
                 {unsavedChanges.preferences && (
                   <button
                     onClick={() => handleSaveSection('preferences')}
@@ -1851,7 +1861,7 @@ const Profile = () => {
                 <button
                                       onClick={() => handlePreferenceChange('autoReminders', !formData.preferences?.autoReminders)}
                                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${
-                      formData.preferences?.autoReminders ? 'bg-[#BC96E6]' : 'bg-white/20'
+                      formData.preferences?.autoReminders ? 'bg-gray-600' : 'bg-gray-300'
                     } hover:scale-105`}
                 >
                                         <span
@@ -1873,7 +1883,7 @@ const Profile = () => {
             <div className="tab-section">
               {/* Section Header */}
               <div className="section-header">
-                <h3 className="section-title">Account Security</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Account Security</h3>
                 <div className="flex items-center space-x-2 text-gray-600 text-sm">
                   <Shield className="w-4 h-4" />
                   <span>Last login: {profile?.user?.formattedLastLogin || formatLastLogin(profile?.user?.lastLogin)}</span>
@@ -1889,10 +1899,10 @@ const Profile = () => {
               <div className="form-grid">
                 {/* Password Change Card */}
                 <div className="form-field">
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-[#BC96E6]/20 rounded-lg">
-                        <Lock className="w-6 h-6 text-[#BC96E6]" />
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <Lock className="w-6 h-6 text-gray-600" />
                       </div>
                       <div>
                                         <h4 className="text-base font-semibold text-gray-800">Password Change</h4>
@@ -1901,7 +1911,7 @@ const Profile = () => {
                     </div>
                   <button
                     onClick={() => setShowPasswordModal(true)}
-                      className="px-6 py-3 bg-[#BC96E6] text-white rounded-xl font-medium hover:bg-[#A67CD6] hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+                      className="px-6 py-3 bg-gray-700 text-white rounded-xl font-medium hover:bg-gray-800 hover:scale-105 transition-all duration-200 flex items-center space-x-2"
                   >
                       <Lock className="w-4 h-4" />
                       <span>Update Password</span>
@@ -1911,10 +1921,10 @@ const Profile = () => {
 
                 {/* Account Deletion Card */}
                 <div className="form-field">
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-red-500/20 rounded-lg">
-                        <Trash2 className="w-6 h-6 text-red-500" />
+                      <div className="p-2 bg-red-100 rounded-lg">
+                        <Trash2 className="w-6 h-6 text-red-600" />
                       </div>
                       <div>
                         <h4 className="text-base font-semibold text-gray-800">Account Deletion</h4>
@@ -1924,7 +1934,7 @@ const Profile = () => {
                     <p className="text-gray-600 mb-4 text-sm">This action cannot be undone. All your data will be permanently deleted.</p>
                   <button
                     onClick={() => setShowDeleteModal(true)}
-                      className="px-6 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+                      className="px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 hover:scale-105 transition-all duration-200 flex items-center space-x-2"
                   >
                       <Trash2 className="w-4 h-4" />
                       <span>Delete My Account</span>
@@ -1940,17 +1950,17 @@ const Profile = () => {
             <div className="tab-section">
               {/* Section Header */}
               <div className="section-header">
-                <h3 className="section-title">Client Previews</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Client Previews</h3>
                 <p className="text-gray-600 text-sm">See how your information appears to clients</p>
               </div>
 
               <div className="form-grid">
                 {/* Invoice Header Preview */}
                 <div className="form-field">
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-[#BC96E6]/20 rounded-lg">
-                        <FileText className="w-6 h-6 text-[#BC96E6]" />
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <FileText className="w-6 h-6 text-gray-600" />
                       </div>
                       <div>
                         <h4 className="text-base font-semibold text-gray-800">Invoice Header Preview</h4>
@@ -2012,10 +2022,10 @@ const Profile = () => {
 
                 {/* Client Portal Preview */}
                 <div className="form-field">
-                  <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                  <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-[#FFD166]/20 rounded-lg">
-                        <Monitor className="w-6 h-6 text-[#FFD166]" />
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <Monitor className="w-6 h-6 text-gray-600" />
                       </div>
                       <div>
                         <h4 className="text-base font-semibold text-gray-800">Client Portal Preview</h4>
@@ -2075,7 +2085,7 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowClientPreviewModal(true)}
-                      className="w-full px-6 py-3 bg-[#FFD166] text-[#210B2C] rounded-xl font-medium hover:bg-[#FFD166]/90 hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2"
+                      className="w-full px-6 py-3 bg-gray-700 text-white rounded-xl font-medium hover:bg-gray-800 hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2"
                     >
                       <Monitor className="w-4 h-4" />
                       <span>View as Client</span>
@@ -2116,8 +2126,8 @@ const Profile = () => {
           <div className="modal-container">
             <div className="modal-header">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-[#BC96E6]/20 rounded-lg">
-                  <Lock className="w-6 h-6 text-[#BC96E6]" />
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Lock className="w-6 h-6 text-gray-600" />
                 </div>
               <h3 className="modal-title">Change Password</h3>
               </div>
@@ -2234,8 +2244,8 @@ const Profile = () => {
           <div className="modal-container">
             <div className="modal-header">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <AlertTriangle className="w-6 h-6 text-red-500" />
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <h3 className="modal-title">Delete Account</h3>
               </div>
@@ -2252,8 +2262,8 @@ const Profile = () => {
 
             <div className="modal-content space-y-6">
               <div className="text-center">
-                <div className="p-4 bg-red-500/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Trash2 className="w-8 h-8 text-red-500" />
+                <div className="p-4 bg-red-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Trash2 className="w-8 h-8 text-red-600" />
                 </div>
                 <h4 className="text-base font-semibold text-gray-800 mb-2">Permanently Delete Account</h4>
                 <p className="text-gray-600 text-sm mb-6">
@@ -2307,8 +2317,8 @@ const Profile = () => {
           <div className="modal-container max-w-4xl">
             <div className="modal-header">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-[#FFD166]/20 rounded-lg">
-                  <Monitor className="w-6 h-6 text-[#FFD166]" />
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Monitor className="w-6 h-6 text-gray-600" />
                 </div>
                 <h3 className="modal-title">Client View Simulation</h3>
               </div>
@@ -2322,7 +2332,7 @@ const Profile = () => {
 
             <div className="modal-content">
               {/* Client Portal Header */}
-              <div className="bg-gradient-to-r from-[#210B2C] to-[#210B2C]/90 rounded-xl p-6 mb-6">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <img
@@ -2363,7 +2373,7 @@ const Profile = () => {
                     <h1 className="text-lg font-bold text-gray-900 mb-2">
                       {safeRender(formData.fullName) || 'Your Name'}
                     </h1>
-                    <p className="text-sm text-[#BC96E6] font-medium mb-4">
+                    <p className="text-sm text-gray-600 font-medium mb-4">
                       {safeRender(formData.freelancerType) || 'Freelancer'}
                     </p>
                     
@@ -2407,22 +2417,22 @@ const Profile = () => {
                         <h3 className="text-sm font-semibold text-gray-900 mb-3">Connect</h3>
                         <div className="flex space-x-4">
                           {formData.socialLinks.linkedin && (
-                            <a href={formData.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                            <a href={formData.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-gray-900 transition-colors">
                               LinkedIn
                             </a>
                           )}
                           {formData.socialLinks.twitter && (
-                            <a href={formData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                            <a href={formData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-gray-900 transition-colors">
                               Twitter
                             </a>
                           )}
                           {formData.socialLinks.instagram && (
-                            <a href={formData.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                            <a href={formData.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-gray-900 transition-colors">
                               Instagram
                             </a>
                           )}
                           {formData.socialLinks.facebook && (
-                            <a href={formData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-[#BC96E6] hover:text-[#A67CD6] transition-colors">
+                            <a href={formData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-gray-900 transition-colors">
                               Facebook
                             </a>
                           )}
@@ -2435,10 +2445,10 @@ const Profile = () => {
 
               {/* Client Actions */}
               <div className="mt-6 flex justify-center space-x-4">
-                <button className="px-6 py-3 bg-[#BC96E6] text-white rounded-xl font-medium hover:bg-[#A67CD6] transition-colors">
+                <button className="px-6 py-3 bg-gray-700 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors">
                   Book Consultation
                 </button>
-                <button className="px-6 py-3 bg-[#FFD166] text-[#210B2C] rounded-xl font-medium hover:bg-[#FFD166]/90 transition-colors">
+                <button className="px-6 py-3 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors">
                   View Portfolio
                 </button>
               </div>
