@@ -6,7 +6,7 @@
 }
 
 .hero-background {
-  @apply absolute inset-0 bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] opacity-90;
+  @apply absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-800 to-gray-700 opacity-90;
 }
 
 .hero-image {
@@ -22,15 +22,15 @@
 }
 
 .hero-glass-card {
-  @apply backdrop-blur-xl bg-white/10 border border-white/15 rounded-2xl shadow-lg p-8 md:p-10 lg:p-12 text-center relative overflow-hidden;
+  @apply backdrop-blur-xl bg-gray-50/10 border border-gray-200/15 rounded-2xl shadow-lg p-8 md:p-10 lg:p-12 text-center relative overflow-hidden;
 }
 
 .hero-glass-overlay {
-  @apply absolute inset-0 bg-gradient-to-br from-white/5 via-white/10 to-white/5 rounded-3xl;
+  @apply absolute inset-0 bg-gradient-to-br from-gray-50/5 via-gray-100/10 to-gray-50/5 rounded-3xl;
 }
 
 .hero-inner-glow {
-  @apply absolute inset-0 bg-gradient-to-br from-[#FFD166]/5 via-transparent to-[#BC96E6]/5 rounded-3xl;
+  @apply absolute inset-0 bg-gradient-to-br from-gray-300/5 via-transparent to-gray-400/5 rounded-3xl;
 }
 
 .hero-content-inner {
@@ -38,11 +38,11 @@
 }
 
 .hero-badge {
-  @apply flex items-center justify-center space-x-3 text-[#FFD166] mb-8;
+  @apply flex items-center justify-center space-x-3 text-gray-300 mb-8;
 }
 
 .hero-badge-icon {
-  @apply h-8 w-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/25 shadow-sm;
+  @apply h-8 w-8 rounded-full bg-gray-100/20 backdrop-blur-sm flex items-center justify-center border border-gray-200/25 shadow-sm;
 }
 
 .hero-buttons {
@@ -50,12 +50,12 @@
 }
 
 .hero-primary-button {
-  @apply bg-[#FFD166] text-[#210B2C] font-semibold shadow-md hover:bg-[#FFD166]/90 hover:shadow-lg transition-all duration-300 w-full sm:w-auto text-base px-6 py-3 rounded-xl;
+  @apply bg-gray-600 text-gray-50 font-semibold shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300 w-full sm:w-auto text-base px-6 py-3 rounded-xl;
 }
 
 /* Floating UI Elements */
 .floating-element {
-  @apply absolute bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/25 shadow-lg z-20;
+  @apply absolute bg-gray-100/15 backdrop-blur-sm flex items-center justify-center border border-gray-200/25 shadow-lg z-20;
 }
 
 .floating-heart {
@@ -116,7 +116,7 @@
 }
 
 .section-description {
-  @apply text-xl text-muted-foreground max-w-2xl mx-auto;
+  @apply text-xl text-gray-300 max-w-2xl mx-auto;
 }
 
 .section-grid {
@@ -125,46 +125,90 @@
 
 /* What We Do Section */
 .what-we-do-section {
-  @apply bg-gradient-to-br from-[#210B2C]/5 via-[#BC96E6]/10 to-[#FFD166]/5;
+  @apply bg-gradient-to-br from-gray-950/10 via-gray-900/15 to-gray-800/10;
 }
 
 .what-we-do-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto;
 }
 
 .what-we-do-card {
-  @apply relative overflow-hidden rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 shadow-md transition-all duration-300 transform hover:scale-105 hover:translate-y-[-2px] cursor-pointer;
+  @apply relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-100/5 via-gray-200/20 to-gray-100/5 backdrop-blur-sm border border-gray-300/20 shadow-lg transition-all duration-500 transform hover:scale-105 hover:translate-y-[-4px] cursor-pointer;
 }
 
 .what-we-do-card:hover {
-  @apply bg-white/20 border-white/30 shadow-2xl;
-  box-shadow: 0 0 30px rgba(255, 209, 102, 0.3), 0 0 60px rgba(188, 150, 230, 0.2);
+  @apply bg-gradient-to-br from-gray-100/15 via-gray-200/25 to-gray-100/15 border-gray-400/30 shadow-2xl;
+  box-shadow: 0 0 40px rgba(156, 163, 175, 0.15), 0 0 80px rgba(107, 114, 128, 0.08);
 }
 
 .what-we-do-card-content {
-  @apply p-6 text-center;
+  @apply p-8 text-center relative z-10;
 }
 
 .what-we-do-icon {
-  @apply h-8 w-8 flex items-center justify-center mb-3 mx-auto;
+  @apply h-12 w-12 flex items-center justify-center mb-6 mx-auto rounded-2xl bg-gradient-to-br from-gray-200/10 to-gray-300/10 backdrop-blur-sm border border-gray-300/20;
 }
 
 .what-we-do-title {
-  @apply text-base font-medium text-white mb-2 leading-tight;
+  @apply text-lg font-semibold text-gray-50 mb-4 leading-tight;
 }
 
 .what-we-do-description {
-  @apply text-white/70 text-xs leading-relaxed;
+  @apply text-gray-300/80 text-sm leading-relaxed;
+}
+
+/* Compact What We Do Cards */
+.what-we-do-card-compact {
+  @apply relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-100/5 via-gray-200/15 to-gray-100/5 backdrop-blur-sm border border-gray-300/20 shadow-lg transition-all duration-500 transform hover:scale-105 hover:translate-y-[-2px] cursor-pointer h-full;
+}
+
+.what-we-do-card-compact:hover {
+  @apply bg-gradient-to-br from-gray-100/10 via-gray-200/20 to-gray-100/10 border-gray-400/30 shadow-xl;
+  box-shadow: 0 0 30px rgba(156, 163, 175, 0.12), 0 0 60px rgba(107, 114, 128, 0.06);
+}
+
+.what-we-do-card-content-compact {
+  @apply p-6 text-left relative z-10 h-full flex flex-col;
+}
+
+.what-we-do-icon-compact {
+  @apply h-10 w-10 flex items-center justify-center mb-4 rounded-xl bg-gradient-to-br from-gray-200/10 to-gray-300/10 backdrop-blur-sm border border-gray-300/20;
+}
+
+.what-we-do-title-compact {
+  @apply text-base font-semibold text-gray-50 mb-3 leading-tight;
+}
+
+.what-we-do-description-compact {
+  @apply text-gray-300/80 text-sm leading-relaxed flex-1;
+}
+
+/* Left Side Title and Description */
+.section-title-left {
+  @apply text-left;
+}
+
+.section-description-left {
+  @apply text-lg text-gray-300 max-w-md leading-relaxed;
+}
+
+/* Right Side Title and Description */
+.section-title-right {
+  @apply text-left;
+}
+
+.section-description-right {
+  @apply text-lg text-gray-300 max-w-md leading-relaxed;
 }
 
 /* How It Works Section */
 .how-it-works-section {
-  @apply bg-gradient-to-br from-[#FFD166]/5 via-[#BC96E6]/10 to-[#210B2C]/5;
+  @apply bg-gradient-to-br from-gray-800/10 via-gray-700/15 to-gray-900/10;
 }
 
 /* CTA Section */
 .cta-section {
-  @apply bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166];
+  @apply bg-gradient-to-br from-gray-950 via-gray-800 to-gray-700;
 }
 
 .cta-content {
@@ -172,11 +216,11 @@
 }
 
 .cta-title {
-  @apply text-4xl lg:text-5xl font-bold text-white mb-6;
+  @apply text-4xl lg:text-5xl font-bold text-gray-50 mb-6;
 }
 
 .cta-description {
-  @apply text-xl text-white/90 mb-8 max-w-2xl mx-auto;
+  @apply text-xl text-gray-200/90 mb-8 max-w-2xl mx-auto;
 }
 
 .cta-buttons {
@@ -184,11 +228,11 @@
 }
 
 .cta-primary-button {
-  @apply bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 shadow-lg hover:shadow-xl transition-all duration-300;
+  @apply bg-gray-100/20 backdrop-blur-sm border-gray-200/30 hover:bg-gray-100/30 shadow-lg hover:shadow-xl transition-all duration-300;
 }
 
 .cta-secondary-button {
-  @apply bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300;
+  @apply bg-gray-100/10 border-gray-200/30 text-gray-50 hover:bg-gray-100/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300;
 }
 
 /* Step Cards */
@@ -197,23 +241,23 @@
 }
 
 .step-number {
-  @apply absolute -top-4 left-1/2 transform -translate-x-1/2 h-10 w-10 rounded-full bg-gradient-to-r from-[#FFD166] to-[#BC96E6] flex items-center justify-center text-white font-bold text-sm shadow-lg;
+  @apply absolute -top-4 left-1/2 transform -translate-x-1/2 h-10 w-10 rounded-full bg-gradient-to-r from-gray-600 to-gray-500 flex items-center justify-center text-gray-50 font-bold text-sm shadow-lg;
 }
 
 .step-icon {
-  @apply h-24 w-24 mx-auto rounded-3xl bg-white/10 backdrop-blur-sm flex items-center justify-center mb-6 transition-all duration-300 border border-white/20;
+  @apply h-20 w-20 mx-auto rounded-3xl bg-gradient-to-br from-gray-200/10 to-gray-300/10 backdrop-blur-sm flex items-center justify-center mb-6 transition-all duration-300 border border-gray-300/20;
 }
 
 .step-title {
-  @apply text-2xl font-bold text-card-foreground mb-4;
+  @apply text-xl font-bold text-gray-50 mb-4;
 }
 
 .step-description {
-  @apply text-muted-foreground leading-relaxed;
+  @apply text-gray-300/80 leading-relaxed;
 }
 
 .step-connector {
-  @apply hidden md:block absolute top-12 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#FFD166] to-[#BC96E6] rounded-full;
+  @apply hidden md:block absolute top-12 -right-4 w-8 h-0.5 bg-gradient-to-r from-gray-600 to-gray-500 rounded-full;
 }
 
 /* Background Floating Elements */
@@ -222,24 +266,24 @@
 }
 
 .bg-floating-yellow {
-  @apply bg-[#FFD166]/10;
+  @apply bg-gray-400/10;
 }
 
 .bg-floating-purple {
-  @apply bg-[#BC96E6]/10;
+  @apply bg-gray-500/10;
 }
 
 .bg-floating-dark {
-  @apply bg-[#210B2C]/30;
+  @apply bg-gray-800/30;
 }
 
 /* Responsive Text */
 .hero-main-title {
-  @apply text-5xl md:text-6xl lg:text-7xl font-bold text-[#210B2C] drop-shadow-xl mb-2;
+  @apply text-5xl md:text-6xl lg:text-7xl font-bold text-gray-50 drop-shadow-xl mb-2;
 }
 
 .hero-subtitle {
-  @apply text-xl md:text-2xl text-[#210B2C]/80 drop-shadow-lg mb-8;
+  @apply text-xl md:text-2xl text-gray-200/80 drop-shadow-lg mb-8;
 }
 
 /* Animation Classes */

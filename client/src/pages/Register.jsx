@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 import { 
   User, 
   Mail, 
@@ -20,7 +21,7 @@ import {
 import Button from '../components/Button';
 
 import { cn } from '../utils/cn';
-import logo from '../assets/logo.png';
+import logo from '../assets/logo_light.png';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ const Register = () => {
     watch,
     formState: { errors },
     setError,
+    clearErrors,
   } = useForm();
 
   const password = watch('password');
@@ -64,19 +66,79 @@ const Register = () => {
       };
       const result = await registerUser(payload);
       if (result.success) {
-        // Redirect to login page after successful registration
-        navigate('/login');
+        // Show success message and redirect to login page after successful registration
+        toast.success('Account created successfully! Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        // Handle specific error cases
+        const errorMessage = result.error?.toLowerCase() || '';
+        
+        if (errorMessage.includes('email already exists') || errorMessage.includes('user already exists')) {
+          setError('email', {
+            type: 'manual',
+            message: 'An account with this email already exists. Please sign in instead.',
+          });
+          
+          // Show a toast notification and redirect to login after 3 seconds
+          setTimeout(() => {
+            navigate('/login');
+          }, 3000);
+        } else if (errorMessage.includes('invalid email')) {
+          setError('email', {
+            type: 'manual',
+            message: 'Please enter a valid email address.',
+          });
+        } else if (errorMessage.includes('password too weak') || errorMessage.includes('password requirements')) {
+          setError('password', {
+            type: 'manual',
+            message: 'Password must be at least 8 characters long and contain letters and numbers.',
+          });
+        } else if (errorMessage.includes('first name') || errorMessage.includes('last name')) {
+          if (errorMessage.includes('first name')) {
+            setError('firstName', {
+              type: 'manual',
+              message: 'Please enter a valid first name.',
+            });
+          } else {
+            setError('lastName', {
+              type: 'manual',
+              message: 'Please enter a valid last name.',
+            });
+          }
+        } else if (errorMessage.includes('phone number')) {
+          setError('phone', {
+            type: 'manual',
+            message: 'Please enter a valid phone number.',
+          });
+        } else {
+          setError('root', {
+            type: 'manual',
+            message: result.error || 'Registration failed. Please try again.',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      
+      // Handle network errors
+      if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        setError('root', {
+          type: 'manual',
+          message: 'Network error. Please check your internet connection and try again.',
+        });
+      } else if (error.response?.status === 500) {
+        setError('root', {
+          type: 'manual',
+          message: 'Server error. Please try again later.',
+        });
       } else {
         setError('root', {
           type: 'manual',
-          message: result.error,
+          message: 'An unexpected error occurred. Please try again.',
         });
       }
-    } catch (error) {
-      setError('root', {
-        type: 'manual',
-        message: 'An unexpected error occurred. Please try again.',
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +162,7 @@ const Register = () => {
   // Loading screen
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-800 to-gray-700 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -110,15 +172,15 @@ const Register = () => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 mx-auto mb-6 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30"
+            className="w-16 h-16 mx-auto mb-6 bg-gray-800/50 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-gray-600"
           >
-            <Sparkles className="h-8 w-8 text-white" />
+            <Sparkles className="h-8 w-8 text-gray-100" />
           </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-2xl font-semibold text-white mb-2"
+            className="text-2xl font-semibold text-gray-100 mb-2"
           >
             Welcome to SoloDesk
           </motion.h2>
@@ -126,7 +188,7 @@ const Register = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.6 }}
-            className="text-white/80"
+            className="text-gray-300"
           >
             Setting up your workspace...
           </motion.p>
@@ -136,7 +198,7 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-800 to-gray-700 flex flex-col">
       {/* Header with Logo */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -150,7 +212,7 @@ const Register = () => {
             alt="SoloDesk Logo" 
             className="h-12 w-12 object-contain"
           />
-          <span className="text-3xl font-bold text-white group-hover:text-[#FFD166] transition-colors duration-300">SoloDesk</span>
+          <span className="text-3xl font-bold text-gray-100 group-hover:text-gray-200 transition-colors duration-300">SoloDesk</span>
         </Link>
       </motion.header>
 
@@ -178,7 +240,7 @@ const Register = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.6 }}
-                  className="text-4xl lg:text-5xl font-bold text-white leading-tight"
+                  className="text-4xl lg:text-5xl font-bold text-gray-100 leading-tight"
                 >
                   Welcome to your business, beautifully organized.
                 </motion.h1>
@@ -187,7 +249,7 @@ const Register = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.6 }}
-                  className="text-lg text-white/80 leading-relaxed"
+                  className="text-lg text-gray-300 leading-relaxed"
                 >
                   Join thousands of freelancers who manage clients, projects, and payments — all in one place.
                 </motion.p>
@@ -208,10 +270,10 @@ const Register = () => {
                     transition={{ delay: 1 + index * 0.1, duration: 0.5 }}
                     className="flex items-center space-x-3"
                   >
-                    <div className="text-[#FFD166]">
+                    <div className="text-gray-300">
                       {feature.icon}
                     </div>
-                    <span className="text-white/90 font-medium">{feature.text}</span>
+                    <span className="text-gray-200 font-medium">{feature.text}</span>
                   </motion.div>
                 ))}
               </motion.div>
@@ -228,7 +290,7 @@ const Register = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
                       <input
                         type="text"
                         {...register('firstName', {
@@ -240,16 +302,18 @@ const Register = () => {
                         })}
                         placeholder="First Name"
                         className={cn(
-                          'w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                          errors.firstName ? 'border-red-400' : 'border-white/20'
+                          'w-full pl-12 pr-4 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                          errors.firstName ? 'border-red-400' : 'border-gray-600'
                         )}
+                        onFocus={() => clearErrors('firstName')}
                       />
                     </div>
                     {errors.firstName && (
                       <motion.p
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-red-400 text-sm"
+                        onClick={() => clearErrors('firstName')}
+                        className="text-red-400 text-sm cursor-pointer hover:text-red-300 transition-colors"
                       >
                         {errors.firstName.message}
                       </motion.p>
@@ -258,7 +322,7 @@ const Register = () => {
 
                   <div className="space-y-2">
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
                       <input
                         type="text"
                         {...register('lastName', {
@@ -270,16 +334,18 @@ const Register = () => {
                         })}
                         placeholder="Last Name"
                         className={cn(
-                          'w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                          errors.lastName ? 'border-red-400' : 'border-white/20'
+                          'w-full pl-12 pr-4 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                          errors.lastName ? 'border-red-400' : 'border-gray-600'
                         )}
+                        onFocus={() => clearErrors('lastName')}
                       />
                     </div>
                     {errors.lastName && (
                       <motion.p
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-red-400 text-sm"
+                        onClick={() => clearErrors('lastName')}
+                        className="text-red-400 text-sm cursor-pointer hover:text-red-300 transition-colors"
                       >
                         {errors.lastName.message}
                       </motion.p>
@@ -290,7 +356,7 @@ const Register = () => {
                 {/* Email field */}
                 <div className="space-y-2">
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
                     <input
                       type="email"
                       {...register('email', {
@@ -302,16 +368,18 @@ const Register = () => {
                       })}
                       placeholder="Email Address"
                       className={cn(
-                        'w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                        errors.email ? 'border-red-400' : 'border-white/20'
+                        'w-full pl-12 pr-4 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                        errors.email ? 'border-red-400' : 'border-gray-600'
                       )}
+                      onFocus={() => clearErrors('email')}
                     />
                   </div>
                   {errors.email && (
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-400 text-sm"
+                      onClick={() => clearErrors('email')}
+                      className="text-red-400 text-sm cursor-pointer hover:text-red-300 transition-colors"
                     >
                       {errors.email.message}
                     </motion.p>
@@ -321,7 +389,7 @@ const Register = () => {
                 {/* Password field */}
                 <div className="space-y-2">
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       {...register('password', {
@@ -337,14 +405,15 @@ const Register = () => {
                       })}
                       placeholder="Password"
                       className={cn(
-                        'w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                        errors.password ? 'border-red-400' : 'border-white/20'
+                        'w-full pl-12 pr-12 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                        errors.password ? 'border-red-400' : 'border-gray-600'
                       )}
+                      onFocus={() => clearErrors('password')}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
@@ -353,7 +422,8 @@ const Register = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-400 text-sm"
+                      onClick={() => clearErrors('password')}
+                      className="text-red-400 text-sm cursor-pointer hover:text-red-300 transition-colors"
                     >
                       {errors.password.message}
                     </motion.p>
@@ -363,7 +433,7 @@ const Register = () => {
                 {/* Confirm Password field */}
                 <div className="space-y-2">
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       {...register('confirmPassword', {
@@ -373,14 +443,15 @@ const Register = () => {
                       })}
                       placeholder="Confirm Password"
                       className={cn(
-                        'w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                        errors.confirmPassword ? 'border-red-400' : 'border-white/20'
+                        'w-full pl-12 pr-12 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                        errors.confirmPassword ? 'border-red-400' : 'border-gray-600'
                       )}
+                      onFocus={() => clearErrors('confirmPassword')}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
                     >
                       {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
@@ -389,7 +460,8 @@ const Register = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-400 text-sm"
+                      onClick={() => clearErrors('confirmPassword')}
+                      className="text-red-400 text-sm cursor-pointer hover:text-red-300 transition-colors"
                     >
                       {errors.confirmPassword.message}
                     </motion.p>
@@ -399,7 +471,7 @@ const Register = () => {
                 {/* Phone field (optional) */}
                 <div className="space-y-2">
                   <div className="relative">
-                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
+                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
                     <input
                       type="tel"
                       {...register('phone', {
@@ -410,16 +482,18 @@ const Register = () => {
                       })}
                       placeholder="Phone (optional)"
                       className={cn(
-                        'w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                        errors.phone ? 'border-red-400' : 'border-white/20'
+                        'w-full pl-12 pr-4 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                        errors.phone ? 'border-red-400' : 'border-gray-600'
                       )}
+                      onFocus={() => clearErrors('phone')}
                     />
                   </div>
                   {errors.phone && (
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-400 text-sm"
+                      onClick={() => clearErrors('phone')}
+                      className="text-red-400 text-sm cursor-pointer hover:text-red-300 transition-colors"
                     >
                       {errors.phone.message}
                     </motion.p>
@@ -431,9 +505,18 @@ const Register = () => {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-lg bg-red-400/10 border border-red-400/20"
+                    exit={{ opacity: 0, y: -10 }}
+                    className="relative p-3 rounded-lg bg-red-400/10 border border-red-400/20 group"
                   >
-                    <p className="text-sm text-red-400">{errors.root.message}</p>
+                    <button
+                      onClick={() => setError('root', { type: 'manual', message: '' })}
+                      className="absolute top-2 right-2 text-red-400 hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    <p className="text-sm text-red-400 pr-6">{errors.root.message}</p>
                   </motion.div>
                 )}
 
@@ -443,14 +526,14 @@ const Register = () => {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#FFD166] text-[#210B2C] font-semibold py-4 px-6 rounded-xl hover:bg-[#FFD166]/90 hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gray-600 text-gray-100 font-semibold py-4 px-6 rounded-xl hover:bg-gray-500 hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-5 h-5 border-2 border-[#210B2C] border-t-transparent rounded-full"
+                        className="w-5 h-5 border-2 border-gray-100 border-t-transparent rounded-full"
                       />
                       <span>Creating Account...</span>
                     </>
@@ -469,11 +552,11 @@ const Register = () => {
                   transition={{ delay: 1.4, duration: 0.6 }}
                   className="text-center"
                 >
-                  <p className="text-white/70">
+                  <p className="text-gray-300">
                     Already have an account?{' '}
                     <Link
                       to="/login"
-                      className="text-[#FFD166] hover:text-[#FFD166]/80 font-medium transition-colors duration-300 hover:underline"
+                      className="text-gray-400 hover:text-gray-300 font-medium transition-colors duration-300 hover:underline"
                     >
                       Sign In
                     </Link>
@@ -496,25 +579,25 @@ const Register = () => {
         className="py-8 px-6 text-center"
       >
         <div className="max-w-2xl mx-auto space-y-4">
-          <p className="text-white/70 text-sm">
+          <p className="text-gray-400 text-sm">
             © 2024 SoloDesk. All rights reserved.
           </p>
           <div className="flex justify-center space-x-6 text-sm">
             <Link
               to="/privacy"
-              className="text-white/60 hover:text-white transition-colors duration-300"
+              className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
             >
               Privacy Policy
             </Link>
             <Link
               to="/terms"
-              className="text-white/60 hover:text-white transition-colors duration-300"
+              className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
             >
               Terms of Service
             </Link>
             <Link
               to="/support"
-              className="text-white/60 hover:text-white transition-colors duration-300"
+              className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
             >
               Support
             </Link>

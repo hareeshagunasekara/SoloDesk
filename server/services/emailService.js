@@ -37,9 +37,10 @@ const sendResetEmail = async (email, resetToken, userName = 'User') => {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Reset Your Password</title>
+          <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
           <style>
             body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               line-height: 1.6;
               color: #333;
               max-width: 600px;
@@ -196,9 +197,10 @@ const sendWelcomeEmail = async (email, userName) => {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Welcome to SoloDesk</title>
+          <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
           <style>
             body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               line-height: 1.6;
               color: #333;
               max-width: 600px;

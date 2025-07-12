@@ -31,32 +31,32 @@ const About = () => {
     {
       icon: <Calendar className="h-8 w-8" />,
       title: "Smart Scheduling",
-      description: "Book appointments, manage availability, and sync with your calendar automatically."
+      description: "Seamless booking with calendar sync, availability, buffers, and reminders."
     },
     {
       icon: <Users className="h-8 w-8" />,
-      title: "Client Management",
-      description: "Keep all client information, communication history, and project details in one place."
+      title: "Intelligent Client Management",
+      description: "Every detail in one sleek view — from contacts to conversations."
     },
     {
       icon: <CreditCard className="h-8 w-8" />,
-      title: "Payment Tracking",
-      description: "Create invoices, track payments, and manage your cash flow with ease."
+      title: "Streamlined Payments",
+      description: "Send branded invoices, track payments, and keep cash flow smooth."
     },
     {
       icon: <CheckSquare className="h-8 w-8" />,
-      title: "Task Management",
-      description: "Organize projects, set deadlines, and never miss a deliverable again."
+      title: "Task & Project Management",
+      description: "Organize projects, set milestones, and hit every deadline."
     },
     {
       icon: <BarChart3 className="h-8 w-8" />,
-      title: "Business Insights",
-      description: "Get clear analytics on your earnings, busiest periods, and top clients."
+      title: "Real-Time Insights",
+      description: "Visual reports on revenue, peak performance, and client trends."
     },
     {
       icon: <Zap className="h-8 w-8" />,
-      title: "Automation",
-      description: "Automate follow-ups, reminders, and repetitive tasks to focus on what matters."
+      title: "Light Automation",
+      description: "Automated follow-ups and task triggers — because your time is premium."
     }
   ];
 
@@ -64,24 +64,24 @@ const About = () => {
     {
       icon: <Zap className="h-8 w-8" />,
       title: "Save Time",
-      description: "Automate repetitive tasks and focus on what you do best - serving your clients."
+      description: "Spend less time managing, more time creating and delivering."
     },
     {
       icon: <Target className="h-8 w-8" />,
       title: "Stay Organized",
-      description: "Keep all your client information, projects, and payments in one centralized location."
+      description: "Everything — clients, projects, payments — under one digital roof."
     },
     {
       icon: <Award className="h-8 w-8" />,
       title: "Look Professional",
-      description: "Present a polished, professional image to your clients with branded invoices and scheduling."
+      description: "Branded touchpoints. Clean interface. Confidence with every click."
     }
   ];
 
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative py-24 bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] overflow-hidden">
+      <section className="relative py-24 bg-gradient-to-br from-primary-950 via-primary-400 to-primary-100 overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0">
           <motion.div
@@ -123,8 +123,8 @@ const About = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-8 border border-white/30"
             >
-              <Target className="h-4 w-4 text-[#FFD166]" />
-              <span className="text-white text-sm font-medium">Your Personal Freelance HQ</span>
+              <Target className="h-4 w-4 text-primary-100" />
+              <span className="text-white text-sm font-medium">Your Personal Business Command Center</span>
             </motion.div>
 
             <motion.h1
@@ -133,9 +133,9 @@ const About = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
             >
-              Built for Freelancers,{' '}
-              <span className="bg-gradient-to-r from-[#FFD166] to-[#BC96E6] bg-clip-text text-transparent">
-                by Freelancers
+              Crafted for Independent Professionals{' '}
+              <span className="bg-gradient-to-r from-primary-100 to-primary-300 bg-clip-text text-transparent">
+                Who Do It All
               </span>
             </motion.h1>
 
@@ -145,7 +145,7 @@ const About = () => {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="text-xl text-white/90 mb-8 leading-relaxed"
             >
-              A personal CRM and business dashboard for freelancers to manage clients, bookings, tasks, and payments—all in one place.
+              SoloDesk is your all-in-one CRM and workspace dashboard — built to help you manage clients, bookings, tasks, and payments with clarity, style, and control.
             </motion.p>
 
             <motion.div
@@ -156,7 +156,7 @@ const About = () => {
             >
               <Link
                 to="/register"
-                className="inline-flex items-center space-x-2 bg-[#FFD166] text-[#210B2C] font-semibold px-8 py-4 rounded-xl hover:bg-[#FFD166]/90 transition-all duration-300 group"
+                className="inline-flex items-center space-x-2 bg-primary-100 text-primary-950 font-semibold px-8 py-4 rounded-xl hover:bg-primary-200 transition-all duration-300 group"
               >
                 <span>Get Started</span>
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -182,11 +182,11 @@ const About = () => {
             viewport={{ once: true }}
             className="max-w-4xl mx-auto text-center"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              The Freelancer's Struggle is Real
+            <h2 className="text-4xl font-bold text-primary-900 mb-6">
+              From Chaos to Clarity
             </h2>
-            <p className="text-xl text-gray-600 mb-12 leading-relaxed">
-              Freelancers like photographers, coaches, and bakers often struggle to juggle appointments, payments, and follow-ups. Tools like Notion, Calendly, and Excel don't talk to each other. They need a centralized, simple, and intelligent dashboard.
+            <p className="text-xl text-primary-600 mb-12 leading-relaxed">
+              Let's face it — juggling tools, tasks, and timelines isn't sustainable. You're managing bookings in one app, tracking clients in another, and chasing payments through a third. The result? Disconnection. Distraction. Missed opportunities.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -195,13 +195,13 @@ const About = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="bg-red-50 border border-red-200 rounded-xl p-6"
+                className="bg-primary-50 border border-primary-200 rounded-xl p-6"
               >
-                <div className="text-red-500 mb-4">
+                <div className="text-primary-600 mb-4">
                   <Calendar className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Scattered Tools</h3>
-                <p className="text-gray-600">Managing bookings in Calendly, clients in Excel, and payments in PayPal creates chaos.</p>
+                <h3 className="font-semibold text-primary-900 mb-2">Scattered Tools</h3>
+                <p className="text-primary-600">Managing bookings in Calendly, clients in Excel, and payments in PayPal creates chaos.</p>
               </motion.div>
 
               <motion.div
@@ -209,13 +209,13 @@ const About = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="bg-red-50 border border-red-200 rounded-xl p-6"
+                className="bg-primary-50 border border-primary-200 rounded-xl p-6"
               >
-                <div className="text-red-500 mb-4">
+                <div className="text-primary-600 mb-4">
                   <Users className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Lost Opportunities</h3>
-                <p className="text-gray-600">Missing follow-ups and forgetting client details leads to lost business.</p>
+                <h3 className="font-semibold text-primary-900 mb-2">Lost Opportunities</h3>
+                <p className="text-primary-600">Missing follow-ups and forgetting client details leads to lost business.</p>
               </motion.div>
 
               <motion.div
@@ -223,13 +223,13 @@ const About = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
                 viewport={{ once: true }}
-                className="bg-red-50 border border-red-200 rounded-xl p-6"
+                className="bg-primary-50 border border-primary-200 rounded-xl p-6"
               >
-                <div className="text-red-500 mb-4">
+                <div className="text-primary-600 mb-4">
                   <BarChart3 className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">No Visibility</h3>
-                <p className="text-gray-600">Without proper tracking, you can't see what's working or where to improve.</p>
+                <h3 className="font-semibold text-primary-900 mb-2">No Visibility</h3>
+                <p className="text-primary-600">Without proper tracking, you can't see what's working or where to improve.</p>
               </motion.div>
             </div>
           </motion.div>
@@ -237,7 +237,7 @@ const About = () => {
       </section>
 
       {/* Solution Section */}
-      <section className="py-24 bg-gradient-to-br from-gray-50 to-gray-100">
+      <section className="py-24 bg-gradient-to-br from-primary-50 to-primary-100">
         <div className="container mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -246,11 +246,11 @@ const About = () => {
             viewport={{ once: true }}
             className="max-w-4xl mx-auto text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              Enter SoloDesk
+            <h2 className="text-4xl font-bold text-primary-900 mb-6">
+              Meet SoloDesk
             </h2>
-            <p className="text-xl text-gray-600 leading-relaxed">
-              The all-in-one platform that brings together everything you need to run your freelance business efficiently and professionally.
+            <p className="text-xl text-primary-600 leading-relaxed">
+              A smarter way to run your business — all in one place.
             </p>
           </motion.div>
 
@@ -264,13 +264,13 @@ const About = () => {
                 viewport={{ once: true }}
                 className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group"
               >
-                <div className="text-[#FFD166] mb-4 group-hover:text-[#BC96E6] transition-colors">
+                <div className="text-primary-600 mb-4 group-hover:text-primary-700 transition-colors">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                <h3 className="text-lg font-semibold text-primary-900 mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-primary-600 leading-relaxed">
                   {feature.description}
                 </p>
               </motion.div>
@@ -280,7 +280,7 @@ const About = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-24 bg-gradient-to-br from-[#210B2C] to-[#BC96E6]">
+      <section className="py-24 bg-gradient-to-br from-primary-950 to-primary-400">
         <div className="container mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -310,7 +310,7 @@ const About = () => {
                 <div className="text-white mb-4">
                   <stat.icon className="h-8 w-8 mx-auto" />
                 </div>
-                <div className="text-3xl font-bold text-[#FFD166] mb-2">
+                <div className="text-3xl font-bold text-primary-100 mb-2">
                   {stat.number}
                 </div>
                 <div className="text-white/80 font-medium">
@@ -333,7 +333,7 @@ const About = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              Key Benefits
+              The Results Speak for Themselves
             </h2>
             <p className="text-xl text-gray-600">
               Everything you need to run your freelance business more efficiently
@@ -348,15 +348,15 @@ const About = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 text-center"
+                className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 border border-primary-200 text-center"
               >
-                <div className="text-[#FFD166] mb-4 flex justify-center">
+                <div className="text-primary-600 mb-4 flex justify-center">
                   {benefit.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                <h3 className="text-lg font-semibold text-primary-900 mb-3">
                   {benefit.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-primary-600 leading-relaxed">
                   {benefit.description}
                 </p>
               </motion.div>
@@ -366,7 +366,7 @@ const About = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166]">
+      <section className="py-24 bg-gradient-to-br from-primary-950 via-primary-400 to-primary-100">
         <div className="container mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -376,10 +376,10 @@ const About = () => {
             className="text-center max-w-3xl mx-auto"
           >
             <h2 className="text-4xl font-bold text-white mb-6">
-              Ready to Streamline Your Freelance Business?
+              Ready to Upgrade the Way You Work?
             </h2>
             <p className="text-xl text-white/90 mb-8 leading-relaxed">
-              Start managing your clients, projects, and payments more efficiently today.
+              Streamline your entire business — from client booking to final payment — with ease.
             </p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -390,7 +390,7 @@ const About = () => {
             >
               <Link
                 to="/register"
-                className="inline-flex items-center space-x-2 bg-[#FFD166] text-[#210B2C] font-semibold px-8 py-4 rounded-xl hover:bg-[#FFD166]/90 transition-all duration-300 group"
+                className="inline-flex items-center space-x-2 bg-primary-100 text-primary-950 font-semibold px-8 py-4 rounded-xl hover:bg-primary-200 transition-all duration-300 group"
               >
                 <span>Get Started</span>
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
