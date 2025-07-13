@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes')
 const userRoutes = require('./routes/userRoutes')
 const onboardingRoutes = require('./routes/onboardingRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
+const clientRoutes = require('./routes/clientRoutes')
 
 const app = express()
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/onboarding', onboardingRoutes)
 app.use('/api/payments', paymentRoutes)
+app.use('/api/clients', clientRoutes)
 
 // Simple API endpoint
 app.get('/api/hello', (req, res) => {

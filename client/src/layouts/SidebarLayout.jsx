@@ -87,6 +87,13 @@ const SidebarLayout = ({ children }) => {
       current: location.pathname.startsWith('/clients'),
     },
     {
+      name: 'Projects',
+      href: '/projects',
+      icon: FolderOpen,
+      description: 'Manage projects, track progress, deadlines',
+      current: location.pathname.startsWith('/projects'),
+    },
+    {
       name: 'Calendar',
       href: '/calendar',
       icon: Calendar,

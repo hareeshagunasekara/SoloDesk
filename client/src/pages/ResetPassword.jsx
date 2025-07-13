@@ -13,9 +13,10 @@ import {
   Clock,
   Shield,
   Zap,
-  Key
+  Key,
+  AlertCircle
 } from 'lucide-react';
-import logo from '../assets/logo.png';
+import logo from '../assets/logo_light.png';
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -96,7 +97,7 @@ const ResetPassword = () => {
 
   if (!isValidToken) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-800 to-gray-700 flex flex-col">
         {/* Header with Logo */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
@@ -110,7 +111,7 @@ const ResetPassword = () => {
               alt="SoloDesk Logo" 
               className="h-12 w-12 object-contain"
             />
-            <span className="text-3xl font-bold text-white group-hover:text-[#FFD166] transition-colors duration-300">SoloDesk</span>
+            <span className="text-3xl font-bold text-gray-100 group-hover:text-gray-200 transition-colors duration-300">SoloDesk</span>
           </Link>
         </motion.header>
 
@@ -127,16 +128,16 @@ const ResetPassword = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
-                className="mx-auto h-16 w-16 rounded-full bg-red-500/20 flex items-center justify-center mb-6"
+                className="mx-auto h-16 w-16 rounded-full bg-red-400/10 flex items-center justify-center mb-6"
               >
-                <Key className="h-8 w-8 text-red-500" />
+                <AlertCircle className="h-8 w-8 text-red-400" />
               </motion.div>
               
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
-                className="text-3xl lg:text-4xl font-bold text-white mb-4"
+                className="text-3xl lg:text-4xl font-bold text-gray-100 mb-4"
               >
                 Invalid Reset Link
               </motion.h1>
@@ -145,7 +146,7 @@ const ResetPassword = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.6 }}
-                className="text-lg text-white/80 leading-relaxed mb-8"
+                className="text-lg text-gray-300 leading-relaxed mb-8"
               >
                 The password reset link is invalid or has expired. Please request a new password reset link.
               </motion.p>
@@ -158,20 +159,20 @@ const ResetPassword = () => {
               >
                 <Link
                   to="/forgot-password"
-                  className="inline-flex items-center text-sm text-[#FFD166] hover:text-[#FFD166]/80 transition-colors duration-300 font-medium"
+                  className="inline-flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors duration-300 font-medium"
                 >
                   Request new reset link
                 </Link>
 
-                <div className="text-white/60">or</div>
+                <div className="text-gray-500">or</div>
                 
-          <Link
-            to="/login"
-                  className="inline-flex items-center text-sm text-[#FFD166] hover:text-[#FFD166]/80 transition-colors duration-300 font-medium"
-          >
+                <Link
+                  to="/login"
+                  className="inline-flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors duration-300 font-medium"
+                >
                   <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to login
-          </Link>
+                  Back to login
+                </Link>
               </motion.div>
             </motion.div>
           </AnimatePresence>
@@ -185,25 +186,25 @@ const ResetPassword = () => {
           className="py-8 px-6 text-center"
         >
           <div className="max-w-2xl mx-auto space-y-4">
-            <p className="text-white/70 text-sm">
+            <p className="text-gray-400 text-sm">
               © 2024 SoloDesk. All rights reserved.
             </p>
             <div className="flex justify-center space-x-6 text-sm">
               <Link
                 to="/privacy"
-                className="text-white/60 hover:text-white transition-colors duration-300"
+                className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
               >
                 Privacy Policy
               </Link>
               <Link
                 to="/terms"
-                className="text-white/60 hover:text-white transition-colors duration-300"
+                className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
               >
                 Terms of Service
               </Link>
               <Link
                 to="/support"
-                className="text-white/60 hover:text-white transition-colors duration-300"
+                className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
               >
                 Support
               </Link>
@@ -216,7 +217,7 @@ const ResetPassword = () => {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-800 to-gray-700 flex flex-col">
         {/* Header with Logo */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
@@ -230,7 +231,7 @@ const ResetPassword = () => {
               alt="SoloDesk Logo" 
               className="h-12 w-12 object-contain"
             />
-            <span className="text-3xl font-bold text-white group-hover:text-[#FFD166] transition-colors duration-300">SoloDesk</span>
+            <span className="text-3xl font-bold text-gray-100 group-hover:text-gray-200 transition-colors duration-300">SoloDesk</span>
           </Link>
         </motion.header>
 
@@ -243,21 +244,21 @@ const ResetPassword = () => {
               transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="w-full max-w-2xl mx-auto"
             >
-        <div className="text-center">
+              <div className="text-center">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.2, duration: 0.6 }}
-                  className="mx-auto h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center mb-6"
+                  className="mx-auto h-16 w-16 rounded-full bg-green-400/10 flex items-center justify-center mb-6"
                 >
-                  <CheckCircle className="h-8 w-8 text-green-500" />
+                  <CheckCircle className="h-8 w-8 text-green-400" />
                 </motion.div>
                 
                 <motion.h1
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.6 }}
-                  className="text-3xl lg:text-4xl font-bold text-white mb-4"
+                  className="text-3xl lg:text-4xl font-bold text-gray-100 mb-4"
                 >
                   Password Reset Successfully
                 </motion.h1>
@@ -266,7 +267,7 @@ const ResetPassword = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.6 }}
-                  className="text-lg text-white/80 leading-relaxed mb-8"
+                  className="text-lg text-gray-300 leading-relaxed mb-8"
                 >
                   Your password has been successfully reset. You can now log in with your new password.
                 </motion.p>
@@ -285,10 +286,10 @@ const ResetPassword = () => {
                       transition={{ delay: 1 + index * 0.1, duration: 0.5 }}
                       className="flex items-center justify-center space-x-3"
                     >
-                      <div className="text-[#FFD166]">
+                      <div className="text-gray-300">
                         {feature.icon}
                       </div>
-                      <span className="text-white/90 font-medium">{feature.text}</span>
+                      <span className="text-gray-200 font-medium">{feature.text}</span>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -301,7 +302,7 @@ const ResetPassword = () => {
                 >
                   <button
                     onClick={() => navigate('/login')}
-                    className="inline-flex items-center text-sm text-[#FFD166] hover:text-[#FFD166]/80 transition-colors duration-300 font-medium"
+                    className="inline-flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors duration-300 font-medium"
                   >
                     Continue to login
                   </button>
@@ -319,29 +320,29 @@ const ResetPassword = () => {
           className="py-8 px-6 text-center"
         >
           <div className="max-w-2xl mx-auto space-y-4">
-            <p className="text-white/70 text-sm">
+            <p className="text-gray-400 text-sm">
               © 2024 SoloDesk. All rights reserved.
             </p>
             <div className="flex justify-center space-x-6 text-sm">
               <Link
                 to="/privacy"
-                className="text-white/60 hover:text-white transition-colors duration-300"
+                className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
               >
                 Privacy Policy
               </Link>
               <Link
                 to="/terms"
-                className="text-white/60 hover:text-white transition-colors duration-300"
+                className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
               >
                 Terms of Service
               </Link>
-          <Link
+              <Link
                 to="/support"
-                className="text-white/60 hover:text-white transition-colors duration-300"
-          >
+                className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
+              >
                 Support
-          </Link>
-        </div>
+              </Link>
+            </div>
           </div>
         </motion.footer>
       </div>
@@ -349,7 +350,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#210B2C] via-[#BC96E6] to-[#FFD166] flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-800 to-gray-700 flex flex-col">
       {/* Header with Logo */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -363,7 +364,7 @@ const ResetPassword = () => {
             alt="SoloDesk Logo" 
             className="h-12 w-12 object-contain"
           />
-          <span className="text-3xl font-bold text-white group-hover:text-[#FFD166] transition-colors duration-300">SoloDesk</span>
+          <span className="text-3xl font-bold text-gray-100 group-hover:text-gray-200 transition-colors duration-300">SoloDesk</span>
         </Link>
       </motion.header>
 
@@ -388,7 +389,7 @@ const ResetPassword = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.6 }}
-                  className="text-4xl lg:text-5xl font-bold text-white mb-4"
+                  className="text-4xl lg:text-5xl font-bold text-gray-100 mb-4"
                 >
                   Reset Your Password
                 </motion.h1>
@@ -396,7 +397,7 @@ const ResetPassword = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.6 }}
-                  className="text-lg text-white/80 leading-relaxed"
+                  className="text-lg text-gray-300 leading-relaxed"
                 >
                   Enter your new password below to complete the reset process.
                 </motion.p>
@@ -417,10 +418,10 @@ const ResetPassword = () => {
                     transition={{ delay: 1 + index * 0.1, duration: 0.5 }}
                     className="flex items-center space-x-3"
                   >
-                    <div className="text-[#FFD166]">
+                    <div className="text-gray-300">
                       {feature.icon}
-      </div>
-                    <span className="text-white/90 font-medium">{feature.text}</span>
+                    </div>
+                    <span className="text-gray-200 font-medium">{feature.text}</span>
                   </motion.div>
                 ))}
               </motion.div>
@@ -435,36 +436,36 @@ const ResetPassword = () => {
               >
                 {/* Password field */}
                 <div className="space-y-2">
-          <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              {...register('password', {
-                required: 'Password is required',
-                minLength: {
-                  value: 8,
-                  message: 'Password must be at least 8 characters',
-                },
-                pattern: {
-                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                  message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-                },
-              })}
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      {...register('password', {
+                        required: 'Password is required',
+                        minLength: {
+                          value: 8,
+                          message: 'Password must be at least 8 characters',
+                        },
+                        pattern: {
+                          value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                          message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+                        },
+                      })}
                       placeholder="New Password"
-              className={cn(
-                        'w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                        errors.password ? 'border-red-400' : 'border-white/20'
-              )}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
-            >
+                      className={cn(
+                        'w-full pl-12 pr-12 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                        errors.password ? 'border-red-400' : 'border-gray-600'
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                    >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
-          </div>
-          {errors.password && (
+                    </button>
+                  </div>
+                  {errors.password && (
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -472,34 +473,34 @@ const ResetPassword = () => {
                     >
                       {errors.password.message}
                     </motion.p>
-          )}
-        </div>
+                  )}
+                </div>
 
                 {/* Confirm Password field */}
                 <div className="space-y-2">
-          <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 pointer-events-none z-10" />
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              {...register('confirmPassword', {
-                required: 'Please confirm your password',
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      {...register('confirmPassword', {
+                        required: 'Please confirm your password',
                         validate: (value) => value === password || 'Passwords do not match',
-              })}
+                      })}
                       placeholder="Confirm New Password"
-              className={cn(
-                        'w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFD166]/50 focus:border-[#FFD166]/50 transition-all duration-300',
-                        errors.confirmPassword ? 'border-red-400' : 'border-white/20'
-              )}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
-            >
+                      className={cn(
+                        'w-full pl-12 pr-12 py-4 bg-gray-800/50 backdrop-blur-sm border rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/50 focus:border-gray-400/50 transition-all duration-300',
+                        errors.confirmPassword ? 'border-red-400' : 'border-gray-600'
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                    >
                       {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
-          </div>
-          {errors.confirmPassword && (
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -507,34 +508,42 @@ const ResetPassword = () => {
                     >
                       {errors.confirmPassword.message}
                     </motion.p>
-          )}
-        </div>
+                  )}
+                </div>
 
                 {/* Root error */}
-        {errors.root && (
+                {errors.root && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-lg bg-red-400/10 border border-red-400/20"
+                    className="relative p-3 rounded-lg bg-red-400/10 border border-red-400/20 group"
                   >
-                    <p className="text-sm text-red-400">{errors.root.message}</p>
+                    <button
+                      onClick={() => setError('root', { type: 'manual', message: '' })}
+                      className="absolute top-2 right-2 text-red-400 hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    <p className="text-sm text-red-400 pr-6">{errors.root.message}</p>
                   </motion.div>
-        )}
+                )}
 
                 {/* Submit Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-          type="submit"
-          disabled={isLoading}
-                  className="w-full bg-[#FFD166] text-[#210B2C] font-semibold py-4 px-6 rounded-xl hover:bg-[#FFD166]/90 hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gray-600 text-gray-100 font-semibold py-4 px-6 rounded-xl hover:bg-gray-500 hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-5 h-5 border-2 border-[#210B2C] border-t-transparent rounded-full"
+                        className="w-5 h-5 border-2 border-gray-100 border-t-transparent rounded-full"
                       />
                       <span>Resetting...</span>
                     </>
@@ -555,7 +564,7 @@ const ResetPassword = () => {
                 >
                   <Link
                     to="/login"
-                    className="inline-flex items-center text-sm text-[#FFD166] hover:text-[#FFD166]/80 transition-colors duration-300 font-medium"
+                    className="inline-flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors duration-300 font-medium"
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to login
@@ -575,25 +584,25 @@ const ResetPassword = () => {
         className="py-8 px-6 text-center"
       >
         <div className="max-w-2xl mx-auto space-y-4">
-          <p className="text-white/70 text-sm">
+          <p className="text-gray-400 text-sm">
             © 2024 SoloDesk. All rights reserved.
           </p>
           <div className="flex justify-center space-x-6 text-sm">
             <Link
               to="/privacy"
-              className="text-white/60 hover:text-white transition-colors duration-300"
+              className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
             >
               Privacy Policy
             </Link>
             <Link
               to="/terms"
-              className="text-white/60 hover:text-white transition-colors duration-300"
+              className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
             >
               Terms of Service
             </Link>
             <Link
               to="/support"
-              className="text-white/60 hover:text-white transition-colors duration-300"
+              className="text-gray-500 hover:text-gray-300 transition-colors duration-300"
             >
               Support
             </Link>
