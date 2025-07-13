@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { clearAuthData } from '../utils/tokenUtils'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 // Create axios instance
 const api = axios.create({
@@ -30,8 +30,10 @@ api.interceptors.request.use(
     } else if (token) {
       config.headers.Authorization = `Bearer ${token}`
       console.log('🔑 Adding Authorization header:', config.headers.Authorization ? 'Bearer ' + token.substring(0, 50) + '...' : 'not set')
+      console.log('🔑 Full Authorization header length:', config.headers.Authorization?.length)
     } else {
       console.warn('⚠️ No token found in localStorage for request:', config.url)
+      console.warn('⚠️ Available localStorage keys:', Object.keys(localStorage))
     }
     
     console.log('Final headers:', config.headers)
@@ -116,6 +118,38 @@ export const clientsAPI = {
   delete: (id) => api.delete(`/clients/${id}`),
   getProjects: (id) => api.get(`/clients/${id}/projects`),
   getInvoices: (id) => api.get(`/clients/${id}/invoices`),
+  addNote: (id, content) => api.post(`/clients/${id}/notes`, { content }),
+  updateLastContacted: (id, lastContacted) => api.patch(`/clients/${id}/last-contacted`, { lastContacted }),
+  getStats: () => api.get('/clients/stats'),
+  importFromCSV: (formData) => api.post('/clients/import/csv', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
+  importFromGoogleContacts: (accessToken) => api.post('/clients/import/google', { accessToken }),
+  bulkUpdate: (clientIds, updateData) => api.patch('/clients/bulk', {
+    clientIds,
+    updateData
+  }),
+  bulkDelete: (clientIds) => api.delete('/clients/bulk', {
+    data: { clientIds }
+  }),
+  exportClients: (format = 'csv', filters = {}) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('format', format);
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) queryParams.append(key, value);
+    });
+
+    return api.get(`/clients/export?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+  },
+  duplicate: (id) => api.post(`/clients/${id}/duplicate`),
+  exportPDF: (id) => api.get(`/clients/${id}/export/pdf`, {
+    responseType: 'blob'
+  }),
 }
 
 // Projects API

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { authAPI, userAPI } from '../services/api';
+import { isTokenValid } from '../utils/tokenUtils';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -72,8 +73,20 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthContext: Checking authentication, token exists:', !!token);
       
       if (token) {
+        // First validate token format and expiration
+        if (!isTokenValid(token)) {
+          console.log('AuthContext: Token is invalid or expired, clearing auth data');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          dispatch({
+            type: 'AUTH_FAILURE',
+            payload: 'Token is invalid or expired',
+          });
+          return;
+        }
+        
         try {
-          console.log('AuthContext: Token found, validating with server...');
+          console.log('AuthContext: Token is valid, validating with server...');
           dispatch({ type: 'AUTH_START' });
           const response = await authAPI.getCurrentUser();
           const { user } = response.data;
@@ -298,6 +311,11 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
+  const checkTokenValidity = () => {
+    const token = localStorage.getItem('token');
+    return token ? isTokenValid(token) : false;
+  };
+
   const value = {
     ...state,
     login,
@@ -308,6 +326,7 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     resetPassword,
     clearError,
+    checkTokenValidity,
   };
 
   return (
