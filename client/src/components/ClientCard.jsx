@@ -165,11 +165,11 @@ const ClientCard = ({ client, onViewProfile, onEdit, onAddNote, onSendInvoice, o
   const outstandingAmount = getOutstandingInvoices();
 
   const cardContent = (
-    <div className="bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all duration-300 group relative overflow-hidden border border-gray-100/50 backdrop-blur-sm h-[28rem]">
+    <div className="bg-[#e5e7eb] rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all duration-300 group relative overflow-hidden border border-gray-100/50 backdrop-blur-sm h-[28rem]">
       {/* Card Container */}
       <div className="p-6 h-full flex flex-col relative">
         {/* Subtle gradient overlay for iOS-style depth */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/95 to-gray-50/30 pointer-events-none rounded-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#e5e7eb]/80 via-[#e5e7eb]/95 to-gray-50/30 pointer-events-none rounded-3xl"></div>
         <div className="relative z-10 h-full flex flex-col">
         {/* Header Section */}
         <div className="mb-4">

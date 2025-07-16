@@ -10,6 +10,8 @@ const userRoutes = require('./routes/userRoutes')
 const onboardingRoutes = require('./routes/onboardingRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
 const clientRoutes = require('./routes/clientRoutes')
+const projectRoutes = require('./routes/projectRoutes')
+const taskRoutes = require('./routes/taskRoutes')
 
 const app = express()
 
@@ -30,6 +32,8 @@ app.use('/api/users', userRoutes)
 app.use('/api/onboarding', onboardingRoutes)
 app.use('/api/payments', paymentRoutes)
 app.use('/api/clients', clientRoutes)
+app.use('/api/projects', projectRoutes)
+app.use('/api/tasks', taskRoutes)
 
 // Simple API endpoint
 app.get('/api/hello', (req, res) => {

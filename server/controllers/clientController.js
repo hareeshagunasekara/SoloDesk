@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
 const getClients = async (req, res) => {
   try {
     const { search, status, type, tags, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     // Build query
     let query = { createdBy: userId };
@@ -66,7 +66,7 @@ const getClients = async (req, res) => {
 const getClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const client = await Client.findOne({ _id: id, createdBy: userId });
       // .populate('projects', 'name status description startDate endDate')
@@ -98,7 +98,7 @@ const getClient = async (req, res) => {
 // Create new client
 const createClient = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const clientData = {
       ...req.body,
       createdBy: userId
@@ -169,7 +169,7 @@ const createClient = async (req, res) => {
 const updateClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
     const updateData = req.body;
 
     // Find client and ensure ownership
@@ -243,7 +243,7 @@ const updateClient = async (req, res) => {
 const deleteClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const client = await Client.findOne({ _id: id, createdBy: userId });
 
@@ -274,7 +274,7 @@ const deleteClient = async (req, res) => {
 const addNote = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { content } = req.body;
 
     if (!content || content.trim() === '') {
@@ -315,7 +315,7 @@ const addNote = async (req, res) => {
 const updateLastContacted = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { lastContacted } = req.body;
 
     const client = await Client.findOne({ _id: id, createdBy: userId });
@@ -348,7 +348,7 @@ const updateLastContacted = async (req, res) => {
 // Get client statistics
 const getClientStats = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const stats = await Client.aggregate([
       { $match: { createdBy: userId } },
@@ -394,7 +394,7 @@ const getClientStats = async (req, res) => {
 const addAttachment = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { filename, originalName, mimeType, size, url } = req.body;
 
     if (!filename || !originalName || !mimeType || !size || !url) {
@@ -444,7 +444,7 @@ const addAttachment = async (req, res) => {
 const removeAttachment = async (req, res) => {
   try {
     const { id, attachmentId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const client = await Client.findOne({ _id: id, createdBy: userId });
 
@@ -487,7 +487,7 @@ const removeAttachment = async (req, res) => {
 const addLink = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { title, url, description, type } = req.body;
 
     if (!title || !url) {
@@ -546,7 +546,7 @@ const addLink = async (req, res) => {
 const removeLink = async (req, res) => {
   try {
     const { id, linkId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const client = await Client.findOne({ _id: id, createdBy: userId });
 
@@ -589,7 +589,7 @@ const removeLink = async (req, res) => {
 const duplicateClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const originalClient = await Client.findOne({ _id: id, createdBy: userId });
 
@@ -644,7 +644,7 @@ const duplicateClient = async (req, res) => {
 const exportClientPDF = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const client = await Client.findOne({ _id: id, createdBy: userId });
 

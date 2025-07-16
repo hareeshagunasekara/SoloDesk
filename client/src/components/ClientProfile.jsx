@@ -236,7 +236,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
     return (
       <div
         onClick={() => isEditing && handleDoubleClick(field, value)}
-        className={`transition-colors rounded px-1 py-1 ${isEditing ? 'cursor-pointer hover:bg-gray-50' : ''} ${className}`}
+        className={`transition-colors rounded px-1 py-1 ${isEditing ? 'cursor-pointer hover:bg-gray-50' : ''} ${className} break-words`}
         title={isEditing ? "Click to edit" : ""}
       >
         {value || placeholder}
@@ -254,16 +254,16 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
   ];
 
   return (
-    <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden border border-gray-200">
+    <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-1 sm:p-4">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-6xl h-[98vh] sm:h-[90vh] flex flex-col border border-gray-200">
         {/* iOS Style Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div className="flex items-center justify-between px-3 sm:px-6 py-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">Client Profile</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Client Profile</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -273,15 +273,15 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
         </div>
 
         {/* Content */}
-        <div className="flex h-[calc(90vh-80px)]">
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0">
           {/* Left Sidebar - Client Info */}
-          <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
+          <div className="w-full lg:w-80 bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col min-h-0 max-h-[60vh] lg:max-h-none">
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {/* Client Avatar & Basic Info */}
               <div className="text-center mb-6">
-                <div className="mx-auto h-20 w-20 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center mb-4 shadow-lg">
-                  <span className="text-2xl font-bold text-gray-700">
+                <div className="mx-auto h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center mb-3 sm:mb-4 shadow-lg">
+                  <span className="text-lg sm:text-2xl font-bold text-gray-700">
                     {updatedClient.name 
                       ? updatedClient.name.split(' ').map(n => n[0]).join('').toUpperCase()
                       : updatedClient.companyName 
@@ -290,10 +290,10 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     }
                   </span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">
                   {updatedClient.name || updatedClient.companyName || 'Unknown Client'}
                 </h3>
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-xs sm:text-sm text-gray-600 mb-3">
                   {updatedClient.type === 'Company' 
                     ? updatedClient.companyName || 'Company Client'
                     : updatedClient.type === 'Individual' 
@@ -301,7 +301,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       : 'Client'
                   }
                 </p>
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(updatedClient.status)}`}>
+                <div className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(updatedClient.status)}`}>
                   {updatedClient.status || 'Unknown'}
                 </div>
               </div>
@@ -311,8 +311,8 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                 <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Contact Information</h4>
                 
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <Mail className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
                       <EditableField 
@@ -320,13 +320,13 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                         value={updatedClient.email} 
                         placeholder="Add email address"
                         type="email"
-                        className="text-sm text-gray-900 truncate"
+                        className="text-xs sm:text-sm text-gray-900 truncate"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <Phone className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
                       <EditableField 
@@ -334,78 +334,78 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                         value={updatedClient.phone} 
                         placeholder="Add phone number"
                         type="tel"
-                        className="text-sm text-gray-900"
+                        className="text-xs sm:text-sm text-gray-900"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <MapPin className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Street Address</p>
                       <EditableField 
                         field="address.street" 
                         value={updatedClient.address?.street} 
                         placeholder="Add street address"
-                        className="text-sm text-gray-900"
+                        className="text-xs sm:text-sm text-gray-900"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <MapPin className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">City</p>
                       <EditableField 
                         field="address.city" 
                         value={updatedClient.address?.city} 
                         placeholder="Add city"
-                        className="text-sm text-gray-900"
+                        className="text-xs sm:text-sm text-gray-900"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <MapPin className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">State/Province</p>
                       <EditableField 
                         field="address.state" 
                         value={updatedClient.address?.state} 
                         placeholder="Add state/province"
-                        className="text-sm text-gray-900"
+                        className="text-xs sm:text-sm text-gray-900"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <MapPin className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Country</p>
                       <EditableField 
                         field="address.country" 
                         value={updatedClient.address?.country} 
                         placeholder="Add country"
-                        className="text-sm text-gray-900"
+                        className="text-xs sm:text-sm text-gray-900"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <MapPin className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Postal Code</p>
                       <EditableField 
                         field="address.postalCode" 
                         value={updatedClient.address?.postalCode} 
                         placeholder="Add postal code"
-                        className="text-sm text-gray-900"
+                        className="text-xs sm:text-sm text-gray-900"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                    <Globe className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                    <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Website</p>
                       <EditableField 
@@ -413,7 +413,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                         value={updatedClient.website} 
                         placeholder="Add website URL"
                         type="url"
-                        className="text-sm text-gray-900 truncate"
+                        className="text-xs sm:text-sm text-gray-900 truncate"
                       />
                     </div>
                   </div>
@@ -442,10 +442,10 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                 <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Quick Stats</h4>
                 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                     <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Total Revenue</span>
+                      <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                      <span className="text-xs sm:text-sm text-gray-600">Total Revenue</span>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
                       ${(client.totalRevenue || 0).toLocaleString()}
@@ -476,7 +476,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
             </div>
 
             {/* Fixed Quick Actions */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50">
+            <div className="p-3 sm:p-6 border-t border-gray-200 bg-gray-50">
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Quick Actions</h4>
                 
@@ -529,56 +529,57 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
             {/* Tab Navigation */}
-            <div className="flex items-center gap-1 p-4 bg-white border-b border-gray-200">
+            <div className="flex items-center gap-1 p-2 sm:p-4 bg-white border-b border-gray-200 overflow-x-auto flex-shrink-0">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'bg-gray-800 text-white shadow-lg'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    {tab.label}
+                    <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                   </button>
                 );
               })}
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {activeTab === 'overview' && (
                 <div className="space-y-6">
                   {/* Header */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-blue-600" />
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Overview</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Overview</h3>
                     </div>
                   </div>
 
                   {/* Client Information */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="h-3 w-3 text-blue-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Client Information</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Client Information</h4>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Client Type</label>
-                          <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-gray-200">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Client Type</label>
+                          <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                             {isEditing ? (
                               <select
                                 value={updatedClient.type || 'Individual'}
@@ -586,7 +587,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                                   const newType = e.target.value;
                                   setUpdatedClient(prev => ({ ...prev, type: newType }));
                                 }}
-                                className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-0"
+                                className="flex-1 text-xs sm:text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-0"
                               >
                                 <option value="Individual">👤 Individual</option>
                                 <option value="Company">🏢 Company</option>
@@ -600,25 +601,25 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                          <div className="p-3 bg-white rounded-xl border border-gray-200">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                             <EditableField 
                               field="name" 
                               value={updatedClient.name} 
                               placeholder="Enter full name"
-                              className="text-sm text-gray-900"
+                              className="text-xs sm:text-sm text-gray-900"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
-                          <div className="p-3 bg-white rounded-xl border border-gray-200">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Industry</label>
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                             <EditableField 
                               field="industry" 
                               value={updatedClient.industry} 
                               placeholder="Add industry"
-                              className="text-sm text-gray-900"
+                              className="text-xs sm:text-sm text-gray-900"
                             />
                           </div>
                         </div>
@@ -626,26 +627,26 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                         {updatedClient.type === 'Company' && (
                           <>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                              <div className="p-3 bg-white rounded-xl border border-gray-200">
+                              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                              <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                                 <EditableField 
                                   field="companyName" 
                                   value={updatedClient.companyName} 
                                   placeholder="Enter company name"
-                                  className="text-sm text-gray-900"
+                                  className="text-xs sm:text-sm text-gray-900"
                                 />
                               </div>
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Company Website</label>
-                              <div className="p-3 bg-white rounded-xl border border-gray-200">
+                              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Company Website</label>
+                              <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                                 <EditableField 
                                   field="companyWebsite" 
                                   value={updatedClient.companyWebsite} 
                                   placeholder="Enter company website"
                                   type="url"
-                                  className="text-sm text-gray-900"
+                                  className="text-xs sm:text-sm text-gray-900"
                                 />
                               </div>
                             </div>
@@ -653,9 +654,9 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                         )}
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Last Contacted</label>
-                          <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-gray-200">
-                            <Calendar className="h-4 w-4 text-gray-500" />
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Last Contacted</label>
+                          <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
                             {isEditing ? (
                               <input
                                 type="date"
@@ -665,10 +666,10 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                                   const updatedData = { ...updatedClient, lastContacted: newDate };
                                   setUpdatedClient(updatedData);
                                 }}
-                                className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-0"
+                                className="flex-1 text-xs sm:text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-0"
                               />
                             ) : (
-                              <span className="text-sm text-gray-900">
+                              <span className="text-xs sm:text-sm text-gray-900">
                                 {updatedClient.lastContacted ? new Date(updatedClient.lastContacted).toLocaleDateString() : 'Not specified'}
                               </span>
                             )}
@@ -678,8 +679,8 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                          <div className="p-3 bg-white rounded-xl border border-gray-200">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Status</label>
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                             {isEditing ? (
                               <select
                                 value={updatedClient.status || 'Lead'}
@@ -687,7 +688,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                                   const newStatus = e.target.value;
                                   setUpdatedClient(prev => ({ ...prev, status: newStatus }));
                                 }}
-                                className="w-full text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-0"
+                                className="w-full text-xs sm:text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-0"
                               >
                                 <option value="Lead">🎯 Lead</option>
                                 <option value="Active">✅ Active</option>
@@ -695,7 +696,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                                 <option value="Archived">📁 Archived</option>
                               </select>
                             ) : (
-                              <span className="text-sm text-gray-900">
+                              <span className="text-xs sm:text-sm text-gray-900">
                                 {updatedClient.status || 'Lead'}
                               </span>
                             )}
@@ -703,8 +704,8 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                          <div className="p-3 bg-white rounded-xl border border-gray-200">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Tags</label>
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
                             <div className="flex flex-wrap gap-2 mb-3">
                               {updatedClient.tags && updatedClient.tags.length > 0 ? (
                                 updatedClient.tags.map((tag, index) => (
@@ -863,29 +864,29 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <Clock className="h-3 w-3 text-green-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex items-center justify-center">
+                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Recent Activity</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Recent Activity</h4>
                     </div>
                     
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm text-gray-900">Invoice INV-002 marked as overdue</span>
-                        <span className="text-xs text-gray-500 ml-auto">2 days ago</span>
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-xs sm:text-sm text-gray-900 flex-1">Invoice INV-002 marked as overdue</span>
+                        <span className="text-xs text-gray-500 flex-shrink-0">2 days ago</span>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-900">Project "Website Redesign" updated to 65% complete</span>
-                        <span className="text-xs text-gray-500 ml-auto">1 week ago</span>
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-xs sm:text-sm text-gray-900 flex-1">Project "Website Redesign" updated to 65% complete</span>
+                        <span className="text-xs text-gray-500 flex-shrink-0">1 week ago</span>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        <span className="text-sm text-gray-900">New note added: "Client mentioned potential referral"</span>
-                        <span className="text-xs text-gray-500 ml-auto">2 weeks ago</span>
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-xs sm:text-sm text-gray-900 flex-1">New note added: "Client mentioned potential referral"</span>
+                        <span className="text-xs text-gray-500 flex-shrink-0">2 weeks ago</span>
                       </div>
                     </div>
                   </div>
@@ -895,12 +896,12 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
               {activeTab === 'projects' && (
                 <div className="space-y-6">
                   {/* Header */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FolderOpen className="h-4 w-4 text-blue-600" />
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FolderOpen className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Projects</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Projects</h3>
                     </div>
                     <Button size="sm" icon={<Plus className="h-4 w-4" />}>
                       New Project
@@ -908,41 +909,41 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Projects List */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FolderOpen className="h-3 w-3 text-blue-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FolderOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Active Projects</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Active Projects</h4>
                     </div>
 
                     <div className="space-y-4">
                       {mockData.projects.map((project) => (
-                        <div key={project.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <h5 className="text-base font-semibold text-gray-900 mb-1">{project.name}</h5>
-                              <div className="flex items-center gap-4">
+                        <div key={project.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                            <div className="flex-1">
+                              <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{project.name}</h5>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getProjectStatusColor(project.status)}`}>
                                   {project.status}
                                 </span>
-                                <span className="text-sm text-gray-600">Due: {new Date(project.dueDate).toLocaleDateString()}</span>
-                                <span className="text-sm text-gray-600">Budget: ${project.budget.toLocaleString()}</span>
+                                <span className="text-xs sm:text-sm text-gray-600">Due: {new Date(project.dueDate).toLocaleDateString()}</span>
+                                <span className="text-xs sm:text-sm text-gray-600">Budget: ${project.budget.toLocaleString()}</span>
                               </div>
                             </div>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="flex-shrink-0">
                               View Details
                             </Button>
                           </div>
                           
                           <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center justify-between text-xs sm:text-sm">
                               <span className="text-gray-600">Progress</span>
                               <span className="font-medium text-gray-900">{project.progress}%</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                               <div 
-                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${project.progress}%` }}
                               ></div>
                             </div>
@@ -957,12 +958,12 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
               {activeTab === 'invoices' && (
                 <div className="space-y-6">
                   {/* Header */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <DollarSign className="h-4 w-4 text-green-600" />
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Invoices & Payments</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Invoices & Payments</h3>
                     </div>
                     <Button size="sm" icon={<Plus className="h-4 w-4" />}>
                       New Invoice
@@ -970,34 +971,32 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Invoices List */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <DollarSign className="h-3 w-3 text-green-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex items-center justify-center">
+                        <DollarSign className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Recent Invoices</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Recent Invoices</h4>
                     </div>
 
                     <div className="space-y-4">
                       {mockData.invoices.map((invoice) => (
-                        <div key={invoice.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <h5 className="text-base font-semibold text-gray-900 mb-1">{invoice.number}</h5>
-                                <div className="flex items-center gap-4">
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getInvoiceStatusColor(invoice.status)}`}>
-                                    {invoice.status}
-                                  </span>
-                                  <span className="text-sm text-gray-600">Due: {new Date(invoice.dueDate).toLocaleDateString()}</span>
-                                  {invoice.paidDate && (
-                                    <span className="text-sm text-gray-600">Paid: {new Date(invoice.paidDate).toLocaleDateString()}</span>
-                                  )}
-                                </div>
+                        <div key={invoice.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex-1">
+                              <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{invoice.number}</h5>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getInvoiceStatusColor(invoice.status)}`}>
+                                  {invoice.status}
+                                </span>
+                                <span className="text-xs sm:text-sm text-gray-600">Due: {new Date(invoice.dueDate).toLocaleDateString()}</span>
+                                {invoice.paidDate && (
+                                  <span className="text-xs sm:text-sm text-gray-600">Paid: {new Date(invoice.paidDate).toLocaleDateString()}</span>
+                                )}
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="text-lg font-bold text-gray-900">${invoice.amount.toLocaleString()}</div>
+                            <div className="text-right flex-shrink-0">
+                              <div className="text-base sm:text-lg font-bold text-gray-900">${invoice.amount.toLocaleString()}</div>
                               <Button variant="outline" size="sm" className="mt-2">
                                 View Details
                               </Button>
@@ -1009,25 +1008,25 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Payment Summary */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <DollarSign className="h-3 w-3 text-green-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex items-center justify-center">
+                        <DollarSign className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Payment Summary</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Payment Summary</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 bg-white rounded-xl border border-gray-200">
-                        <div className="text-2xl font-bold text-green-600">$5,500</div>
-                        <div className="text-sm text-gray-600">Total Paid</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-200">
+                        <div className="text-xl sm:text-2xl font-bold text-green-600">$5,500</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Total Paid</div>
                       </div>
-                      <div className="p-4 bg-white rounded-xl border border-gray-200">
-                        <div className="text-2xl font-bold text-red-600">$3,000</div>
-                        <div className="text-sm text-gray-600">Outstanding</div>
+                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-200">
+                        <div className="text-xl sm:text-2xl font-bold text-red-600">$3,000</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Outstanding</div>
                       </div>
-                      <div className="p-4 bg-white rounded-xl border border-gray-200">
-                        <div className="text-2xl font-bold text-blue-600">$8,500</div>
-                        <div className="text-sm text-gray-600">Total Billed</div>
+                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-200 sm:col-span-2 lg:col-span-1">
+                        <div className="text-xl sm:text-2xl font-bold text-blue-600">$8,500</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Total Billed</div>
                       </div>
                     </div>
                   </div>
@@ -1037,12 +1036,12 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
               {activeTab === 'communications' && (
                 <div className="space-y-6">
                   {/* Header */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <MessageSquare className="h-4 w-4 text-purple-600" />
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Communication</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Communication</h3>
                     </div>
                     <Button size="sm" icon={<Plus className="h-4 w-4" />}>
                       Add Note
@@ -1050,28 +1049,28 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Communication Timeline */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                        <MessageSquare className="h-3 w-3 text-purple-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Communication Timeline</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Communication Timeline</h4>
                     </div>
 
                     <div className="space-y-4">
                       {mockData.communications.map((comm) => (
-                        <div key={comm.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                          <div className="flex items-start gap-4">
-                            <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <MessageSquare className="h-3 w-3 text-purple-600" />
+                        <div key={comm.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600" />
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h5 className="text-base font-semibold text-gray-900">{comm.title}</h5>
-                                <span className="text-sm text-gray-500">{new Date(comm.date).toLocaleDateString()}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-2">
+                                <h5 className="text-sm sm:text-base font-semibold text-gray-900">{comm.title}</h5>
+                                <span className="text-xs sm:text-sm text-gray-500">{new Date(comm.date).toLocaleDateString()}</span>
                                 <span className="text-xs text-gray-400 uppercase tracking-wide">{comm.type}</span>
                               </div>
-                              <p className="text-gray-700">{comm.notes}</p>
+                              <p className="text-xs sm:text-sm text-gray-700">{comm.notes}</p>
                             </div>
                           </div>
                         </div>
@@ -1084,12 +1083,12 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
               {activeTab === 'files' && (
                 <div className="space-y-6">
                   {/* Header */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                        <Paperclip className="h-4 w-4 text-orange-600" />
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Paperclip className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Files</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Files</h3>
                     </div>
                     <Button size="sm" icon={<Upload className="h-4 w-4" />}>
                       Upload Files
@@ -1097,29 +1096,29 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Files List */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
-                        <Paperclip className="h-3 w-3 text-orange-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Paperclip className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-orange-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Attached Files</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Attached Files</h4>
                     </div>
 
                     <div className="space-y-4">
                       {mockData.attachments.map((file) => (
-                        <div key={file.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                        <div key={file.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
                               {getFileIcon(file.type)}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h5 className="text-sm font-semibold text-gray-900 truncate">{file.name}</h5>
-                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <h5 className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{file.name}</h5>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-500">
                                 <span>{formatFileSize(file.size)}</span>
                                 <span>Uploaded {new Date(file.uploadedAt).toLocaleDateString()}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               <Button variant="outline" size="sm" icon={<Download className="h-4 w-4" />}>
                                 Download
                               </Button>
@@ -1138,12 +1137,12 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
               {activeTab === 'notes' && (
                 <div className="space-y-6">
                   {/* Header */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-indigo-600" />
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Notes</h3>
                     </div>
                     <Button size="sm" icon={<Plus className="h-4 w-4" />}>
                       Add Note
@@ -1151,23 +1150,23 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Notes List */}
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
-                        <FileText className="h-3 w-3 text-indigo-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-indigo-600" />
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900">Client Notes</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Client Notes</h4>
                     </div>
 
                     <div className="space-y-4">
                       {mockData.notes.map((note) => (
-                        <div key={note.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                          <div className="flex items-start justify-between mb-3">
+                        <div key={note.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-900">{note.author}</span>
+                              <span className="text-xs sm:text-sm font-medium text-gray-900">{note.author}</span>
                               <span className="text-xs text-gray-500">{new Date(note.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               <Button variant="outline" size="sm" icon={<Edit className="h-4 w-4" />}>
                                 Edit
                               </Button>
@@ -1176,7 +1175,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                               </Button>
                             </div>
                           </div>
-                          <p className="text-gray-700">{note.content}</p>
+                          <p className="text-xs sm:text-sm text-gray-700">{note.content}</p>
                         </div>
                       ))}
                     </div>
