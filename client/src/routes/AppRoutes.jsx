@@ -18,7 +18,7 @@ import ResetPassword from '../pages/ResetPassword';
 // Dashboard Pages
 import Dashboard from '../pages/Dashboard';
 import Clients from '../pages/Clients';
-import ClientDetail from '../pages/ClientDetail';
+
 import Projects from '../pages/Projects';
 import ProjectDetail from '../pages/ProjectDetail';
 import Tasks from '../pages/Tasks';
@@ -134,16 +134,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/clients/:id"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <ClientDetail />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
+
       <Route
         path="/projects"
         element={

@@ -163,6 +163,8 @@ export const projectsAPI = {
   getTimeEntries: (id) => api.get(`/projects/${id}/time-entries`),
   duplicate: (id) => api.post(`/projects/${id}/duplicate`),
   archive: (id) => api.put(`/projects/${id}/archive`),
+  addNote: (id, content) => api.post(`/projects/${id}/notes`, { content }),
+  deleteNote: (projectId, noteId) => api.delete(`/projects/${projectId}/notes/${noteId}`),
 }
 
 // Tasks API

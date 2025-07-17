@@ -1,0 +1,1 @@
+console.log("=== PROJECT CREATION DEBUG ==="); console.log("Request body:", JSON.stringify(req.body, null, 2)); console.log("Tasks:", req.body.tasks);

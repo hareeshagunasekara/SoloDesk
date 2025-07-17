@@ -101,13 +101,6 @@ const SidebarLayout = ({ children }) => {
       current: location.pathname === '/calendar',
     },
     {
-      name: 'Tasks',
-      href: '/tasks',
-      icon: CheckSquare,
-      description: 'To-dos, reminders, auto-follow-ups',
-      current: location.pathname.startsWith('/tasks'),
-    },
-    {
       name: 'Invoices',
       href: '/invoices',
       icon: FileText,
