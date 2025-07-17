@@ -93,6 +93,26 @@ export const projectService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to archive project');
     }
+  },
+
+  // Add a note to a project
+  addProjectNote: async (projectId, content) => {
+    try {
+      const response = await projectsAPI.addNote(projectId, content);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to add note');
+    }
+  },
+
+  // Delete a note from a project
+  deleteProjectNote: async (projectId, noteId) => {
+    try {
+      const response = await projectsAPI.deleteNote(projectId, noteId);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to delete note');
+    }
   }
 };
 
@@ -106,5 +126,7 @@ export const {
   getProjectTasks,
   getProjectTimeEntries,
   duplicateProject,
-  archiveProject
+  archiveProject,
+  addProjectNote,
+  deleteProjectNote
 } = projectService; 

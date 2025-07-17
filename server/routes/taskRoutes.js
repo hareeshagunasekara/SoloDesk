@@ -156,6 +156,8 @@ router.put('/:taskId', async (req, res) => {
 router.delete('/:taskId', async (req, res) => {
   try {
     const { taskId } = req.params;
+    console.log('🗑️ Attempting to delete task:', taskId);
+    console.log('👤 User ID:', req.user._id);
 
     const task = await Task.findOne({
       _id: taskId,
@@ -164,13 +166,24 @@ router.delete('/:taskId', async (req, res) => {
     });
 
     if (!task) {
+      console.log('❌ Task not found or already archived');
       return res.status(404).json({
         success: false,
         message: 'Task not found'
       });
     }
 
+    console.log('✅ Task found:', task.name);
+    console.log('📝 Current task state:', {
+      isArchived: task.isArchived,
+      completed: task.completed,
+      name: task.name
+    });
+
+    // Archive the task and await the result
     await task.archive(req.user._id);
+
+    console.log('✅ Task archived successfully');
 
     res.status(200).json({
       success: true,
@@ -178,7 +191,8 @@ router.delete('/:taskId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error deleting task:', error);
+    console.error('❌ Error deleting task:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to delete task',

@@ -74,6 +74,26 @@ const projectSchema = new mongoose.Schema({
     default: []
   },
 
+  // Project Notes
+  notes: {
+    type: [{
+      content: {
+        type: String,
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
+      createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+      }
+    }],
+    default: []
+  },
+
   // Project Settings
   budget: {
     type: Number,

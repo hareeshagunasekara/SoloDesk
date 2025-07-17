@@ -16,7 +16,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
-  ChevronRight
+  ChevronRight,
+  Info
 } from 'lucide-react';
 
 const AddProjectModal = ({ isOpen, onClose, onSubmit, clients = [] }) => {
@@ -603,9 +604,17 @@ const AddProjectModal = ({ isOpen, onClose, onSubmit, clients = [] }) => {
 
               {/* Quick Tasks */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quick Tasks
-                </label>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Quick Tasks
+                  </label>
+                  <div className="group relative">
+                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                    <div className="absolute top-full left-0 mt-1 px-2 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 max-w-xs z-10 shadow-lg">
+                      Break your project into manageable steps
+                    </div>
+                  </div>
+                </div>
                 <div className="flex gap-2 mb-3">
                   <input
                     type="text"

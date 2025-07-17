@@ -6,6 +6,7 @@ import { clientService } from '../services/clientService';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Filter } from 'lucide-react';
 import ProjectCard from '../components/ProjectCard';
+import taskService from '../services/taskService';
 
 const Projects = () => {
   const { isAuthenticated, user, checkTokenValidity } = useAuth();
@@ -14,6 +15,14 @@ const Projects = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [priorityFilter, setPriorityFilter] = useState('All');
+  const [dueDateSort, setDueDateSort] = useState('None');
+  const [budgetSort, setBudgetSort] = useState('None');
+
+  // State to hold tasks info for each project
+  const [projectTasksInfo, setProjectTasksInfo] = useState({}); // { [projectId]: { completed, total, nextDueDate } }
 
   // Fetch projects and clients on component mount
   useEffect(() => {
@@ -25,6 +34,46 @@ const Projects = () => {
       setLoading(false);
     }
   }, [isAuthenticated, user]);
+
+  // Fetch tasks for all projects after loading
+  useEffect(() => {
+    if (!loading && projects.length > 0) {
+      const fetchTasksForProjects = async () => {
+        const info = {};
+        await Promise.all(projects.map(async (project) => {
+          try {
+            const res = await taskService.getProjectTasks(project._id);
+            if (res.success && Array.isArray(res.data)) {
+              const tasks = res.data;
+              const completed = tasks.filter(t => t.completed).length;
+              const total = tasks.length;
+              // Find next due date (soonest in the future)
+              const now = new Date();
+              const futureTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) >= now);
+              let nextDueDate = null;
+              if (futureTasks.length > 0) {
+                nextDueDate = futureTasks.reduce((soonest, t) => {
+                  const tDate = new Date(t.dueDate);
+                  return (!soonest || tDate < soonest) ? tDate : soonest;
+                }, null);
+              }
+              info[project._id] = {
+                completed,
+                total,
+                nextDueDate: nextDueDate ? nextDueDate.toISOString() : null
+              };
+            } else {
+              info[project._id] = { completed: 0, total: 0, nextDueDate: null };
+            }
+          } catch {
+            info[project._id] = { completed: 0, total: 0, nextDueDate: null };
+          }
+        }));
+        setProjectTasksInfo(info);
+      };
+      fetchTasksForProjects();
+    }
+  }, [loading, projects]);
 
   const fetchData = async () => {
     try {
@@ -135,9 +184,69 @@ const Projects = () => {
                   className="input pl-10 w-64"
                 />
               </div>
-              <Button variant="outline" size="sm" icon={<Filter className="h-4 w-4" />}>
-                Filter
-              </Button>
+              {/* Filters */}
+              <div className="flex gap-2 items-center">
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  className="border border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-gray-400"
+                >
+                  <option value="All">All Statuses</option>
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Completed">Completed</option>
+                </select>
+                {/* Priority Filter */}
+                <select
+                  value={priorityFilter}
+                  onChange={e => setPriorityFilter(e.target.value)}
+                  className="border border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-gray-400"
+                >
+                  <option value="All">All Priorities</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+                {/* Due Date Sort */}
+                <select
+                  value={dueDateSort}
+                  onChange={e => setDueDateSort(e.target.value)}
+                  className="border border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  title="Sort by due date"
+                >
+                  <option value="None">Sort by Due Date</option>
+                  <option value="Closest">Closest First</option>
+                  <option value="Farthest">Farthest First</option>
+                </select>
+                {/* Budget Sort */}
+                <select
+                  value={budgetSort}
+                  onChange={e => setBudgetSort(e.target.value)}
+                  className="border border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  title="Sort by budget"
+                >
+                  <option value="None">Sort by Budget</option>
+                  <option value="Highest">Highest First</option>
+                  <option value="Lowest">Lowest First</option>
+                </select>
+                {(statusFilter !== 'All' || priorityFilter !== 'All' || dueDateSort !== 'None' || budgetSort !== 'None') && (
+                  <button
+                    type="button"
+                    className="px-3 py-2 rounded-lg text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 border border-gray-300 transition-all"
+                    style={{ minWidth: 60 }}
+                    onClick={() => {
+                      setStatusFilter('All');
+                      setPriorityFilter('All');
+                      setDueDateSort('None');
+                      setBudgetSort('None');
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -190,8 +299,36 @@ const Projects = () => {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {projects.map((project) => {
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Filter projects in-memory */}
+              {projects
+                .filter(project => {
+                  // Status filter
+                  if (statusFilter !== 'All' && project.status !== statusFilter) return false;
+                  // Priority filter
+                  if (priorityFilter !== 'All' && project.priority !== priorityFilter) return false;
+                  return true;
+                })
+                .sort((a, b) => {
+                  // Handle budget sorting first (higher priority)
+                  if (budgetSort !== 'None') {
+                    const aBudget = a.budget || 0;
+                    const bBudget = b.budget || 0;
+                    if (budgetSort === 'Highest') return bBudget - aBudget;
+                    if (budgetSort === 'Lowest') return aBudget - bBudget;
+                  }
+                  
+                  // Handle due date sorting
+                  if (dueDateSort !== 'None') {
+                    const aDue = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+                    const bDue = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+                    if (dueDateSort === 'Closest') return aDue - bDue;
+                    if (dueDateSort === 'Farthest') return bDue - aDue;
+                  }
+                  
+                  return 0;
+                })
+                .map((project) => {
                 // Calculate derived fields for ProjectCard
                 const clientName = project.clientId?.name || 'No client assigned';
                 const tags = project.tags || [];
@@ -202,9 +339,11 @@ const Projects = () => {
                 const progress = project.progress || 0;
                 const priority = project.priority || 'Medium';
                 const budget = project.budget ? `LKR ${project.budget.toLocaleString()}` : 'N/A';
-                const estimatedHours = project.estimatedHours || 0;
-                const completedTasks = project.completedTasks || 0;
-                const totalTasks = project.totalTasks || 0;
+                // Get task info from state
+                const taskInfo = projectTasksInfo[project._id] || { completed: 0, total: 0, nextDueDate: null };
+                const completedTasks = taskInfo.completed;
+                const totalTasks = taskInfo.total;
+                const nextTaskDue = taskInfo.nextDueDate ? new Date(taskInfo.nextDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No upcoming tasks';
                 const createdBy = project.createdBy?.firstName ? `${project.createdBy.firstName} ${project.createdBy.lastName || ''}` : 'You';
                 const assignedTo = project.assignedTo?.firstName ? `${project.assignedTo.firstName} ${project.assignedTo.lastName || ''}` : '';
                 return (
@@ -219,9 +358,10 @@ const Projects = () => {
                     progress={progress}
                     priority={priority}
                     budget={budget}
-                    estimatedHours={estimatedHours}
+                    // estimatedHours removed
                     completedTasks={completedTasks}
                     totalTasks={totalTasks}
+                    nextTaskDue={nextTaskDue}
                     createdBy={createdBy}
                     assignedTo={assignedTo}
                     onView={() => { /* TODO: handle view */ }}

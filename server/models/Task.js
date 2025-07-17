@@ -197,7 +197,8 @@ taskSchema.pre('save', function(next) {
     this.history.push({
       action: 'created',
       description: `Task "${this.name}" was created`,
-      performedBy: this.createdBy
+      performedBy: this.createdBy,
+      performedAt: new Date()
     });
   } else if (this.isModified('completed') && this.completed) {
     // Task was completed
@@ -206,6 +207,7 @@ taskSchema.pre('save', function(next) {
       action: 'completed',
       description: `Task "${this.name}" was completed`,
       performedBy: this.createdBy,
+      performedAt: new Date(),
       metadata: {
         completedAt: this.completedAt
       }
@@ -217,7 +219,8 @@ taskSchema.pre('save', function(next) {
     this.history.push({
       action: 'reopened',
       description: `Task "${this.name}" was reopened`,
-      performedBy: this.createdBy
+      performedBy: this.createdBy,
+      performedAt: new Date()
     });
   } else if (this.isModified('assignedTo')) {
     // Task assignment changed
@@ -225,6 +228,7 @@ taskSchema.pre('save', function(next) {
       action: 'assigned',
       description: `Task "${this.name}" was assigned`,
       performedBy: this.createdBy,
+      performedAt: new Date(),
       metadata: {
         assignedTo: this.assignedTo
       }
@@ -235,6 +239,7 @@ taskSchema.pre('save', function(next) {
       action: 'due_date_changed',
       description: `Due date for task "${this.name}" was changed`,
       performedBy: this.createdBy,
+      performedAt: new Date(),
       metadata: {
         newDueDate: this.dueDate
       }
@@ -245,9 +250,26 @@ taskSchema.pre('save', function(next) {
       action: 'priority_changed',
       description: `Priority for task "${this.name}" was changed to ${this.priority}`,
       performedBy: this.createdBy,
+      performedAt: new Date(),
       metadata: {
         newPriority: this.priority
       }
+    });
+  } else if (this.isModified('isArchived') && this.isArchived) {
+    // Task was archived
+    this.history.push({
+      action: 'archived',
+      description: 'Task was archived',
+      performedBy: this.archivedBy,
+      performedAt: new Date()
+    });
+  } else if (this.isModified('isArchived') && !this.isArchived) {
+    // Task was restored
+    this.history.push({
+      action: 'restored',
+      description: 'Task was restored',
+      performedBy: this.createdBy,
+      performedAt: new Date()
     });
   }
   next();
@@ -259,15 +281,6 @@ taskSchema.methods.complete = function(completedBy) {
   this.completedAt = new Date();
   this.completedBy = completedBy;
   
-  this.history.push({
-    action: 'completed',
-    description: `Task "${this.name}" was completed`,
-    performedBy: completedBy,
-    metadata: {
-      completedAt: this.completedAt
-    }
-  });
-  
   return this.save();
 };
 
@@ -277,12 +290,6 @@ taskSchema.methods.reopen = function(reopenedBy) {
   this.completedAt = undefined;
   this.completedBy = undefined;
   
-  this.history.push({
-    action: 'reopened',
-    description: `Task "${this.name}" was reopened`,
-    performedBy: reopenedBy
-  });
-  
   return this.save();
 };
 
@@ -290,28 +297,22 @@ taskSchema.methods.reopen = function(reopenedBy) {
 taskSchema.methods.assign = function(userId, assignedBy) {
   this.assignedTo = userId;
   
-  this.history.push({
-    action: 'assigned',
-    description: `Task "${this.name}" was assigned`,
-    performedBy: assignedBy,
-    metadata: {
-      assignedTo: userId
-    }
-  });
-  
   return this.save();
 };
 
 // Method to archive task
 taskSchema.methods.archive = function(archivedBy) {
+  console.log('🔄 Archiving task:', this.name);
+  console.log('👤 Archived by:', archivedBy);
+  
   this.isArchived = true;
   this.archivedAt = new Date();
   this.archivedBy = archivedBy;
   
-  this.history.push({
-    action: 'archived',
-    description: 'Task was archived',
-    performedBy: archivedBy
+  console.log('📝 Task state before save:', {
+    isArchived: this.isArchived,
+    archivedAt: this.archivedAt,
+    archivedBy: this.archivedBy
   });
   
   return this.save();
@@ -322,12 +323,6 @@ taskSchema.methods.restore = function(restoredBy) {
   this.isArchived = false;
   this.archivedAt = undefined;
   this.archivedBy = undefined;
-  
-  this.history.push({
-    action: 'restored',
-    description: 'Task was restored',
-    performedBy: restoredBy
-  });
   
   return this.save();
 };

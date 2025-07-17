@@ -327,11 +327,99 @@ const getProjectStats = async (req, res) => {
   }
 };
 
+// Add note to project
+const addNoteToProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user._id;
+    const { content } = req.body;
+
+    if (!content || content.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Note content is required'
+      });
+    }
+
+    const project = await Project.findOne({ _id: projectId, createdBy: userId, isArchived: false });
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    const note = {
+      content: content.trim(),
+      createdAt: new Date(),
+      createdBy: userId
+    };
+    project.notes.push(note);
+    await project.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Note added successfully',
+      data: project.notes[project.notes.length - 1]
+    });
+  } catch (error) {
+    console.error('Error adding note to project:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add note',
+      error: error.message
+    });
+  }
+};
+
+// Delete note from project
+const deleteNoteFromProject = async (req, res) => {
+  try {
+    const { projectId, noteId } = req.params;
+    const userId = req.user._id;
+
+    const project = await Project.findOne({ _id: projectId, createdBy: userId, isArchived: false });
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Find the note index
+    const noteIndex = project.notes.findIndex(note => note._id.toString() === noteId);
+    if (noteIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Note not found'
+      });
+    }
+
+    // Remove the note
+    project.notes.splice(noteIndex, 1);
+    await project.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Note deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting note from project:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete note',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createProject,
   getProjects,
   getProject,
   updateProject,
   deleteProject,
-  getProjectStats
+  getProjectStats,
+  addNoteToProject,
+  deleteNoteFromProject
 }; 

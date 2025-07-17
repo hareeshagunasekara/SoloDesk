@@ -42,12 +42,12 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
   const [editingField, setEditingField] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [isEditing, setIsEditing] = useState(initialEditMode);
-  const [updatedClient, setUpdatedClient] = useState(client);
+  const [updatedClient, setUpdatedClient] = useState(client || {});
   const [isSaving, setIsSaving] = useState(false);
 
   // Update local state when client prop changes
   useEffect(() => {
-    setUpdatedClient(client);
+    setUpdatedClient(client || {});
   }, [client]);
 
   // Mock data for sections that aren't set up yet
@@ -96,12 +96,13 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
   };
 
   const getStatusColor = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-800 border-gray-300';
     switch (status.toLowerCase()) {
       case 'active': return 'bg-green-100 text-green-800 border-green-200';
       case 'lead': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'inactive': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'inactive': return 'bg-gray-100 text-gray-800 border-gray-300';
       case 'archived': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
@@ -110,12 +111,12 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
       case 'VIP': return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
       case 'high-budget': return 'bg-green-100 text-green-800 border border-green-200';
       case 'retainer': return 'bg-blue-100 text-blue-800 border border-blue-200';
-      case 'low-maintenance': return 'bg-gray-100 text-gray-800 border border-gray-200';
+      case 'low-maintenance': return 'bg-gray-100 text-gray-800 border border-gray-300';
       case 'urgent': return 'bg-red-100 text-red-800 border border-red-200';
       case 'weekly client': return 'bg-purple-100 text-purple-800 border border-purple-200';
       case 'quarterly review': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
       case 'seasonal': return 'bg-orange-100 text-orange-800 border border-orange-200';
-      default: return 'bg-gray-100 text-gray-700 border border-gray-200';
+      default: return 'bg-gray-100 text-gray-700 border border-gray-300';
     }
   };
 
@@ -134,6 +135,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
   };
 
   const getProjectStatusColor = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
     switch (status.toLowerCase()) {
       case 'completed': return 'bg-green-100 text-green-800';
       case 'in progress': return 'bg-blue-100 text-blue-800';
@@ -144,6 +146,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
   };
 
   const getInvoiceStatusColor = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
     switch (status.toLowerCase()) {
       case 'paid': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -253,11 +256,16 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
     { id: 'notes', label: 'Notes', icon: FileText }
   ];
 
+  // Don't render if no client data
+  if (!client) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-1 sm:p-4">
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-6xl h-[98vh] sm:h-[90vh] flex flex-col border border-gray-200">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-6xl h-[98vh] sm:h-[90vh] flex flex-col border border-gray-300">
         {/* iOS Style Header */}
-        <div className="flex items-center justify-between px-3 sm:px-6 py-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between px-3 sm:px-6 py-4 bg-gray-50 border-b border-gray-300 flex-shrink-0 rounded-t-xl sm:rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
@@ -275,7 +283,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
         {/* Content */}
         <div className="flex flex-col lg:flex-row flex-1 min-h-0">
           {/* Left Sidebar - Client Info */}
-          <div className="w-full lg:w-80 bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col min-h-0 max-h-[60vh] lg:max-h-none">
+          <div className="w-full lg:w-80 bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-300 flex flex-col min-h-0 max-h-[60vh] lg:max-h-none lg:rounded-br-xl lg:rounded-br-2xl">
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-3 sm:p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {/* Client Avatar & Basic Info */}
@@ -311,7 +319,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                 <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Contact Information</h4>
                 
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
@@ -325,7 +333,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
@@ -339,7 +347,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Street Address</p>
@@ -352,7 +360,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">City</p>
@@ -365,7 +373,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">State/Province</p>
@@ -378,7 +386,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Country</p>
@@ -391,7 +399,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Postal Code</p>
@@ -404,7 +412,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Website</p>
@@ -428,7 +436,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     {client.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg border border-gray-200"
+                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg border border-gray-300"
                       >
                         {tag}
                       </span>
@@ -442,7 +450,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                 <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Quick Stats</h4>
                 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
                       <span className="text-xs sm:text-sm text-gray-600">Total Revenue</span>
@@ -452,7 +460,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-300">
                     <div className="flex items-center gap-2">
                       <FolderOpen className="h-4 w-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Projects</span>
@@ -462,7 +470,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-300">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Invoices</span>
@@ -476,7 +484,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
             </div>
 
             {/* Fixed Quick Actions */}
-            <div className="p-3 sm:p-6 border-t border-gray-200 bg-gray-50">
+            <div className="p-3 sm:p-6 border-t border-gray-300 bg-gray-50 lg:rounded-br-xl lg:rounded-br-2xl">
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Quick Actions</h4>
                 
@@ -529,9 +537,9 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="flex-1 flex flex-col min-h-0">
             {/* Tab Navigation */}
-            <div className="flex items-center gap-1 p-2 sm:p-4 bg-white border-b border-gray-200 overflow-x-auto flex-shrink-0">
+            <div className="flex items-center gap-1 p-2 sm:p-4 bg-white border-b border-gray-300 overflow-x-auto flex-shrink-0 lg:rounded-tr-xl lg:rounded-tr-2xl">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -567,7 +575,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Client Information */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center">
                         <User className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-600" />
@@ -579,7 +587,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       <div className="space-y-4">
                         <div>
                           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Client Type</label>
-                          <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                             {isEditing ? (
                               <select
                                 value={updatedClient.type || 'Individual'}
@@ -602,7 +610,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                         <div>
                           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                             <EditableField 
                               field="name" 
                               value={updatedClient.name} 
@@ -614,7 +622,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                         <div>
                           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Industry</label>
-                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                             <EditableField 
                               field="industry" 
                               value={updatedClient.industry} 
@@ -628,7 +636,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                           <>
                             <div>
                               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                              <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                              <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                                 <EditableField 
                                   field="companyName" 
                                   value={updatedClient.companyName} 
@@ -640,7 +648,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                             <div>
                               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Company Website</label>
-                              <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                              <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                                 <EditableField 
                                   field="companyWebsite" 
                                   value={updatedClient.companyWebsite} 
@@ -655,7 +663,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                         <div>
                           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Last Contacted</label>
-                          <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                             <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
                             {isEditing ? (
                               <input
@@ -680,7 +688,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       <div className="space-y-4">
                         <div>
                           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Status</label>
-                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                             {isEditing ? (
                               <select
                                 value={updatedClient.status || 'Lead'}
@@ -705,7 +713,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                         <div>
                           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Tags</label>
-                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                             <div className="flex flex-wrap gap-2 mb-3">
                               {updatedClient.tags && updatedClient.tags.length > 0 ? (
                                 updatedClient.tags.map((tag, index) => (
@@ -796,7 +804,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Client Since</label>
-                          <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-gray-300">
                             <Calendar className="h-4 w-4 text-gray-500" />
                             <span className="text-sm text-gray-900">
                               {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : 'Not specified'}
@@ -806,7 +814,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                          <div className="p-3 bg-white rounded-xl border border-gray-200">
+                          <div className="p-3 bg-white rounded-xl border border-gray-300">
                             <div className="space-y-2">
                               {updatedClient.notes && updatedClient.notes.length > 0 ? (
                                 updatedClient.notes.map((note, index) => (
@@ -864,7 +872,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex items-center justify-center">
                         <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600" />
@@ -873,17 +881,17 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                     
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                         <span className="text-xs sm:text-sm text-gray-900 flex-1">Invoice INV-002 marked as overdue</span>
                         <span className="text-xs text-gray-500 flex-shrink-0">2 days ago</span>
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></div>
                         <span className="text-xs sm:text-sm text-gray-900 flex-1">Project "Website Redesign" updated to 65% complete</span>
                         <span className="text-xs text-gray-500 flex-shrink-0">1 week ago</span>
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-gray-300">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
                         <span className="text-xs sm:text-sm text-gray-900 flex-1">New note added: "Client mentioned potential referral"</span>
                         <span className="text-xs text-gray-500 flex-shrink-0">2 weeks ago</span>
@@ -909,7 +917,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Projects List */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center">
                         <FolderOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-600" />
@@ -919,7 +927,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                     <div className="space-y-4">
                       {mockData.projects.map((project) => (
-                        <div key={project.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                        <div key={project.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                             <div className="flex-1">
                               <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{project.name}</h5>
@@ -971,7 +979,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Invoices List */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex items-center justify-center">
                         <DollarSign className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600" />
@@ -981,7 +989,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                     <div className="space-y-4">
                       {mockData.invoices.map((invoice) => (
-                        <div key={invoice.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                        <div key={invoice.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex-1">
                               <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{invoice.number}</h5>
@@ -1008,7 +1016,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Payment Summary */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex items-center justify-center">
                         <DollarSign className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600" />
@@ -1016,15 +1024,15 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       <h4 className="text-sm sm:text-base font-semibold text-gray-900">Payment Summary</h4>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-200">
+                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-300">
                         <div className="text-xl sm:text-2xl font-bold text-green-600">$5,500</div>
                         <div className="text-xs sm:text-sm text-gray-600">Total Paid</div>
                       </div>
-                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-200">
+                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-300">
                         <div className="text-xl sm:text-2xl font-bold text-red-600">$3,000</div>
                         <div className="text-xs sm:text-sm text-gray-600">Outstanding</div>
                       </div>
-                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-200 sm:col-span-2 lg:col-span-1">
+                      <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-300 sm:col-span-2 lg:col-span-1">
                         <div className="text-xl sm:text-2xl font-bold text-blue-600">$8,500</div>
                         <div className="text-xs sm:text-sm text-gray-600">Total Billed</div>
                       </div>
@@ -1049,7 +1057,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Communication Timeline */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center">
                         <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600" />
@@ -1059,7 +1067,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                     <div className="space-y-4">
                       {mockData.communications.map((comm) => (
-                        <div key={comm.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                        <div key={comm.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
                           <div className="flex items-start gap-3 sm:gap-4">
                             <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600" />
@@ -1096,7 +1104,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Files List */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-orange-100 rounded-full flex items-center justify-center">
                         <Paperclip className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-orange-600" />
@@ -1106,9 +1114,9 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                     <div className="space-y-4">
                       {mockData.attachments.map((file) => (
-                        <div key={file.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                        <div key={file.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center flex-shrink-0">
                               {getFileIcon(file.type)}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1150,7 +1158,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   </div>
 
                   {/* Notes List */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-indigo-100 rounded-full flex items-center justify-center">
                         <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-indigo-600" />
@@ -1160,7 +1168,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
                     <div className="space-y-4">
                       {mockData.notes.map((note) => (
-                        <div key={note.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+                        <div key={note.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                             <div className="flex items-center gap-2">
                               <span className="text-xs sm:text-sm font-medium text-gray-900">{note.author}</span>
