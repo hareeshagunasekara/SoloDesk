@@ -32,9 +32,14 @@ import {
   FileImage,
   FileVideo,
   FileAudio,
-  FileArchive
+  FileArchive,
+  Loader2
 } from 'lucide-react';
 import Button from './Button';
+import { clientsAPI } from '../services/api';
+import AddProjectModal from './AddProjectModal';
+import ViewProject from './ViewProject';
+import AddInvoiceModal from './AddInvoiceModal';
 
 const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -45,18 +50,85 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
   const [updatedClient, setUpdatedClient] = useState(client || {});
   const [isSaving, setIsSaving] = useState(false);
 
+  // Projects state
+  const [projects, setProjects] = useState([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsError, setProjectsError] = useState(null);
+
+  // Invoices state
+  const [invoices, setInvoices] = useState([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
+  const [invoicesError, setInvoicesError] = useState(null);
+
+  // AddProjectModal state
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+
+  // ViewProject modal state
+  const [showViewProjectModal, setShowViewProjectModal] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+
+  // AddInvoiceModal state
+  const [showAddInvoiceModal, setShowAddInvoiceModal] = useState(false);
+
   // Update local state when client prop changes
   useEffect(() => {
     setUpdatedClient(client || {});
   }, [client]);
 
+  // Fetch projects when component mounts or client changes
+  useEffect(() => {
+    if (client?._id) {
+      fetchClientProjects();
+      fetchClientInvoices();
+    }
+  }, [client?._id]);
+
+  const fetchClientProjects = async () => {
+    if (!client?._id) return;
+    
+    setProjectsLoading(true);
+    setProjectsError(null);
+    try {
+      const response = await clientsAPI.getProjects(client._id);
+      if (response.data?.success) {
+        setProjects(response.data.data || []);
+      } else {
+        setProjects([]);
+        setProjectsError(response.data?.message || 'Failed to fetch projects');
+      }
+    } catch (error) {
+      console.error('Error fetching client projects:', error);
+      setProjects([]);
+      setProjectsError(error.response?.data?.message || 'Failed to fetch projects');
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  const fetchClientInvoices = async () => {
+    if (!client?._id) return;
+    
+    setInvoicesLoading(true);
+    setInvoicesError(null);
+    try {
+      const response = await clientsAPI.getInvoices(client._id);
+      if (response.data?.success) {
+        setInvoices(response.data.data || []);
+      } else {
+        setInvoices([]);
+        setInvoicesError(response.data?.message || 'Failed to fetch invoices');
+      }
+    } catch (error) {
+      console.error('Error fetching client invoices:', error);
+      setInvoices([]);
+      setInvoicesError(error.response?.data?.message || 'Failed to fetch invoices');
+    } finally {
+      setInvoicesLoading(false);
+    }
+  };
+
   // Mock data for sections that aren't set up yet
   const mockData = {
-    projects: [
-      { id: 1, name: 'Website Redesign', status: 'In Progress', progress: 65, dueDate: '2024-03-15', budget: 5000 },
-      { id: 2, name: 'Brand Identity', status: 'Completed', progress: 100, dueDate: '2024-02-28', budget: 3000 },
-      { id: 3, name: 'Marketing Campaign', status: 'Planning', progress: 25, dueDate: '2024-04-10', budget: 8000 }
-    ],
     invoices: [
       { id: 1, number: 'INV-001', amount: 2500, status: 'Paid', dueDate: '2024-02-15', paidDate: '2024-02-10' },
       { id: 2, number: 'INV-002', amount: 3000, status: 'Overdue', dueDate: '2024-02-28', paidDate: null },
@@ -135,13 +207,14 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
   };
 
   const getProjectStatusColor = (status) => {
-    if (!status) return 'bg-gray-100 text-gray-800';
+    if (!status) return 'bg-gray-100 text-gray-800 border border-gray-200';
     switch (status.toLowerCase()) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in progress': return 'bg-blue-100 text-blue-800';
-      case 'planning': return 'bg-yellow-100 text-yellow-800';
-      case 'on hold': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-gray-600 text-white border border-gray-600';
+      case 'in progress': return 'bg-gray-500 text-white border border-gray-500';
+      case 'planning': return 'bg-gray-400 text-white border border-gray-400';
+      case 'on hold': return 'bg-gray-300 text-gray-700 border border-gray-300';
+      case 'not started': return 'bg-gray-200 text-gray-700 border border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
   };
 
@@ -151,8 +224,32 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
       case 'paid': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'overdue': return 'bg-red-100 text-red-800';
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'sent': return 'bg-blue-100 text-blue-800';
+      case 'partially_paid': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const formatCurrency = (amount, currency = 'USD') => {
+    if (!amount || isNaN(amount)) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
+
+  const calculatePaymentSummary = () => {
+    if (!invoices || invoices.length === 0) {
+      return { totalBilled: 0, totalPaid: 0, outstanding: 0 };
+    }
+
+    const totalBilled = invoices.reduce((sum, invoice) => sum + (invoice.total || 0), 0);
+    const paidInvoices = invoices.filter(invoice => invoice.status === 'paid');
+    const totalPaid = paidInvoices.reduce((sum, invoice) => sum + (invoice.total || 0), 0);
+    const outstanding = totalBilled - totalPaid;
+
+    return { totalBilled, totalPaid, outstanding };
   };
 
   // Editing functions
@@ -466,7 +563,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       <span className="text-sm text-gray-600">Projects</span>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
-                      {mockData.projects.length}
+                      {projects.length}
                     </span>
                   </div>
 
@@ -476,7 +573,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       <span className="text-sm text-gray-600">Invoices</span>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
-                      {mockData.invoices.length}
+                      {invoices.length}
                     </span>
                   </div>
                 </div>
@@ -528,6 +625,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                   size="sm"
                   fullWidth
                   icon={<DollarSign className="h-4 w-4" />}
+                  onClick={() => setShowAddInvoiceModal(true)}
                   className="bg-gray-800 hover:bg-gray-700 text-white border-gray-800"
                 >
                   Create Invoice
@@ -911,54 +1009,73 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold text-gray-900">Projects</h3>
                     </div>
-                    <Button size="sm" icon={<Plus className="h-4 w-4" />}>
+                    <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setShowAddProjectModal(true)}>
                       New Project
                     </Button>
                   </div>
 
                   {/* Projects List */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FolderOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-600" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                        <FolderOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-600" />
                       </div>
                       <h4 className="text-sm sm:text-base font-semibold text-gray-900">Active Projects</h4>
                     </div>
 
-                    <div className="space-y-4">
-                      {mockData.projects.map((project) => (
-                        <div key={project.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                            <div className="flex-1">
-                              <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{project.name}</h5>
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getProjectStatusColor(project.status)}`}>
-                                  {project.status}
-                                </span>
-                                <span className="text-xs sm:text-sm text-gray-600">Due: {new Date(project.dueDate).toLocaleDateString()}</span>
-                                <span className="text-xs sm:text-sm text-gray-600">Budget: ${project.budget.toLocaleString()}</span>
+                    {projectsLoading ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Loader2 className="h-8 w-8 text-gray-600 animate-spin" />
+                        <span className="ml-2 text-gray-600">Loading projects...</span>
+                      </div>
+                    ) : projectsError ? (
+                      <div className="text-center py-8 text-red-600">
+                        {projectsError}
+                      </div>
+                    ) : projects.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <FolderOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">No active projects found for this client.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {projects.map((project) => (
+                          <div key={project._id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                              <div className="flex-1">
+                                <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{project.name}</h5>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getProjectStatusColor(project.status)}`}>
+                                    {project.status}
+                                  </span>
+                                  <span className="text-xs sm:text-sm text-gray-600">Due: {project.dueDate ? new Date(project.dueDate).toLocaleDateString() : 'No due date'}</span>
+                                  <span className="text-xs sm:text-sm text-gray-600">Budget: {project.budget ? `$${project.budget.toLocaleString()}` : 'Not set'}</span>
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm" className="flex-shrink-0 border-gray-300 text-white hover:bg-gray-50" onClick={() => {
+                                setSelectedProjectId(project._id);
+                                setShowViewProjectModal(true);
+                              }}>
+                                View Details
+                              </Button>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-xs sm:text-sm">
+                                <span className="text-gray-600">Progress</span>
+                                <span className="font-medium text-gray-900">{project.progress || 0}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 overflow-hidden">
+                                <div 
+                                  className="bg-gradient-to-r from-gray-600 to-gray-700 h-1.5 sm:h-2 rounded-full transition-all duration-300 shadow-sm"
+                                  style={{ width: `${project.progress || 0}%` }}
+                                ></div>
                               </div>
                             </div>
-                            <Button variant="outline" size="sm" className="flex-shrink-0">
-                              View Details
-                            </Button>
                           </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-xs sm:text-sm">
-                              <span className="text-gray-600">Progress</span>
-                              <span className="font-medium text-gray-900">{project.progress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
-                              <div 
-                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${project.progress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -973,7 +1090,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold text-gray-900">Invoices & Payments</h3>
                     </div>
-                    <Button size="sm" icon={<Plus className="h-4 w-4" />}>
+                    <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setShowAddInvoiceModal(true)}>
                       New Invoice
                     </Button>
                   </div>
@@ -987,32 +1104,49 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       <h4 className="text-sm sm:text-base font-semibold text-gray-900">Recent Invoices</h4>
                     </div>
 
-                    <div className="space-y-4">
-                      {mockData.invoices.map((invoice) => (
-                        <div key={invoice.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div className="flex-1">
-                              <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{invoice.number}</h5>
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getInvoiceStatusColor(invoice.status)}`}>
-                                  {invoice.status}
-                                </span>
-                                <span className="text-xs sm:text-sm text-gray-600">Due: {new Date(invoice.dueDate).toLocaleDateString()}</span>
-                                {invoice.paidDate && (
-                                  <span className="text-xs sm:text-sm text-gray-600">Paid: {new Date(invoice.paidDate).toLocaleDateString()}</span>
-                                )}
+                    {invoicesLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                        <span className="ml-2 text-gray-600">Loading invoices...</span>
+                      </div>
+                    ) : invoicesError ? (
+                      <div className="text-center py-8">
+                        <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                        <p className="text-red-600 text-sm">{invoicesError}</p>
+                      </div>
+                    ) : invoices.length === 0 ? (
+                      <div className="text-center py-8">
+                        <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600 text-sm">No invoices found for this client.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {invoices.map((invoice) => (
+                          <div key={invoice.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              <div className="flex-1">
+                                <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{invoice.number}</h5>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getInvoiceStatusColor(invoice.status)}`}>
+                                    {invoice.status}
+                                  </span>
+                                  <span className="text-xs sm:text-sm text-gray-600">Due: {new Date(invoice.dueDate).toLocaleDateString()}</span>
+                                  {invoice.paidDate && (
+                                    <span className="text-xs sm:text-sm text-gray-600">Paid: {new Date(invoice.paidDate).toLocaleDateString()}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <div className="text-base sm:text-lg font-bold text-gray-900">{formatCurrency(invoice.total, invoice.currency)}</div>
+                                <Button variant="outline" size="sm" className="mt-2">
+                                  View Details
+                                </Button>
                               </div>
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              <div className="text-base sm:text-lg font-bold text-gray-900">${invoice.amount.toLocaleString()}</div>
-                              <Button variant="outline" size="sm" className="mt-2">
-                                View Details
-                              </Button>
-                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Payment Summary */}
@@ -1025,15 +1159,15 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-300">
-                        <div className="text-xl sm:text-2xl font-bold text-green-600">$5,500</div>
+                        <div className="text-xl sm:text-2xl font-bold text-green-600">{formatCurrency(calculatePaymentSummary().totalPaid)}</div>
                         <div className="text-xs sm:text-sm text-gray-600">Total Paid</div>
                       </div>
                       <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-300">
-                        <div className="text-xl sm:text-2xl font-bold text-red-600">$3,000</div>
+                        <div className="text-xl sm:text-2xl font-bold text-red-600">{formatCurrency(calculatePaymentSummary().outstanding)}</div>
                         <div className="text-xs sm:text-sm text-gray-600">Outstanding</div>
                       </div>
                       <div className="p-3 sm:p-4 bg-white rounded-xl border border-gray-300 sm:col-span-2 lg:col-span-1">
-                        <div className="text-xl sm:text-2xl font-bold text-blue-600">$8,500</div>
+                        <div className="text-xl sm:text-2xl font-bold text-blue-600">{formatCurrency(calculatePaymentSummary().totalBilled)}</div>
                         <div className="text-xs sm:text-sm text-gray-600">Total Billed</div>
                       </div>
                     </div>
@@ -1194,6 +1328,48 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
           </div>
         </div>
       </div>
+
+             {/* Add Project Modal */}
+       <AddProjectModal
+         isOpen={showAddProjectModal}
+         onClose={() => setShowAddProjectModal(false)}
+         onSubmit={async (projectData) => {
+           try {
+             // The modal will handle the API call internally
+             // We just need to refresh the projects list
+             await fetchClientProjects();
+             setShowAddProjectModal(false);
+           } catch (error) {
+             console.error('Error adding project:', error);
+           }
+         }}
+         clients={[client]} // Pass the current client as the only option
+       />
+
+       {/* View Project Modal */}
+       <ViewProject
+         isOpen={showViewProjectModal}
+         onClose={() => setShowViewProjectModal(false)}
+         projectId={selectedProjectId}
+         onProjectUpdated={() => fetchClientProjects()}
+       />
+
+       {/* Add Invoice Modal */}
+       <AddInvoiceModal
+         isOpen={showAddInvoiceModal}
+         onClose={() => setShowAddInvoiceModal(false)}
+         onSave={async (invoiceData) => {
+           try {
+             // Refresh the invoices list after creating a new invoice
+             await fetchClientInvoices();
+             setShowAddInvoiceModal(false);
+           } catch (error) {
+             console.error('Error adding invoice:', error);
+           }
+         }}
+         clients={[client]} // Pass the current client as the only option
+         projects={projects} // Pass the client's projects
+       />
     </div>
   );
 };

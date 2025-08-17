@@ -157,10 +157,10 @@ const ProjectCard = ({
     }
   };
 
-  // Calculate progress based on tasks or use project progress
-  const completedCount = tasks.filter(t => t.completed).length;
-  const totalCount = tasks.length;
-  const progressPercent = project?.progress !== undefined ? project.progress : (totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0);
+  // Calculate progress based on props or project.progress
+  const progressPercent = (typeof completedTasks === 'number' && typeof totalTasks === 'number' && totalTasks > 0)
+    ? Math.round((completedTasks / totalTasks) * 100)
+    : (project?.progress !== undefined ? project.progress : 0);
 
   return (
     <>
@@ -237,7 +237,7 @@ const ProjectCard = ({
             />
           </div>
           <div className="flex items-center justify-between mt-2 text-xs text-gray-600">
-            <span>{completedCount} of {totalCount} tasks completed</span>
+            <span>{typeof completedTasks === 'number' && typeof totalTasks === 'number' ? `${completedTasks} of ${totalTasks} tasks completed` : 'No tasks'}</span>
             {dueDate && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
@@ -298,7 +298,7 @@ const ProjectCard = ({
           >
             <div className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4" />
-              <span>Tasks ({totalCount})</span>
+              <span>Tasks ({totalTasks})</span>
             </div>
             <MdExpandMore className="h-4 w-4" />
           </button>

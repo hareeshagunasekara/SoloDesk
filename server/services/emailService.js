@@ -1,10 +1,10 @@
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 // Create transporter
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: 'gmail',
+    service: "gmail",
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS, // Use Gmail App Password
@@ -14,22 +14,22 @@ const createTransporter = () => {
 
 // Generate reset token
 const generateResetToken = () => {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(32).toString("hex");
 };
 
 // Send password reset email
-const sendResetEmail = async (email, resetToken, userName = 'User') => {
+const sendResetEmail = async (email, resetToken, userName = "User") => {
   try {
     const transporter = createTransporter();
-    
+
     // Create reset link
-    const resetLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
-    
+    const resetLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+
     // Email template with new SoloDesk gray theme
     const mailOptions = {
       from: `"SoloDesk" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: 'Reset Your SoloDesk Password',
+      subject: "Reset Your SoloDesk Password",
       html: `
         <!DOCTYPE html>
         <html lang="en">
@@ -342,11 +342,11 @@ const sendResetEmail = async (email, resetToken, userName = 'User') => {
                 This is an automated email. Please do not reply to this message.
               </p>
               <div class="footer-links">
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}" class="footer-link">Visit SoloDesk</a>
+                <a href="${process.env.CLIENT_URL || "http://localhost:5173"}" class="footer-link">Visit SoloDesk</a>
                 <span class="divider">•</span>
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/support" class="footer-link">Support</a>
+                <a href="${process.env.CLIENT_URL || "http://localhost:5173"}/support" class="footer-link">Support</a>
                 <span class="divider">•</span>
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/help" class="footer-link">Help Center</a>
+                <a href="${process.env.CLIENT_URL || "http://localhost:5173"}/help" class="footer-link">Help Center</a>
               </div>
             </div>
           </div>
@@ -368,19 +368,19 @@ const sendResetEmail = async (email, resetToken, userName = 'User') => {
         Best regards,
         The SoloDesk Team
         
-        Visit SoloDesk: ${process.env.CLIENT_URL || 'http://localhost:5173'}
-        Support: ${process.env.CLIENT_URL || 'http://localhost:5173'}/support
-      `
+        Visit SoloDesk: ${process.env.CLIENT_URL || "http://localhost:5173"}
+        Support: ${process.env.CLIENT_URL || "http://localhost:5173"}/support
+      `,
     };
 
     // Send email
     const info = await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent:', info.messageId);
-    
+    console.log("Password reset email sent:", info.messageId);
+
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
-    throw new Error('Failed to send password reset email');
+    console.error("Error sending password reset email:", error);
+    throw new Error("Failed to send password reset email");
   }
 };
 
@@ -388,11 +388,11 @@ const sendResetEmail = async (email, resetToken, userName = 'User') => {
 const sendWelcomeEmail = async (email, userName) => {
   try {
     const transporter = createTransporter();
-    
+
     const mailOptions = {
       from: `"SoloDesk" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: 'Welcome to SoloDesk!',
+      subject: "Welcome to SoloDesk!",
       html: `
         <!DOCTYPE html>
         <html lang="en">
@@ -496,7 +496,7 @@ const sendWelcomeEmail = async (email, userName) => {
             </ul>
             
             <div style="text-align: center;">
-              <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" class="button">Get Started</a>
+              <a href="${process.env.CLIENT_URL || "http://localhost:5173"}/login" class="button">Get Started</a>
             </div>
             
             <p>If you have any questions or need help getting started, don't hesitate to reach out to our support team.</p>
@@ -507,16 +507,16 @@ const sendWelcomeEmail = async (email, userName) => {
           </div>
         </body>
         </html>
-      `
+      `,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Welcome email sent:', info.messageId);
-    
+    console.log("Welcome email sent:", info.messageId);
+
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending welcome email:', error);
-    throw new Error('Failed to send welcome email');
+    console.error("Error sending welcome email:", error);
+    throw new Error("Failed to send welcome email");
   }
 };
 
@@ -525,10 +525,10 @@ const verifyEmailConfig = async () => {
   try {
     const transporter = createTransporter();
     await transporter.verify();
-    console.log('Email configuration is valid');
+    console.log("Email configuration is valid");
     return true;
   } catch (error) {
-    console.error('Email configuration error:', error);
+    console.error("Email configuration error:", error);
     return false;
   }
 };
@@ -537,5 +537,5 @@ module.exports = {
   sendResetEmail,
   sendWelcomeEmail,
   generateResetToken,
-  verifyEmailConfig
-}; 
+  verifyEmailConfig,
+};

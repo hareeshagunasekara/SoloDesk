@@ -20,7 +20,6 @@ import Dashboard from '../pages/Dashboard';
 import Clients from '../pages/Clients';
 
 import Projects from '../pages/Projects';
-import ProjectDetail from '../pages/ProjectDetail';
 import Tasks from '../pages/Tasks';
 import TaskDetail from '../pages/TaskDetail';
 import Calendar from '../pages/Calendar';
@@ -145,16 +144,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/projects/:id"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <ProjectDetail />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
+
       <Route
         path="/tasks"
         element={

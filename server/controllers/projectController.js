@@ -1,6 +1,6 @@
-const Project = require('../models/Project');
-const Task = require('../models/Task');
-const Client = require('../models/Client');
+const Project = require("../models/Project");
+const Task = require("../models/Task");
+const Client = require("../models/Client");
 
 // Create a new project with tasks
 const createProject = async (req, res) => {
@@ -18,7 +18,7 @@ const createProject = async (req, res) => {
       budget,
       hourlyRate,
       priority,
-      tags
+      tags,
     } = req.body;
 
     // Create the project first
@@ -35,7 +35,7 @@ const createProject = async (req, res) => {
       hourlyRate,
       priority,
       tags,
-      createdBy: req.user._id
+      createdBy: req.user._id,
     });
 
     const savedProject = await project.save();
@@ -45,13 +45,13 @@ const createProject = async (req, res) => {
       const taskPromises = tasks.map((taskData, index) => {
         return Task.create({
           name: taskData.name,
-          description: taskData.description || '',
+          description: taskData.description || "",
           projectId: savedProject._id,
           dueDate: taskData.dueDate,
-          priority: taskData.priority || 'Medium',
-          type: taskData.type || 'Task',
+          priority: taskData.priority || "Medium",
+          type: taskData.type || "Task",
           order: index,
-          createdBy: req.user._id
+          createdBy: req.user._id,
         });
       });
 
@@ -59,20 +59,19 @@ const createProject = async (req, res) => {
     }
 
     // Populate client information for response
-    await savedProject.populate('clientId', 'name companyName');
+    await savedProject.populate("clientId", "name companyName");
 
     res.status(201).json({
       success: true,
-      message: 'Project created successfully',
-      data: savedProject
+      message: "Project created successfully",
+      data: savedProject,
     });
-
   } catch (error) {
-    console.error('Error creating project:', error);
+    console.error("Error creating project:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create project',
-      error: error.message
+      message: "Failed to create project",
+      error: error.message,
     });
   }
 };
@@ -81,10 +80,10 @@ const createProject = async (req, res) => {
 const getProjects = async (req, res) => {
   try {
     const { status, clientId, search } = req.query;
-    
+
     let query = {
       createdBy: req.user._id,
-      isArchived: false
+      isArchived: false,
     };
 
     if (status) {
@@ -100,20 +99,19 @@ const getProjects = async (req, res) => {
     }
 
     const projects = await Project.find(query)
-      .populate('clientId', 'name companyName')
+      .populate("clientId", "name companyName")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
-      data: projects
+      data: projects,
     });
-
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    console.error("Error fetching projects:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch projects',
-      error: error.message
+      message: "Failed to fetch projects",
+      error: error.message,
     });
   }
 };
@@ -126,13 +124,13 @@ const getProject = async (req, res) => {
     const project = await Project.findOne({
       _id: projectId,
       createdBy: req.user._id,
-      isArchived: false
-    }).populate('clientId', 'name companyName email phone');
+      isArchived: false,
+    }).populate("clientId", "name companyName email phone");
 
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: 'Project not found'
+        message: "Project not found",
       });
     }
 
@@ -141,8 +139,9 @@ const getProject = async (req, res) => {
 
     // Calculate project progress based on completed tasks
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(task => task.completed).length;
-    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const completedTasks = tasks.filter((task) => task.completed).length;
+    const progress =
+      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     // Update project progress
     project.progress = progress;
@@ -157,17 +156,16 @@ const getProject = async (req, res) => {
           totalTasks,
           completedTasks,
           pendingTasks: totalTasks - completedTasks,
-          progress
-        }
-      }
+          progress,
+        },
+      },
     });
-
   } catch (error) {
-    console.error('Error fetching project:', error);
+    console.error("Error fetching project:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch project',
-      error: error.message
+      message: "Failed to fetch project",
+      error: error.message,
     });
   }
 };
@@ -182,31 +180,30 @@ const updateProject = async (req, res) => {
       {
         _id: projectId,
         createdBy: req.user._id,
-        isArchived: false
+        isArchived: false,
       },
       updateData,
-      { new: true, runValidators: true }
-    ).populate('clientId', 'name companyName');
+      { new: true, runValidators: true },
+    ).populate("clientId", "name companyName");
 
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: 'Project not found'
+        message: "Project not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Project updated successfully',
-      data: project
+      message: "Project updated successfully",
+      data: project,
     });
-
   } catch (error) {
-    console.error('Error updating project:', error);
+    console.error("Error updating project:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update project',
-      error: error.message
+      message: "Failed to update project",
+      error: error.message,
     });
   }
 };
@@ -219,13 +216,13 @@ const deleteProject = async (req, res) => {
     const project = await Project.findOne({
       _id: projectId,
       createdBy: req.user._id,
-      isArchived: false
+      isArchived: false,
     });
 
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: 'Project not found'
+        message: "Project not found",
       });
     }
 
@@ -234,20 +231,21 @@ const deleteProject = async (req, res) => {
 
     // Archive all tasks associated with this project
     const result = await Task.archiveByProject(projectId, req.user._id);
-    
-    console.log(`Successfully archived ${result.modifiedCount} tasks for project ${projectId}`);
+
+    console.log(
+      `Successfully archived ${result.modifiedCount} tasks for project ${projectId}`,
+    );
 
     res.status(200).json({
       success: true,
-      message: 'Project deleted successfully'
+      message: "Project deleted successfully",
     });
-
   } catch (error) {
-    console.error('Error deleting project:', error);
+    console.error("Error deleting project:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete project',
-      error: error.message
+      message: "Failed to delete project",
+      error: error.message,
     });
   }
 };
@@ -262,15 +260,15 @@ const getProjectStats = async (req, res) => {
       {
         $match: {
           createdBy: userId,
-          isArchived: false
-        }
+          isArchived: false,
+        },
       },
       {
         $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     // Get task statistics
@@ -278,15 +276,15 @@ const getProjectStats = async (req, res) => {
       {
         $match: {
           createdBy: userId,
-          isArchived: false
-        }
+          isArchived: false,
+        },
       },
       {
         $group: {
-          _id: '$completed',
-          count: { $sum: 1 }
-        }
-      }
+          _id: "$completed",
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     // Get overdue projects
@@ -301,28 +299,27 @@ const getProjectStats = async (req, res) => {
         byStatus: projectStats.reduce((acc, stat) => {
           acc[stat._id] = stat.count;
           return acc;
-        }, {})
+        }, {}),
       },
       tasks: {
         total: taskStats.reduce((sum, stat) => sum + stat.count, 0),
-        completed: taskStats.find(stat => stat._id === true)?.count || 0,
-        pending: taskStats.find(stat => stat._id === false)?.count || 0
+        completed: taskStats.find((stat) => stat._id === true)?.count || 0,
+        pending: taskStats.find((stat) => stat._id === false)?.count || 0,
       },
       overdue: overdueProjects.length,
-      dueSoon: dueSoonProjects.length
+      dueSoon: dueSoonProjects.length,
     };
 
     res.status(200).json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
-    console.error('Error fetching project stats:', error);
+    console.error("Error fetching project stats:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch project statistics',
-      error: error.message
+      message: "Failed to fetch project statistics",
+      error: error.message,
     });
   }
 };
@@ -334,40 +331,44 @@ const addNoteToProject = async (req, res) => {
     const userId = req.user._id;
     const { content } = req.body;
 
-    if (!content || content.trim() === '') {
+    if (!content || content.trim() === "") {
       return res.status(400).json({
         success: false,
-        message: 'Note content is required'
+        message: "Note content is required",
       });
     }
 
-    const project = await Project.findOne({ _id: projectId, createdBy: userId, isArchived: false });
+    const project = await Project.findOne({
+      _id: projectId,
+      createdBy: userId,
+      isArchived: false,
+    });
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: 'Project not found'
+        message: "Project not found",
       });
     }
 
     const note = {
       content: content.trim(),
       createdAt: new Date(),
-      createdBy: userId
+      createdBy: userId,
     };
     project.notes.push(note);
     await project.save();
 
     res.status(201).json({
       success: true,
-      message: 'Note added successfully',
-      data: project.notes[project.notes.length - 1]
+      message: "Note added successfully",
+      data: project.notes[project.notes.length - 1],
     });
   } catch (error) {
-    console.error('Error adding note to project:', error);
+    console.error("Error adding note to project:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to add note',
-      error: error.message
+      message: "Failed to add note",
+      error: error.message,
     });
   }
 };
@@ -378,20 +379,26 @@ const deleteNoteFromProject = async (req, res) => {
     const { projectId, noteId } = req.params;
     const userId = req.user._id;
 
-    const project = await Project.findOne({ _id: projectId, createdBy: userId, isArchived: false });
+    const project = await Project.findOne({
+      _id: projectId,
+      createdBy: userId,
+      isArchived: false,
+    });
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: 'Project not found'
+        message: "Project not found",
       });
     }
 
     // Find the note index
-    const noteIndex = project.notes.findIndex(note => note._id.toString() === noteId);
+    const noteIndex = project.notes.findIndex(
+      (note) => note._id.toString() === noteId,
+    );
     if (noteIndex === -1) {
       return res.status(404).json({
         success: false,
-        message: 'Note not found'
+        message: "Note not found",
       });
     }
 
@@ -401,14 +408,14 @@ const deleteNoteFromProject = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Note deleted successfully'
+      message: "Note deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting note from project:', error);
+    console.error("Error deleting note from project:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete note',
-      error: error.message
+      message: "Failed to delete note",
+      error: error.message,
     });
   }
 };
@@ -421,5 +428,5 @@ module.exports = {
   deleteProject,
   getProjectStats,
   addNoteToProject,
-  deleteNoteFromProject
-}; 
+  deleteNoteFromProject,
+};
