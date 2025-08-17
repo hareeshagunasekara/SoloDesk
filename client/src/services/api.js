@@ -210,6 +210,7 @@ export const invoicesAPI = {
   addItem: (id, item) => api.post(`/invoices/${id}/items`, item),
   updateItem: (id, itemId, item) => api.put(`/invoices/${id}/items/${itemId}`, item),
   deleteItem: (id, itemId) => api.delete(`/invoices/${id}/items/${itemId}`),
+  getNextInvoiceNumber: () => api.get('/invoices/next-number'),
 }
 
 // Payments API

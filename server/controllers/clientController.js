@@ -1,10 +1,18 @@
-const Client = require('../models/Client');
-const logger = require('../utils/logger');
+const Client = require("../models/Client");
+const Invoice = require("../models/Invoice");
+const logger = require("../utils/logger");
 
 // Get all clients for a user
 const getClients = async (req, res) => {
   try {
-    const { search, status, type, tags, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const {
+      search,
+      status,
+      type,
+      tags,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
     const userId = req.user._id;
 
     // Build query
@@ -13,10 +21,10 @@ const getClients = async (req, res) => {
     // Search functionality
     if (search) {
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { companyName: { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } }
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { companyName: { $regex: search, $options: "i" } },
+        { tags: { $in: [new RegExp(search, "i")] } },
       ];
     }
 
@@ -32,32 +40,31 @@ const getClients = async (req, res) => {
 
     // Filter by tags
     if (tags) {
-      const tagArray = tags.split(',').map(tag => tag.trim());
+      const tagArray = tags.split(",").map((tag) => tag.trim());
       query.tags = { $in: tagArray };
     }
 
     // Build sort object
     const sort = {};
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
 
-    const clients = await Client.find(query)
-      .sort(sort);
-      // .populate('projects', 'name status')
-      // .populate('invoices', 'amount status')
-      // .populate('messages', 'subject createdAt')
-      // .populate('files', 'name type');
+    const clients = await Client.find(query).sort(sort);
+    // .populate('projects', 'name status')
+    // .populate('invoices', 'amount status')
+    // .populate('messages', 'subject createdAt')
+    // .populate('files', 'name type');
 
     res.json({
       success: true,
       data: clients,
-      count: clients.length
+      count: clients.length,
     });
   } catch (error) {
-    logger.error('Error fetching clients:', error);
+    logger.error("Error fetching clients:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch clients',
-      error: error.message
+      message: "Failed to fetch clients",
+      error: error.message,
     });
   }
 };
@@ -69,28 +76,28 @@ const getClient = async (req, res) => {
     const userId = req.user._id;
 
     const client = await Client.findOne({ _id: id, createdBy: userId });
-      // .populate('projects', 'name status description startDate endDate')
-      // .populate('invoices', 'amount status dueDate invoiceNumber')
-      // .populate('messages', 'subject content createdAt')
-      // .populate('files', 'name type size uploadedAt');
+    // .populate('projects', 'name status description startDate endDate')
+    // .populate('invoices', 'amount status dueDate invoiceNumber')
+    // .populate('messages', 'subject content createdAt')
+    // .populate('files', 'name type size uploadedAt');
 
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
     res.json({
       success: true,
-      data: client
+      data: client,
     });
   } catch (error) {
-    logger.error('Error fetching client:', error);
+    logger.error("Error fetching client:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch client',
-      error: error.message
+      message: "Failed to fetch client",
+      error: error.message,
     });
   }
 };
@@ -101,46 +108,61 @@ const createClient = async (req, res) => {
     const userId = req.user._id;
     const clientData = {
       ...req.body,
-      createdBy: userId
+      createdBy: userId,
     };
 
     // Validate required fields
     if (!clientData.name || !clientData.email) {
       return res.status(400).json({
         success: false,
-        message: 'Name and email are required'
+        message: "Name and email are required",
       });
     }
 
     // Validate company fields if type is Company
-    if (clientData.type === 'Company' && !clientData.companyName) {
+    if (clientData.type === "Company" && !clientData.companyName) {
       return res.status(400).json({
         success: false,
-        message: 'Company name is required for company clients'
+        message: "Company name is required for company clients",
       });
     }
 
     // Handle notes field - ensure it's an array
-    if (clientData.notes === '' || clientData.notes === null || clientData.notes === undefined) {
+    if (
+      clientData.notes === "" ||
+      clientData.notes === null ||
+      clientData.notes === undefined
+    ) {
       clientData.notes = [];
     }
 
     // Validate tags - ensure they are from the predefined list
     if (clientData.tags && Array.isArray(clientData.tags)) {
-      const validTags = ['VIP', 'high-budget', 'retainer', 'low-maintenance', 'urgent', 'weekly client', 'quarterly review', 'seasonal'];
-      clientData.tags = clientData.tags.filter(tag => validTags.includes(tag));
+      const validTags = [
+        "VIP",
+        "high-budget",
+        "retainer",
+        "low-maintenance",
+        "urgent",
+        "weekly client",
+        "quarterly review",
+        "seasonal",
+      ];
+      clientData.tags = clientData.tags.filter((tag) =>
+        validTags.includes(tag),
+      );
     }
 
     // Check if email already exists for this user
     const existingClient = await Client.findOne({
       email: clientData.email,
-      createdBy: userId
+      createdBy: userId,
     });
 
     if (existingClient) {
       return res.status(400).json({
         success: false,
-        message: 'A client with this email already exists'
+        message: "A client with this email already exists",
       });
     }
 
@@ -152,15 +174,15 @@ const createClient = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Client created successfully',
-      data: client
+      message: "Client created successfully",
+      data: client,
     });
   } catch (error) {
-    logger.error('Error creating client:', error);
+    logger.error("Error creating client:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create client',
-      error: error.message
+      message: "Failed to create client",
+      error: error.message,
     });
   }
 };
@@ -178,27 +200,42 @@ const updateClient = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
     // Validate company fields if type is Company
-    if (updateData.type === 'Company' && !updateData.companyName) {
+    if (updateData.type === "Company" && !updateData.companyName) {
       return res.status(400).json({
         success: false,
-        message: 'Company name is required for company clients'
+        message: "Company name is required for company clients",
       });
     }
 
     // Handle notes field - ensure it's an array
-    if (updateData.notes === '' || updateData.notes === null || updateData.notes === undefined) {
+    if (
+      updateData.notes === "" ||
+      updateData.notes === null ||
+      updateData.notes === undefined
+    ) {
       updateData.notes = [];
     }
 
     // Validate tags - ensure they are from the predefined list
     if (updateData.tags && Array.isArray(updateData.tags)) {
-      const validTags = ['VIP', 'high-budget', 'retainer', 'low-maintenance', 'urgent', 'weekly client', 'quarterly review', 'seasonal'];
-      updateData.tags = updateData.tags.filter(tag => validTags.includes(tag));
+      const validTags = [
+        "VIP",
+        "high-budget",
+        "retainer",
+        "low-maintenance",
+        "urgent",
+        "weekly client",
+        "quarterly review",
+        "seasonal",
+      ];
+      updateData.tags = updateData.tags.filter((tag) =>
+        validTags.includes(tag),
+      );
     }
 
     // Check email uniqueness if email is being updated
@@ -206,13 +243,13 @@ const updateClient = async (req, res) => {
       const existingClient = await Client.findOne({
         email: updateData.email,
         createdBy: userId,
-        _id: { $ne: id }
+        _id: { $ne: id },
       });
 
       if (existingClient) {
         return res.status(400).json({
           success: false,
-          message: 'A client with this email already exists'
+          message: "A client with this email already exists",
         });
       }
     }
@@ -226,15 +263,15 @@ const updateClient = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Client updated successfully',
-      data: client
+      message: "Client updated successfully",
+      data: client,
     });
   } catch (error) {
-    logger.error('Error updating client:', error);
+    logger.error("Error updating client:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update client',
-      error: error.message
+      message: "Failed to update client",
+      error: error.message,
     });
   }
 };
@@ -250,7 +287,7 @@ const deleteClient = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
@@ -258,14 +295,14 @@ const deleteClient = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Client deleted successfully'
+      message: "Client deleted successfully",
     });
   } catch (error) {
-    logger.error('Error deleting client:', error);
+    logger.error("Error deleting client:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete client',
-      error: error.message
+      message: "Failed to delete client",
+      error: error.message,
     });
   }
 };
@@ -277,10 +314,10 @@ const addNote = async (req, res) => {
     const userId = req.user._id;
     const { content } = req.body;
 
-    if (!content || content.trim() === '') {
+    if (!content || content.trim() === "") {
       return res.status(400).json({
         success: false,
-        message: 'Note content is required'
+        message: "Note content is required",
       });
     }
 
@@ -289,7 +326,7 @@ const addNote = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
@@ -298,15 +335,15 @@ const addNote = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Note added successfully',
-      data: client.notes[client.notes.length - 1]
+      message: "Note added successfully",
+      data: client.notes[client.notes.length - 1],
     });
   } catch (error) {
-    logger.error('Error adding note:', error);
+    logger.error("Error adding note:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to add note',
-      error: error.message
+      message: "Failed to add note",
+      error: error.message,
     });
   }
 };
@@ -323,7 +360,7 @@ const updateLastContacted = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
@@ -332,15 +369,15 @@ const updateLastContacted = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Last contacted updated successfully',
-      data: { lastContacted: client.lastContacted }
+      message: "Last contacted updated successfully",
+      data: { lastContacted: client.lastContacted },
     });
   } catch (error) {
-    logger.error('Error updating last contacted:', error);
+    logger.error("Error updating last contacted:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update last contacted',
-      error: error.message
+      message: "Failed to update last contacted",
+      error: error.message,
     });
   }
 };
@@ -356,14 +393,20 @@ const getClientStats = async (req, res) => {
         $group: {
           _id: null,
           total: { $sum: 1 },
-          active: { $sum: { $cond: [{ $eq: ['$status', 'Active'] }, 1, 0] } },
-          leads: { $sum: { $cond: [{ $eq: ['$status', 'Lead'] }, 1, 0] } },
-          inactive: { $sum: { $cond: [{ $eq: ['$status', 'Inactive'] }, 1, 0] } },
-          archived: { $sum: { $cond: [{ $eq: ['$status', 'Archived'] }, 1, 0] } },
-          individuals: { $sum: { $cond: [{ $eq: ['$type', 'Individual'] }, 1, 0] } },
-          companies: { $sum: { $cond: [{ $eq: ['$type', 'Company'] }, 1, 0] } }
-        }
-      }
+          active: { $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] } },
+          leads: { $sum: { $cond: [{ $eq: ["$status", "Lead"] }, 1, 0] } },
+          inactive: {
+            $sum: { $cond: [{ $eq: ["$status", "Inactive"] }, 1, 0] },
+          },
+          archived: {
+            $sum: { $cond: [{ $eq: ["$status", "Archived"] }, 1, 0] },
+          },
+          individuals: {
+            $sum: { $cond: [{ $eq: ["$type", "Individual"] }, 1, 0] },
+          },
+          companies: { $sum: { $cond: [{ $eq: ["$type", "Company"] }, 1, 0] } },
+        },
+      },
     ]);
 
     const result = stats[0] || {
@@ -373,19 +416,19 @@ const getClientStats = async (req, res) => {
       inactive: 0,
       archived: 0,
       individuals: 0,
-      companies: 0
+      companies: 0,
     };
 
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
-    logger.error('Error fetching client stats:', error);
+    logger.error("Error fetching client stats:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch client statistics',
-      error: error.message
+      message: "Failed to fetch client statistics",
+      error: error.message,
     });
   }
 };
@@ -400,7 +443,7 @@ const addAttachment = async (req, res) => {
     if (!filename || !originalName || !mimeType || !size || !url) {
       return res.status(400).json({
         success: false,
-        message: 'All attachment fields are required'
+        message: "All attachment fields are required",
       });
     }
 
@@ -409,7 +452,7 @@ const addAttachment = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
@@ -419,7 +462,7 @@ const addAttachment = async (req, res) => {
       mimeType,
       size: parseInt(size),
       url,
-      uploadedAt: new Date()
+      uploadedAt: new Date(),
     };
 
     client.attachments.push(attachment);
@@ -427,15 +470,15 @@ const addAttachment = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Attachment added successfully',
-      data: attachment
+      message: "Attachment added successfully",
+      data: attachment,
     });
   } catch (error) {
-    logger.error('Error adding attachment:', error);
+    logger.error("Error adding attachment:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to add attachment',
-      error: error.message
+      message: "Failed to add attachment",
+      error: error.message,
     });
   }
 };
@@ -451,18 +494,18 @@ const removeAttachment = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
     const attachmentIndex = client.attachments.findIndex(
-      attachment => attachment._id.toString() === attachmentId
+      (attachment) => attachment._id.toString() === attachmentId,
     );
 
     if (attachmentIndex === -1) {
       return res.status(404).json({
         success: false,
-        message: 'Attachment not found'
+        message: "Attachment not found",
       });
     }
 
@@ -471,14 +514,14 @@ const removeAttachment = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Attachment removed successfully'
+      message: "Attachment removed successfully",
     });
   } catch (error) {
-    logger.error('Error removing attachment:', error);
+    logger.error("Error removing attachment:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to remove attachment',
-      error: error.message
+      message: "Failed to remove attachment",
+      error: error.message,
     });
   }
 };
@@ -493,7 +536,7 @@ const addLink = async (req, res) => {
     if (!title || !url) {
       return res.status(400).json({
         success: false,
-        message: 'Title and URL are required'
+        message: "Title and URL are required",
       });
     }
 
@@ -503,7 +546,7 @@ const addLink = async (req, res) => {
     } catch (error) {
       return res.status(400).json({
         success: false,
-        message: 'Please enter a valid URL'
+        message: "Please enter a valid URL",
       });
     }
 
@@ -512,16 +555,16 @@ const addLink = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
     const link = {
       title: title.trim(),
       url: url.trim(),
-      description: description ? description.trim() : '',
-      type: type || 'other',
-      createdAt: new Date()
+      description: description ? description.trim() : "",
+      type: type || "other",
+      createdAt: new Date(),
     };
 
     client.links.push(link);
@@ -529,15 +572,15 @@ const addLink = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Link added successfully',
-      data: link
+      message: "Link added successfully",
+      data: link,
     });
   } catch (error) {
-    logger.error('Error adding link:', error);
+    logger.error("Error adding link:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to add link',
-      error: error.message
+      message: "Failed to add link",
+      error: error.message,
     });
   }
 };
@@ -553,18 +596,18 @@ const removeLink = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
     const linkIndex = client.links.findIndex(
-      link => link._id.toString() === linkId
+      (link) => link._id.toString() === linkId,
     );
 
     if (linkIndex === -1) {
       return res.status(404).json({
         success: false,
-        message: 'Link not found'
+        message: "Link not found",
       });
     }
 
@@ -573,14 +616,14 @@ const removeLink = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Link removed successfully'
+      message: "Link removed successfully",
     });
   } catch (error) {
-    logger.error('Error removing link:', error);
+    logger.error("Error removing link:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to remove link',
-      error: error.message
+      message: "Failed to remove link",
+      error: error.message,
     });
   }
 };
@@ -596,7 +639,7 @@ const duplicateClient = async (req, res) => {
     if (!originalClient) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
@@ -605,17 +648,17 @@ const duplicateClient = async (req, res) => {
     delete clientData._id;
     delete clientData.createdAt;
     delete clientData.updatedAt;
-    
+
     // Modify the name/company name to indicate it's a copy
-    if (clientData.type === 'Company') {
+    if (clientData.type === "Company") {
       clientData.companyName = `${clientData.companyName} (Copy)`;
     } else {
       clientData.name = `${clientData.name} (Copy)`;
     }
-    
+
     // Reset status to Lead for the duplicate
-    clientData.status = 'Lead';
-    
+    clientData.status = "Lead";
+
     // Clear sensitive data
     clientData.notes = [];
     clientData.attachments = [];
@@ -627,15 +670,15 @@ const duplicateClient = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Client duplicated successfully',
-      data: duplicatedClient
+      message: "Client duplicated successfully",
+      data: duplicatedClient,
     });
   } catch (error) {
-    logger.error('Error duplicating client:', error);
+    logger.error("Error duplicating client:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to duplicate client',
-      error: error.message
+      message: "Failed to duplicate client",
+      error: error.message,
     });
   }
 };
@@ -651,7 +694,7 @@ const exportClientPDF = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
@@ -659,19 +702,123 @@ const exportClientPDF = async (req, res) => {
     // In a real implementation, you would generate a PDF here
     res.json({
       success: true,
-      message: 'PDF export functionality will be implemented soon',
+      message: "PDF export functionality will be implemented soon",
       data: {
         clientId: client._id,
-        clientName: client.type === 'Company' ? client.companyName : client.name,
-        exportDate: new Date()
-      }
+        clientName:
+          client.type === "Company" ? client.companyName : client.name,
+        exportDate: new Date(),
+      },
     });
   } catch (error) {
-    logger.error('Error exporting client PDF:', error);
+    logger.error("Error exporting client PDF:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to export client PDF',
-      error: error.message
+      message: "Failed to export client PDF",
+      error: error.message,
+    });
+  }
+};
+
+// Get projects for a specific client
+const getClientProjects = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    // First verify the client exists and belongs to the user
+    const client = await Client.findOne({ _id: id, createdBy: userId });
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: "Client not found",
+      });
+    }
+
+    // Import Project model
+    const Project = require("../models/Project");
+
+    // Get projects for this client
+    const projects = await Project.find({ 
+      clientId: id, 
+      createdBy: userId,
+      isArchived: { $ne: true } // Exclude archived projects
+    })
+    .select('name status description startDate endDate dueDate budget progress priority tags')
+    .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: projects,
+      count: projects.length,
+    });
+  } catch (error) {
+    logger.error("Error fetching client projects:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch client projects",
+      error: error.message,
+    });
+  }
+};
+
+// Get invoices for a specific client
+const getClientInvoices = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    // First verify the client exists and belongs to the user
+    const client = await Client.findOne({ _id: id, createdBy: userId });
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: "Client not found",
+      });
+    }
+
+    // Get invoices for this client
+    const invoices = await Invoice.find({ 
+      clientEmail: client.email, 
+      createdBy: userId 
+    })
+    .populate('projectId', 'name status dueDate')
+    .select('number client clientEmail amount total currency status dueDate issueDate paidDate projectId items notes terms')
+    .sort({ issueDate: -1 });
+
+    // Transform the data to match frontend expectations
+    const transformedInvoices = invoices.map(invoice => ({
+      id: invoice._id,
+      number: invoice.number,
+      client: invoice.client,
+      clientEmail: invoice.clientEmail,
+      amount: invoice.amount,
+      total: invoice.total,
+      currency: invoice.currency,
+      status: invoice.status,
+      dueDate: invoice.dueDate,
+      issueDate: invoice.issueDate,
+      paidDate: invoice.paidDate,
+      project: invoice.projectId ? invoice.projectId.name : null,
+      projectId: invoice.projectId ? invoice.projectId._id : null,
+      items: invoice.items,
+      notes: invoice.notes,
+      terms: invoice.terms,
+      createdAt: invoice.createdAt,
+      updatedAt: invoice.updatedAt
+    }));
+
+    res.json({
+      success: true,
+      data: transformedInvoices,
+      count: transformedInvoices.length,
+    });
+  } catch (error) {
+    logger.error("Error fetching client invoices:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch client invoices",
+      error: error.message,
     });
   }
 };
@@ -690,5 +837,7 @@ module.exports = {
   addLink,
   removeLink,
   duplicateClient,
-  exportClientPDF
-}; 
+  exportClientPDF,
+  getClientProjects,
+  getClientInvoices,
+};

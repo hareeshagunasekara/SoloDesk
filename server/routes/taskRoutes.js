@@ -1,19 +1,19 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { auth } = require('../middlewares/authMiddleware');
-const Task = require('../models/Task');
+const { auth } = require("../middlewares/authMiddleware");
+const Task = require("../models/Task");
 
 // All routes are protected
 router.use(auth);
 
 // Get all tasks for a user
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { projectId, completed, assignedTo } = req.query;
-    
+
     let query = {
       createdBy: req.user._id,
-      isArchived: false
+      isArchived: false,
     };
 
     if (projectId) {
@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
     }
 
     if (completed !== undefined) {
-      query.completed = completed === 'true';
+      query.completed = completed === "true";
     }
 
     if (assignedTo) {
@@ -29,91 +29,89 @@ router.get('/', async (req, res) => {
     }
 
     const tasks = await Task.find(query)
-      .populate('projectId', 'name')
-      .populate('assignedTo', 'firstName lastName email')
+      .populate("projectId", "name")
+      .populate("assignedTo", "firstName lastName email")
       .sort({ order: 1, createdAt: 1 });
 
     res.status(200).json({
       success: true,
-      data: tasks
+      data: tasks,
     });
-
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    console.error("Error fetching tasks:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch tasks',
-      error: error.message
+      message: "Failed to fetch tasks",
+      error: error.message,
     });
   }
 });
 
 // Get a single task
-router.get('/:taskId', async (req, res) => {
+router.get("/:taskId", async (req, res) => {
   try {
     const { taskId } = req.params;
 
     const task = await Task.findOne({
       _id: taskId,
       createdBy: req.user._id,
-      isArchived: false
-    }).populate('projectId', 'name')
-      .populate('assignedTo', 'firstName lastName email');
+      isArchived: false,
+    })
+      .populate("projectId", "name")
+      .populate("assignedTo", "firstName lastName email");
 
     if (!task) {
       return res.status(404).json({
         success: false,
-        message: 'Task not found'
+        message: "Task not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      data: task
+      data: task,
     });
-
   } catch (error) {
-    console.error('Error fetching task:', error);
+    console.error("Error fetching task:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch task',
-      error: error.message
+      message: "Failed to fetch task",
+      error: error.message,
     });
   }
 });
 
 // Create a new task
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const taskData = {
       ...req.body,
-      createdBy: req.user._id
+      createdBy: req.user._id,
     };
 
     const task = new Task(taskData);
     const savedTask = await task.save();
 
-    await savedTask.populate('projectId', 'name');
-    await savedTask.populate('assignedTo', 'firstName lastName email');
+    await savedTask.populate("projectId", "name");
+    await savedTask.populate("assignedTo", "firstName lastName email");
 
     res.status(201).json({
       success: true,
-      message: 'Task created successfully',
-      data: savedTask
+      message: "Task created successfully",
+      data: savedTask,
     });
-
   } catch (error) {
-    console.error('Error creating task:', error);
+    console.error("Error creating task:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create task',
-      error: error.message
+      message: "Failed to create task",
+      error: error.message,
     });
   }
 });
 
 // Update a task
-router.put('/:taskId', async (req, res) => {
+router.put("/:taskId", async (req, res) => {
   try {
     const { taskId } = req.params;
     const updateData = req.body;
@@ -122,100 +120,99 @@ router.put('/:taskId', async (req, res) => {
       {
         _id: taskId,
         createdBy: req.user._id,
-        isArchived: false
+        isArchived: false,
       },
       updateData,
-      { new: true, runValidators: true }
-    ).populate('projectId', 'name')
-     .populate('assignedTo', 'firstName lastName email');
+      { new: true, runValidators: true },
+    )
+      .populate("projectId", "name")
+      .populate("assignedTo", "firstName lastName email");
 
     if (!task) {
       return res.status(404).json({
         success: false,
-        message: 'Task not found'
+        message: "Task not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Task updated successfully',
-      data: task
+      message: "Task updated successfully",
+      data: task,
     });
-
   } catch (error) {
-    console.error('Error updating task:', error);
+    console.error("Error updating task:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update task',
-      error: error.message
+      message: "Failed to update task",
+      error: error.message,
     });
   }
 });
 
 // Delete a task (soft delete)
-router.delete('/:taskId', async (req, res) => {
+router.delete("/:taskId", async (req, res) => {
   try {
     const { taskId } = req.params;
-    console.log('🗑️ Attempting to delete task:', taskId);
-    console.log('👤 User ID:', req.user._id);
+    console.log("🗑️ Attempting to delete task:", taskId);
+    console.log("👤 User ID:", req.user._id);
 
     const task = await Task.findOne({
       _id: taskId,
       createdBy: req.user._id,
-      isArchived: false
+      isArchived: false,
     });
 
     if (!task) {
-      console.log('❌ Task not found or already archived');
+      console.log("❌ Task not found or already archived");
       return res.status(404).json({
         success: false,
-        message: 'Task not found'
+        message: "Task not found",
       });
     }
 
-    console.log('✅ Task found:', task.name);
-    console.log('📝 Current task state:', {
+    console.log("✅ Task found:", task.name);
+    console.log("📝 Current task state:", {
       isArchived: task.isArchived,
       completed: task.completed,
-      name: task.name
+      name: task.name,
     });
 
     // Archive the task and await the result
     await task.archive(req.user._id);
 
-    console.log('✅ Task archived successfully');
+    console.log("✅ Task archived successfully");
 
     res.status(200).json({
       success: true,
-      message: 'Task deleted successfully'
+      message: "Task deleted successfully",
     });
-
   } catch (error) {
-    console.error('❌ Error deleting task:', error);
-    console.error('❌ Error stack:', error.stack);
+    console.error("❌ Error deleting task:", error);
+    console.error("❌ Error stack:", error.stack);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete task',
-      error: error.message
+      message: "Failed to delete task",
+      error: error.message,
     });
   }
 });
 
 // Toggle task completion
-router.put('/:taskId/toggle', async (req, res) => {
+router.put("/:taskId/toggle", async (req, res) => {
   try {
     const { taskId } = req.params;
 
     const task = await Task.findOne({
       _id: taskId,
       createdBy: req.user._id,
-      isArchived: false
+      isArchived: false,
     });
 
     if (!task) {
       return res.status(404).json({
         success: false,
-        message: 'Task not found'
+        message: "Task not found",
       });
     }
 
@@ -225,23 +222,22 @@ router.put('/:taskId/toggle', async (req, res) => {
       await task.complete(req.user._id);
     }
 
-    await task.populate('projectId', 'name');
-    await task.populate('assignedTo', 'firstName lastName email');
+    await task.populate("projectId", "name");
+    await task.populate("assignedTo", "firstName lastName email");
 
     res.status(200).json({
       success: true,
-      message: `Task ${task.completed ? 'completed' : 'reopened'} successfully`,
-      data: task
+      message: `Task ${task.completed ? "completed" : "reopened"} successfully`,
+      data: task,
     });
-
   } catch (error) {
-    console.error('Error toggling task:', error);
+    console.error("Error toggling task:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to toggle task',
-      error: error.message
+      message: "Failed to toggle task",
+      error: error.message,
     });
   }
 });
 
-module.exports = router; 
+module.exports = router;

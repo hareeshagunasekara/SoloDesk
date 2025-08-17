@@ -1,27 +1,32 @@
-const express = require('express')
-const { body } = require('express-validator')
-const router = express.Router()
+const express = require("express");
+const { body } = require("express-validator");
+const router = express.Router();
 
-const paymentController = require('../controllers/paymentController')
-const { auth, admin } = require('../middlewares/authMiddleware')
-const validate = require('../middlewares/validate')
+const paymentController = require("../controllers/paymentController");
+const { auth, admin } = require("../middlewares/authMiddleware");
+const validate = require("../middlewares/validate");
 
 // Validation rules
 const createPaymentIntentValidation = [
-  body('amount')
+  body("amount")
     .isFloat({ min: 0.01 })
-    .withMessage('Amount must be a positive number'),
-  body('currency')
+    .withMessage("Amount must be a positive number"),
+  body("currency")
     .optional()
-    .isIn(['usd', 'eur', 'gbp'])
-    .withMessage('Currency must be usd, eur, or gbp')
-]
+    .isIn(["usd", "eur", "gbp"])
+    .withMessage("Currency must be usd, eur, or gbp"),
+];
 
 // All routes require authentication
-router.use(auth)
+router.use(auth);
 
-router.post('/create-intent', createPaymentIntentValidation, validate, paymentController.createPaymentIntent)
+router.post(
+  "/create-intent",
+  createPaymentIntentValidation,
+  validate,
+  paymentController.createPaymentIntent,
+);
 
 // ... keep any other non-order, non-refund payment routes ...
 
-module.exports = router 
+module.exports = router;
