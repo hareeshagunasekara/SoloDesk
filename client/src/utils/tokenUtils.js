@@ -70,3 +70,40 @@ export const clearAuthData = () => {
   });
   window.dispatchEvent(logoutEvent);
 }; 
+
+/**
+ * Validates if a string is a valid MongoDB ObjectId
+ * @param {string} id - The ID to validate
+ * @returns {boolean} - True if valid MongoDB ObjectId, false otherwise
+ */
+export const isValidObjectId = (id) => {
+  if (!id || typeof id !== 'string') return false;
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  return objectIdRegex.test(id);
+};
+
+/**
+ * Safely extracts ObjectId from various data structures
+ * @param {any} data - The data that might contain an ObjectId
+ * @returns {string|null} - The ObjectId if valid, null otherwise
+ */
+export const extractObjectId = (data) => {
+  if (!data) return null;
+  
+  // If it's already a string, validate it
+  if (typeof data === 'string') {
+    return isValidObjectId(data) ? data : null;
+  }
+  
+  // If it's an object with _id
+  if (data._id) {
+    return isValidObjectId(data._id) ? data._id : null;
+  }
+  
+  // If it's an object with id
+  if (data.id) {
+    return isValidObjectId(data.id) ? data.id : null;
+  }
+  
+  return null;
+}; 

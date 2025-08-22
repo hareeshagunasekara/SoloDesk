@@ -97,8 +97,15 @@
     @apply border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80;
   }
   
-  .badge-accent {
+    .badge-accent {
     @apply border-transparent bg-accent text-accent-foreground hover:bg-accent/80;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   
   .badge-outline {

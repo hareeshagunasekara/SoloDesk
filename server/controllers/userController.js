@@ -664,6 +664,34 @@ const testFormattedLastLogin = async (req, res) => {
   }
 };
 
+// @desc    Get user data for email templates
+// @route   GET /api/users/email-template-data
+// @access  Private
+const getEmailTemplateData = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('firstName lastName email phone businessName website');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        businessName: user.businessName || 'SoloDesk',
+        website: user.website || '',
+      },
+    });
+  } catch (error) {
+    logger.error("Get email template data error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -677,4 +705,5 @@ module.exports = {
   changePassword,
   deleteAccount,
   testFormattedLastLogin,
+  getEmailTemplateData,
 };

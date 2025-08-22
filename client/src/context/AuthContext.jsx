@@ -131,7 +131,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
-    console.log('=== AuthContext Login Debug ===');
+    // Remove debug logging since it's no longer needed
     console.log('1. Login function called with credentials:', { email: credentials.email });
     
     try {

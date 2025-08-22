@@ -372,7 +372,7 @@ const Profile = () => {
   // Debug function to check token status
   const debugTokenStatus = () => {
     const storedToken = localStorage.getItem('token');
-    console.log('=== Detailed Token Debug Info ===');
+    // Remove debug logging since it's no longer needed
     console.log('1. AuthContext token exists:', !!token);
     console.log('2. localStorage token exists:', !!storedToken);
     console.log('3. AuthContext token valid:', isTokenValid(token));
@@ -1892,7 +1892,7 @@ const Profile = () => {
                       ({profile?.user?.country} timezone)
                     </span>
                   )}
-                  {console.log('DEBUG Profile: profile?.user?.lastLogin =', profile?.user?.lastLogin, 'profile?.user?.formattedLastLogin =', profile?.user?.formattedLastLogin, 'country =', profile?.user?.country)}
+                  {/* Remove debug logging since it's no longer needed */}
                 </div>
               </div>
 

@@ -9,6 +9,7 @@ router.use(auth);
 
 // Profile management routes (must come before parameterized routes)
 router.get("/profile", userController.getUserProfile);
+router.get("/email-template-data", userController.getEmailTemplateData);
 router.put("/profile", userController.updateUserProfile);
 router.put("/avatar", userController.updateAvatar);
 router.put("/logo", userController.updateLogo);

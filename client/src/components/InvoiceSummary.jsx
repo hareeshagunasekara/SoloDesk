@@ -37,7 +37,104 @@ const InvoiceSummary = ({ stats }) => {
 
   return (
     <div className="w-full py-1">
-      <div className="flex flex-row gap-2 md:gap-4 items-stretch justify-between w-full">
+      {/* Mobile Layout: Stack vertically */}
+      <div className="block lg:hidden space-y-4">
+        {/* Stat Cards - Full width on mobile */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Total Invoiced */}
+          <div className="stat-card group p-3 flex flex-col items-center text-center gap-2 h-24 transition-shadow hover:shadow-lg cursor-pointer">
+            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <DollarSign className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex flex-col justify-center min-w-0">
+              <span className="text-xs text-gray-600 font-medium">Total Invoiced</span>
+              <span className="text-sm font-bold text-gray-900 truncate">{formatCurrency(totalInvoiced)}</span>
+            </div>
+          </div>
+          {/* Paid */}
+          <div className="stat-card group p-3 flex flex-col items-center text-center gap-2 h-24 transition-shadow hover:shadow-lg cursor-pointer">
+            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center group-hover:bg-success/20 transition-colors">
+              <CheckCircle className="h-5 w-5 text-success" />
+            </div>
+            <div className="flex flex-col justify-center min-w-0">
+              <span className="text-xs text-gray-600 font-medium">Paid</span>
+              <span className="text-sm font-bold text-gray-900 truncate">{paidCount}</span>
+            </div>
+          </div>
+          {/* Overdue */}
+          <div className="stat-card group p-3 flex flex-col items-center text-center gap-2 h-24 transition-shadow hover:shadow-lg cursor-pointer">
+            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-error/10 flex items-center justify-center group-hover:bg-error/20 transition-colors">
+              <AlertCircle className="h-5 w-5 text-error" />
+            </div>
+            <div className="flex flex-col justify-center min-w-0">
+              <span className="text-xs text-gray-600 font-medium">Overdue</span>
+              <span className="text-sm font-bold text-gray-900 truncate">{overdueCount}</span>
+            </div>
+          </div>
+          {/* Unpaid */}
+          <div className="stat-card group p-3 flex flex-col items-center text-center gap-2 h-24 transition-shadow hover:shadow-lg cursor-pointer">
+            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center group-hover:bg-warning/20 transition-colors">
+              <Clock className="h-5 w-5 text-warning" />
+            </div>
+            <div className="flex flex-col justify-center min-w-0">
+              <span className="text-xs text-gray-600 font-medium">Unpaid</span>
+              <span className="text-sm font-bold text-gray-900 truncate">{formatCurrency(unpaidBalance)}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Pie Chart */}
+        <div className="card p-4 flex flex-col items-center justify-center">
+          <div className="w-full max-w-xs">
+            <div className="w-full h-48 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={60}
+                    paddingAngle={2}
+                    dataKey="value"
+                    stroke="#fff"
+                    strokeWidth={3}
+                    labelLine={false}
+                    label={renderCenterLabel}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Mobile Legend */}
+            <div className="mt-4 space-y-2">
+              {pieData.map((item, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className="inline-block w-3 h-3 rounded-full border-2"
+                      style={{ backgroundColor: item.color, borderColor: '#fff', boxShadow: '0 1px 4px rgba(16,24,40,0.10)' }}
+                    />
+                    <span className="text-sm text-gray-600 font-medium">
+                      {item.name}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout: Horizontal */}
+      <div className="hidden lg:flex flex-row gap-2 md:gap-4 items-stretch justify-between w-full">
         {/* Stat Cards - 50% width, grid layout, user-friendly */}
         <div
           className="grid grid-cols-2 grid-rows-2 gap-3 flex-1 min-w-0"

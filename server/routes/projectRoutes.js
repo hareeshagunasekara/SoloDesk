@@ -10,6 +10,7 @@ const {
   getProjectStats,
   addNoteToProject,
   deleteNoteFromProject,
+  getProjectsWithoutInvoices,
 } = require("../controllers/projectController");
 
 // All routes are protected
@@ -19,6 +20,7 @@ router.use(auth);
 router.post("/", createProject);
 router.get("/", getProjects);
 router.get("/stats", getProjectStats);
+router.get("/available-for-invoice", getProjectsWithoutInvoices);
 router.get("/:projectId", getProject);
 router.put("/:projectId", updateProject);
 router.delete("/:projectId", deleteProject);

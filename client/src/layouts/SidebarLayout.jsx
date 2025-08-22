@@ -108,13 +108,6 @@ const SidebarLayout = ({ children }) => {
       current: location.pathname.startsWith('/invoices'),
     },
     {
-      name: 'Payments',
-      href: '/payments',
-      icon: CreditCard,
-      description: 'See transactions, status, filters',
-      current: location.pathname === '/payments',
-    },
-    {
       name: 'Analytics',
       href: '/analytics',
       icon: BarChart3,
@@ -122,7 +115,7 @@ const SidebarLayout = ({ children }) => {
       current: location.pathname === '/analytics',
     },
     {
-      name: 'Auto-Messages',
+      name: 'Emails',
       href: '/messages',
       icon: MessageSquare,
       description: 'View/edit auto-generated emails/reminders',
