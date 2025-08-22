@@ -420,6 +420,77 @@ const deleteNoteFromProject = async (req, res) => {
   }
 };
 
+// Get projects without invoices (for invoice creation)
+const getProjectsWithoutInvoices = async (req, res) => {
+  try {
+    const { status, clientId, search } = req.query;
+    const userId = req.user._id;
+
+    // Import Invoice model
+    const Invoice = require("../models/Invoice");
+
+    // Build base query for projects
+    let projectQuery = {
+      createdBy: userId,
+      isArchived: false,
+    };
+
+    if (status) {
+      projectQuery.status = status;
+    }
+
+    if (clientId) {
+      projectQuery.clientId = clientId;
+    }
+
+    if (search) {
+      projectQuery.$text = { $search: search };
+    }
+
+    // Get all projects for the user
+    const allProjects = await Project.find(projectQuery)
+      .populate("clientId", "name companyName")
+      .sort({ createdAt: -1 });
+
+    // Get all invoices for the user that have projectId
+    const invoicesWithProjects = await Invoice.find({
+      createdBy: userId,
+      projectId: { $exists: true, $ne: null }
+    }).select('projectId');
+
+    // Create a set of project IDs that already have invoices
+    const projectsWithInvoices = new Set();
+    invoicesWithProjects.forEach(invoice => {
+      if (invoice.projectId) {
+        projectsWithInvoices.add(invoice.projectId.toString());
+      }
+    });
+
+    // Filter out projects that already have invoices
+    const availableProjects = allProjects.filter(project => {
+      const projectIdString = project._id.toString();
+      return !projectsWithInvoices.has(projectIdString);
+    });
+
+    res.status(200).json({
+      success: true,
+      data: availableProjects,
+      stats: {
+        total: allProjects.length,
+        available: availableProjects.length,
+        withInvoices: allProjects.length - availableProjects.length
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching projects without invoices:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch projects without invoices",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createProject,
   getProjects,
@@ -429,4 +500,5 @@ module.exports = {
   getProjectStats,
   addNoteToProject,
   deleteNoteFromProject,
+  getProjectsWithoutInvoices,
 };

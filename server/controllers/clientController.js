@@ -1,6 +1,8 @@
 const Client = require("../models/Client");
 const Invoice = require("../models/Invoice");
+const User = require("../models/User");
 const logger = require("../utils/logger");
+const { sendClientWelcomeEmail } = require("../services/emailService");
 
 // Get all clients for a user
 const getClients = async (req, res) => {
@@ -168,6 +170,17 @@ const createClient = async (req, res) => {
 
     const client = new Client(clientData);
     await client.save();
+
+    // Send welcome email to the client
+    try {
+      // Pass user ID to email service so it can fetch complete user details
+      await sendClientWelcomeEmail(client, { _id: userId });
+      logger.info(`Welcome email sent to client: ${client.email}`);
+    } catch (emailError) {
+      // Log the error but don't fail the client creation
+      logger.error("Failed to send welcome email to client:", emailError);
+      // Continue with the response - email failure shouldn't break client creation
+    }
 
     // Populate references - commented out until models are created
     // await client.populate('projects invoices messages files');

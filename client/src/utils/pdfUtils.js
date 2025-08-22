@@ -57,125 +57,172 @@ export const generateInvoicePDF = async (invoiceElement, filename = 'invoice.pdf
   }
 };
 
-export const downloadInvoicePDF = async (invoice, filename = null) => {
+export const downloadInvoicePDF = async (invoice, user = null, client = null, filename = null) => {
   try {
-    // Create a simple invoice HTML structure
+    // Compact, single-page invoice HTML structure with gray light theme
     const invoiceHTML = `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; background: white;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; padding: 30px; background: white; color: #364153; font-size: 12px; line-height: 1.4;">
+        <!-- Header Section - Compact -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
           <div>
-            <h1 style="color: #333; margin: 0;">INVOICE</h1>
-            <p style="color: #666; margin: 5px 0;"><strong>Invoice #:</strong> ${invoice.number}</p>
-            <p style="color: #666; margin: 5px 0;"><strong>Issue Date:</strong> ${new Date(invoice.issueDate).toLocaleDateString()}</p>
-            <p style="color: #666; margin: 5px 0;"><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+            <h1 style="color: #101828; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">INVOICE</h1>
+            <div style="margin-top: 10px;">
+              <p style="color: #6a7282; margin: 4px 0; font-size: 11px;"><strong style="color: #4a5565;">Invoice #:</strong> ${invoice.number}</p>
+              <p style="color: #6a7282; margin: 4px 0; font-size: 11px;"><strong style="color: #4a5565;">Issue Date:</strong> ${new Date(invoice.issueDate).toLocaleDateString()}</p>
+              <p style="color: #6a7282; margin: 4px 0; font-size: 11px;"><strong style="color: #4a5565;">Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+            </div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px;">
-              ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.amount)}
+            <div style="font-size: 20px; font-weight: 700; color: #101828; margin-bottom: 10px;">
+              ${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.amount)}
             </div>
-            <div style="padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; 
-                        background: ${invoice.status === 'paid' ? '#10B981' : invoice.status === 'overdue' ? '#EF4444' : '#F59E0B'}; 
+            <div style="padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; 
+                        background: ${invoice.status === 'paid' ? '#10B981' : invoice.status === 'overdue' ? '#EF4444' : invoice.status === 'draft' ? '#6B7280' : '#F59E0B'}; 
                         color: white; display: inline-block;">
               ${invoice.status}
             </div>
           </div>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
-          <div>
-            <h3 style="color: #333; margin-bottom: 15px;">From</h3>
-            <p style="font-weight: bold; margin: 5px 0;">SoloDesk</p>
-            <p style="color: #666; margin: 5px 0;">123 Business Street</p>
-            <p style="color: #666; margin: 5px 0;">City, State 12345</p>
-            <p style="color: #666; margin: 5px 0;">contact@solodesk.com</p>
-            <p style="color: #666; margin: 5px 0;">+1 (555) 123-4567</p>
+        <!-- Company and Client Information - Compact -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+          <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #d1d5dc;">
+            <h3 style="color: #101828; margin: 0 0 10px 0; font-size: 14px; font-weight: 600;">From</h3>
+            <div style="color: #4a5565;">
+              ${user?.logo ? `
+                <div style="margin-bottom: 10px;">
+                  <img src="${user.logo}" alt="Business Logo" style="max-height: 40px; max-width: 120px; object-fit: contain; border-radius: 4px;" />
+                </div>
+              ` : ''}
+              <p style="font-weight: 600; margin: 4px 0; font-size: 12px;">${user?.businessName || 'SoloDesk'}</p>
+              <p style="margin: 3px 0; font-size: 11px;">${user?.address?.street || '123 Business Street'}</p>
+              <p style="margin: 3px 0; font-size: 11px;">${user?.address?.city && user?.address?.state ? `${user.address.city}, ${user.address.state} ${user.address.zipCode || ''}` : 'City, State 12345'}</p>
+              <p style="margin: 3px 0; font-size: 11px;">${user?.email || 'contact@solodesk.com'}</p>
+              <p style="margin: 3px 0; font-size: 11px;">${user?.phone || '+1 (555) 123-4567'}</p>
+            </div>
           </div>
-          <div>
-            <h3 style="color: #333; margin-bottom: 15px;">Bill To</h3>
-            <p style="font-weight: bold; margin: 5px 0;">${invoice.client}</p>
-            <p style="color: #666; margin: 5px 0;">${invoice.clientEmail}</p>
-            <p style="color: #666; margin: 5px 0;">Client Address Line 1</p>
-            <p style="color: #666; margin: 5px 0;">Client Address Line 2</p>
+          <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #99a1af;">
+            <h3 style="color: #101828; margin: 0 0 10px 0; font-size: 14px; font-weight: 600;">Bill To</h3>
+            <div style="color: #4a5565;">
+              <p style="font-weight: 600; margin: 4px 0; font-size: 12px;">${client?.type === 'Company' && client?.companyName ? client.companyName : (client?.name || invoice.client)}</p>
+              ${client?.type === 'Company' && client?.companyName && client?.name ? `<p style="margin: 3px 0; font-size: 11px;">Attn: ${client.name}</p>` : ''}
+              <p style="margin: 3px 0; font-size: 11px;">${invoice.clientEmail}</p>
+              ${client?.phone ? `<p style="margin: 3px 0; font-size: 11px;">${client.phone}</p>` : ''}
+              ${client?.address?.street ? `<p style="margin: 3px 0; font-size: 11px;">${client.address.street}</p>` : ''}
+              ${client?.address?.city || client?.address?.state || client?.address?.postalCode ? `
+                <p style="margin: 3px 0; font-size: 11px;">
+                  ${[client?.address?.city, client?.address?.state, client?.address?.postalCode].filter(Boolean).join(', ')}
+                </p>
+              ` : ''}
+              ${client?.address?.country ? `<p style="margin: 3px 0; font-size: 11px;">${client.address.country}</p>` : ''}
+            </div>
           </div>
         </div>
         
-        <div style="margin-bottom: 40px;">
-          <h3 style="color: #333; margin-bottom: 15px;">Invoice Items</h3>
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-            <thead style="background: #f8f9fa;">
-              <tr>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd; color: #666;">Description</th>
-                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Quantity</th>
-                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Rate</th>
-                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd; color: #666;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${invoice.items?.map(item => `
+        <!-- Invoice Items Table - Compact -->
+        <div style="margin-bottom: 25px;">
+          <h3 style="color: #101828; margin-bottom: 12px; font-size: 16px; font-weight: 600;">Invoice Items</h3>
+          <div style="border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+            <table style="width: 100%; border-collapse: collapse; background: white; font-size: 11px;">
+              <thead style="background: #f3f4f6;">
                 <tr>
-                  <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold;">${item.description}</td>
-                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #666;">${item.quantity}</td>
-                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; color: #666;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.rate)}</td>
-                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #eee; font-weight: bold;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.amount)}</td>
+                  <th style="padding: 10px 12px; text-align: left; color: #4a5565; font-weight: 600; font-size: 11px; border-bottom: 1px solid #d1d5dc;">Description</th>
+                  <th style="padding: 10px 12px; text-align: right; color: #4a5565; font-weight: 600; font-size: 11px; border-bottom: 1px solid #d1d5dc;">Qty</th>
+                  <th style="padding: 10px 12px; text-align: right; color: #4a5565; font-weight: 600; font-size: 11px; border-bottom: 1px solid #d1d5dc;">Rate</th>
+                  <th style="padding: 10px 12px; text-align: right; color: #4a5565; font-weight: 600; font-size: 11px; border-bottom: 1px solid #d1d5dc;">Amount</th>
                 </tr>
-              `).join('') || ''}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                ${invoice.items?.map((item, index) => `
+                  <tr style="${index % 2 === 0 ? 'background: #f9fafb;' : 'background: white;'}">
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-weight: 500; font-size: 11px;">${item.description}</td>
+                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; color: #6a7282; font-size: 11px;">${item.quantity}</td>
+                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; color: #6a7282; font-size: 11px;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(item.rate)}</td>
+                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; font-weight: 600; font-size: 11px;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(item.amount)}</td>
+                  </tr>
+                `).join('') || `
+                  <tr style="background: #f9fafb;">
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-weight: 500; font-size: 11px;">Services</td>
+                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; color: #6a7282; font-size: 11px;">1</td>
+                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; color: #6a7282; font-size: 11px;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.amount)}</td>
+                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; font-weight: 600; font-size: 11px;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.amount)}</td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
+          </div>
         </div>
         
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
-          <div style="width: 300px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-              <span style="color: #666;">Subtotal</span>
-              <span style="font-weight: bold;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.amount)}</span>
+        <!-- Totals Section - Compact -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+          <div style="width: 280px; background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #d1d5dc;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px;">
+              <span style="color: #6a7282;">Subtotal</span>
+              <span style="font-weight: 600; color: #4a5565;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.amount)}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-              <span style="color: #666;">Tax</span>
-              <span style="font-weight: bold;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.tax || 0)}</span>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px;">
+              <span style="color: #6a7282;">Tax</span>
+              <span style="font-weight: 600; color: #4a5565;">${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.tax || 0)}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #333; font-size: 18px; font-weight: bold;">
+            ${invoice.discount ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px;">
+                <span style="color: #6a7282;">Discount</span>
+                <span style="font-weight: 600; color: #EF4444;">-${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.discount)}</span>
+              </div>
+            ` : ''}
+            <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #d1d5dc; font-size: 16px; font-weight: 700; color: #101828;">
               <span>Total</span>
-              <span>${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.total || invoice.amount)}</span>
+              <span>${new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.total || invoice.amount)}</span>
             </div>
           </div>
         </div>
         
+        <!-- Notes and Terms - Compact -->
         ${invoice.notes || invoice.terms ? `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
             ${invoice.notes ? `
-              <div>
-                <h4 style="color: #333; margin-bottom: 10px;">Notes</h4>
-                <p style="color: #666; margin: 0;">${invoice.notes}</p>
+              <div style="background: #f9fafb; padding: 12px; border-radius: 8px; border-left: 3px solid #99a1af;">
+                <h4 style="color: #101828; margin: 0 0 8px 0; font-size: 12px; font-weight: 600;">Notes</h4>
+                <p style="color: #6a7282; margin: 0; font-size: 11px; line-height: 1.3;">${invoice.notes}</p>
               </div>
             ` : ''}
             ${invoice.terms ? `
-              <div>
-                <h4 style="color: #333; margin-bottom: 10px;">Terms</h4>
-                <p style="color: #666; margin: 0;">${invoice.terms}</p>
+              <div style="background: #f9fafb; padding: 12px; border-radius: 8px; border-left: 3px solid #d1d5dc;">
+                <h4 style="color: #101828; margin: 0 0 8px 0; font-size: 12px; font-weight: 600;">Terms</h4>
+                <p style="color: #6a7282; margin: 0; font-size: 11px; line-height: 1.3;">${invoice.terms}</p>
               </div>
             ` : ''}
           </div>
         ` : ''}
         
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+        <!-- Payment Status Footer - Compact -->
+        <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; border-left: 3px solid #6a7282; margin-bottom: 15px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <h4 style="color: #333; margin: 0 0 5px 0;">Payment Status</h4>
-              <p style="color: #666; margin: 0;">
+              <h4 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #101828;">Payment Status</h4>
+              <p style="margin: 0; font-size: 11px; color: #6a7282; line-height: 1.3;">
                 ${invoice.status === 'paid' 
                   ? 'Payment received on ' + new Date(invoice.paidDate || invoice.dueDate).toLocaleDateString()
                   : invoice.status === 'overdue'
                   ? 'Payment is overdue. Please process payment as soon as possible.'
+                  : invoice.status === 'draft'
+                  ? 'This is a draft invoice. Please review and send when ready.'
                   : 'Payment is due on ' + new Date(invoice.dueDate).toLocaleDateString()
                 }
               </p>
             </div>
-            <div style="padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; 
-                        background: ${invoice.status === 'paid' ? '#10B981' : invoice.status === 'overdue' ? '#EF4444' : '#F59E0B'}; 
+            <div style="padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; 
+                        background: ${invoice.status === 'paid' ? '#10B981' : invoice.status === 'overdue' ? '#EF4444' : invoice.status === 'draft' ? '#6B7280' : '#F59E0B'}; 
                         color: white;">
               ${invoice.status}
             </div>
           </div>
+        </div>
+        
+        <!-- Footer - Compact -->
+        <div style="padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center; color: #6a7282; font-size: 10px;">
+          <p style="margin: 0;">Thank you for your business!</p>
+          <p style="margin: 3px 0 0 0;">Generated by SoloDesk on ${new Date().toLocaleDateString()}</p>
         </div>
       </div>
     `;

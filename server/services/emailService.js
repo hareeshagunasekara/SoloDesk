@@ -1,5 +1,18 @@
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const { getWelcomeEmailTemplate } = require("./emailTemplateService");
+
+// Helper function to get complete user details
+const getUserDetailsForEmail = async (userId) => {
+  try {
+    const User = require("../models/User");
+    const user = await User.findById(userId).select('firstName lastName email phone businessName website');
+    return user;
+  } catch (error) {
+    console.error("Error fetching user details for email:", error);
+    return null;
+  }
+};
 
 // Create transporter
 const createTransporter = () => {
@@ -520,6 +533,72 @@ const sendWelcomeEmail = async (email, userName) => {
   }
 };
 
+// Send client welcome email using template service
+const sendClientWelcomeEmail = async (clientData, userData) => {
+  try {
+    const transporter = createTransporter();
+
+    // Ensure we have complete user details
+    let completeUserData = userData;
+    if (!userData.email || !userData.phone || !userData.businessName || userData.website === undefined) {
+      console.log("Fetching complete user details for email...");
+      const fetchedUser = await getUserDetailsForEmail(userData._id);
+      if (fetchedUser) {
+        completeUserData = fetchedUser;
+      } else {
+        throw new Error("Could not fetch user details for email");
+      }
+    }
+
+    // Try to get custom template from database
+    let emailTemplate;
+    try {
+      const EmailTemplate = require("../models/EmailTemplate");
+      const customTemplate = await EmailTemplate.findOne({ 
+        userId: completeUserData._id, 
+        type: 'welcome', 
+        isDefault: true,
+        isActive: true 
+      }).maxTimeMS(5000); // 5 second timeout
+
+      if (customTemplate) {
+        // Use custom template with variables replaced
+        emailTemplate = getWelcomeEmailTemplate(clientData, completeUserData, {
+          tagline: customTemplate.tagline,
+          highlightTitle: customTemplate.highlightTitle,
+          highlightText: customTemplate.highlightText,
+          servicesTitle: customTemplate.servicesTitle,
+          services: customTemplate.services
+        });
+      } else {
+        // Use default template
+        emailTemplate = getWelcomeEmailTemplate(clientData, completeUserData);
+      }
+    } catch (error) {
+      console.log("Using default template due to error:", error.message);
+      // Use default template if there's an error
+      emailTemplate = getWelcomeEmailTemplate(clientData, completeUserData);
+    }
+
+    const mailOptions = {
+      from: `"${completeUserData.businessName || 'SoloDesk'}" <${process.env.EMAIL_USER}>`,
+      to: clientData.email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+    };
+
+    // Send email
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Client welcome email sent:", info.messageId);
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending client welcome email:", error);
+    throw new Error("Failed to send client welcome email");
+  }
+};
+
 // Verify email configuration
 const verifyEmailConfig = async () => {
   try {
@@ -536,6 +615,8 @@ const verifyEmailConfig = async () => {
 module.exports = {
   sendResetEmail,
   sendWelcomeEmail,
+  sendClientWelcomeEmail,
   generateResetToken,
   verifyEmailConfig,
+  getUserDetailsForEmail,
 };

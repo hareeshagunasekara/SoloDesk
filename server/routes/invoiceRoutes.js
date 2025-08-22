@@ -19,7 +19,21 @@ const invoiceValidation = [
   body("currency").optional().isString().withMessage("Currency must be a string"),
   body("discount").optional().isNumeric().withMessage("Discount must be a number"),
   body("tax").optional().isNumeric().withMessage("Tax must be a number"),
-  body("projectId").optional().isMongoId().withMessage("Project ID must be a valid MongoDB ID"),
+  body("projectId")
+    .optional()
+    .custom((value) => {
+      // Allow null, undefined, or empty string
+      if (value === null || value === undefined || value === '') {
+        return true;
+      }
+      // If value is provided, it must be a valid MongoDB ObjectId
+      const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+      if (!objectIdRegex.test(value)) {
+        throw new Error('Project ID must be a valid MongoDB ID');
+      }
+      return true;
+    })
+    .withMessage("Project ID must be a valid MongoDB ID"),
   body("items").isArray().withMessage("Items must be an array"),
   body("items.*.description").notEmpty().withMessage("Item description is required"),
   body("items.*.quantity").isNumeric().withMessage("Item quantity must be a number"),

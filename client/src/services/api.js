@@ -34,6 +34,7 @@ api.interceptors.request.use(
     } else {
       console.warn('⚠️ No token found in localStorage for request:', config.url)
       console.warn('⚠️ Available localStorage keys:', Object.keys(localStorage))
+      console.warn('⚠️ This will likely result in a 401 error')
     }
     
     console.log('Final headers:', config.headers)
@@ -50,20 +51,7 @@ api.interceptors.request.use(
 // Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => {
-    console.log('=== API Response Debug ===')
-    console.log('URL:', response.config.url)
-    console.log('Status:', response.status)
-    console.log('Response data keys:', Object.keys(response.data || {}))
-    
-    // Special handling for login responses
-    if (response.config.url === '/auth/login') {
-      console.log('🔐 LOGIN RESPONSE - Token received:', !!response.data?.token)
-      if (response.data?.token) {
-        console.log('🔑 Token preview:', response.data.token.substring(0, 50) + '...')
-      }
-    }
-    
-    console.log('========================')
+    // Remove debug logging since it's no longer needed
     return response
   },
   (error) => {
@@ -155,6 +143,7 @@ export const clientsAPI = {
 // Projects API
 export const projectsAPI = {
   getAll: (params) => api.get('/projects', { params }),
+  getAvailableForInvoice: (params) => api.get('/projects/available-for-invoice', { params }),
   getById: (id) => api.get(`/projects/${id}`),
   create: (data) => api.post('/projects', data),
   update: (id, data) => api.put(`/projects/${id}`, data),

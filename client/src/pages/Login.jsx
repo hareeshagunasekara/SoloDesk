@@ -79,7 +79,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-    console.log('=== Login Flow Debug ===');
+    // Remove debug logging since it's no longer needed
     console.log('1. Form submitted with email:', data.email);
     
     try {

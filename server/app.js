@@ -13,6 +13,7 @@ const clientRoutes = require("./routes/clientRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
+const emailTemplateRoutes = require("./routes/emailTemplateRoutes");
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/invoices", invoiceRoutes);
+app.use("/api/email-templates", emailTemplateRoutes);
 
 // Simple API endpoint
 app.get("/api/hello", (req, res) => {

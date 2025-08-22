@@ -12,6 +12,16 @@ export const projectService = {
     }
   },
 
+  // Get projects available for invoice creation (without invoices)
+  getProjectsAvailableForInvoice: async (params = {}) => {
+    try {
+      const response = await projectsAPI.getAvailableForInvoice(params);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch projects available for invoice');
+    }
+  },
+
   // Get a single project by ID
   getProjectById: async (projectId) => {
     try {

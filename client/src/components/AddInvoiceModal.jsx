@@ -6,6 +6,7 @@ import { invoicesAPI } from '../services/api';
 import { projectService } from '../services/projectService';
 import taskService from '../services/taskService';
 import { toast } from 'react-hot-toast';
+import { extractObjectId } from '../utils/tokenUtils';
 
 const defaultLineItem = (currency = 'USD') => ({
   project: '',
@@ -17,9 +18,11 @@ const defaultLineItem = (currency = 'USD') => ({
   isCustom: false, // Track if this is a custom item not tied to a task
 });
 
-const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] }) => {
-  const { user } = useAuth();
+const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [], selectedProject = null }) => {
+  const { user, isAuthenticated, token } = useAuth();
   const userCurrency = user?.preferredCurrency || 'USD';
+
+  // Remove debug logging since it's no longer needed
 
   const [clientSearch, setClientSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
@@ -36,7 +39,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
   
   // New state for project and task functionality
   const [clientProjects, setClientProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [currentSelectedProject, setCurrentSelectedProject] = useState(null);
   const [projectTasks, setProjectTasks] = useState([]);
   const [useManualMode, setUseManualMode] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
@@ -74,7 +77,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
     setNotes('');
     setTerms('Net 30');
     setClientProjects([]);
-    setSelectedProject(null);
+    setCurrentSelectedProject(null);
     setProjectTasks([]);
     setUseManualMode(false);
     setLineItems([defaultLineItem(userCurrency)]);
@@ -89,10 +92,53 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      // Check authentication state
+      const storedToken = localStorage.getItem('token');
+      if (!storedToken || !isAuthenticated) {
+        console.warn('AddInvoiceModal: User not authenticated when modal opened');
+        setError('Authentication required. Please log in again.');
+        onClose();
+        return;
+      }
+      
       resetForm();
       generateInvoiceNumber();
+      
+      // If a project is selected, pre-populate the form
+      if (selectedProject) {
+        // Ensure the project has the correct structure
+        const processedProject = {
+          ...selectedProject,
+          _id: extractObjectId(selectedProject) || selectedProject._id || selectedProject.id, // Use utility function
+          name: selectedProject.name || selectedProject.title,
+          clientId: selectedProject.clientId || selectedProject.client,
+        };
+        
+        setCurrentSelectedProject(processedProject);
+        
+        // Handle client data
+        if (processedProject.clientId) {
+          const clientData = processedProject.clientId;
+          if (typeof clientData === 'object' && clientData._id) {
+            // Client is a populated object
+            setSelectedClient(clientData);
+            const clientId = extractObjectId(clientData);
+            if (clientId) {
+              fetchClientProjects(clientId);
+            }
+          } else if (typeof clientData === 'string') {
+            // Client is just an ID string
+            const clientId = extractObjectId(clientData);
+            if (clientId) {
+              // Could fetch client data here if needed
+            } else {
+              console.warn('Invalid client ID format:', clientData);
+            }
+          }
+        }
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, selectedProject, isAuthenticated]);
 
   // Fetch client projects when client is selected
   useEffect(() => {
@@ -100,26 +146,43 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
       fetchClientProjects(selectedClient._id);
     } else {
       setClientProjects([]);
-      setSelectedProject(null);
+      setCurrentSelectedProject(null);
       setProjectTasks([]);
     }
   }, [selectedClient, useManualEntry]);
 
   // Fetch project tasks when project is selected
   useEffect(() => {
-    if (selectedProject?._id && !useManualMode) {
-      fetchProjectTasks(selectedProject._id);
+    if (currentSelectedProject?._id && !useManualMode) {
+      fetchProjectTasks(currentSelectedProject._id);
     } else {
       setProjectTasks([]);
     }
-  }, [selectedProject, useManualMode]);
+  }, [currentSelectedProject, useManualMode]);
 
   // Auto-populate line items when tasks are loaded
   useEffect(() => {
-    if (projectTasks.length > 0 && !useManualMode && selectedProject) {
+    if (projectTasks.length > 0 && !useManualMode && currentSelectedProject) {
       populateLineItemsFromTasks();
     }
-  }, [projectTasks, useManualMode, selectedProject]);
+  }, [projectTasks, useManualMode, currentSelectedProject]);
+
+  // Test function to verify project assignment
+  const testProjectAssignment = () => {
+    // Remove debug logging since it's no longer needed
+  };
+
+  // Expose test function globally for debugging
+  useEffect(() => {
+    if (window) {
+      window.testProjectAssignment = testProjectAssignment;
+    }
+    return () => {
+      if (window) {
+        delete window.testProjectAssignment;
+      }
+    };
+  }, [currentSelectedProject, selectedProject]);
 
   const fetchClientProjects = async (clientId) => {
     setLoadingProjects(true);
@@ -156,7 +219,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
       ...defaultLineItem(currency),
       description: task.name,
       quantity: 1,
-      rate: selectedProject?.hourlyRate || user?.hourlyRate || 50,
+      rate: currentSelectedProject?.hourlyRate || user?.hourlyRate || 50,
       taskId: task._id,
       isCustom: false,
     }));
@@ -180,7 +243,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
       address: client.address ? [client.address.street, client.address.city, client.address.state, client.address.country, client.address.postalCode].filter(Boolean).join(', ') : '',
     });
     setUseManualEntry(false);
-    setSelectedProject(null);
+    setCurrentSelectedProject(null);
     setProjectTasks([]);
     setLineItems([defaultLineItem(currency)]);
   };
@@ -188,14 +251,34 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
   const handleManualEntry = () => {
     setSelectedClient(null);
     setUseManualEntry(true);
-    setSelectedProject(null);
+    setCurrentSelectedProject(null);
     setProjectTasks([]);
     setLineItems([defaultLineItem(currency)]);
   };
 
   const handleProjectSelect = (project) => {
-    setSelectedProject(project);
-    setUseManualMode(false);
+    if (!project) {
+      setCurrentSelectedProject(null);
+      setProjectTasks([]);
+      return;
+    }
+
+    const extractedId = extractObjectId(project);
+    if (extractedId) {
+      setCurrentSelectedProject({
+        _id: extractedId,
+        name: project.name || project.title || 'Unknown Project',
+        status: project.status || 'active',
+        dueDate: project.dueDate || project.endDate || null,
+      });
+      
+      // Fetch tasks for this project
+      fetchProjectTasks(extractedId);
+    } else {
+      console.warn('Invalid project ID format:', project._id || project.id);
+      setCurrentSelectedProject(null);
+      setProjectTasks([]);
+    }
   };
 
   const handleManualModeToggle = () => {
@@ -263,6 +346,21 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
     setSaving(true);
     setError(null);
     
+    // Check authentication first
+    if (!isAuthenticated || !token) {
+      setError('You must be logged in to create an invoice. Please log in and try again.');
+      setSaving(false);
+      return;
+    }
+    
+    // Additional token validation
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken) {
+      setError('Authentication token not found. Please log in again.');
+      setSaving(false);
+      return;
+    }
+    
     // Validation
     if (!invoiceNumber.trim()) {
       setError('Invoice number is required');
@@ -295,11 +393,17 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
     }
     
     try {
+      // Validate projectId if present
+      let validatedProjectId = null;
+      
+      if (currentSelectedProject) {
+        validatedProjectId = extractObjectId(currentSelectedProject);
+      }
+      
       const invoicePayload = {
         number: invoiceNumber.trim(),
         client: useManualEntry ? manualClient.name.trim() : selectedClient?.name,
         clientEmail: useManualEntry ? manualClient.email.trim() : selectedClient?.email,
-        projectId: selectedProject?._id || null,
         amount: calcAmount(),
         tax: calcTax(),
         discount: calcDiscount(),
@@ -322,9 +426,19 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
         terms: terms.trim() || null,
       };
       
-      console.log('Saving invoice:', invoicePayload);
+      // Only add projectId if it's valid
+      if (validatedProjectId) {
+        invoicePayload.projectId = validatedProjectId;
+      }
+      
+      // Remove debug logging since it's no longer needed
+      
+      // Double-check token is available
+      if (!storedToken) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
       const response = await invoicesAPI.create(invoicePayload);
-      console.log('Invoice saved successfully:', response);
       
       // Show success message
       toast.success(`Invoice ${invoiceNumber} created successfully!`, {
@@ -346,12 +460,22 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
       onClose();
     } catch (err) {
       console.error('Error saving invoice:', err);
-      if (err.response?.data?.errors) {
-        // Handle validation errors
-        const errorMessages = err.response.data.errors.map(error => error.msg).join(', ');
-        setError(errorMessages);
+      
+      // Handle specific error types
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else if (err.response?.status === 400) {
+        if (err.response?.data?.errors) {
+          // Handle validation errors
+          const errorMessages = err.response.data.errors.map(error => error.msg).join(', ');
+          setError(errorMessages);
+        } else if (err.response?.data?.message) {
+          setError(err.response.data.message);
+        } else {
+          setError('Invalid data provided. Please check your input.');
+        }
       } else {
-        setError(err.response?.data?.message || 'Failed to create invoice.');
+        setError(err.response?.data?.message || 'Failed to create invoice. Please try again.');
       }
     } finally {
       setSaving(false);
@@ -361,11 +485,11 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200">
+    <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden border border-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Add New Invoice</h2>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Add New Invoice</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -374,19 +498,19 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
           </button>
         </div>
         {/* Modal Content */}
-        <div className="overflow-y-auto max-h-[70vh] px-6 py-4 space-y-6">
+        <div className="overflow-y-auto max-h-[75vh] sm:max-h-[70vh] px-4 sm:px-6 py-4 space-y-4 sm:space-y-6">
           {/* 1. Client Information */}
           <section>
-            <h3 className="font-semibold mb-2">Client Information</h3>
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">Client Information</h3>
             {!useManualEntry ? (
               <div>
-                <label className="block mb-1">Select Client *</label>
+                <label className="block mb-1 text-sm">Select Client *</label>
                 <input
                   type="text"
                   placeholder="Search clients by name or email"
                   value={clientSearch}
                   onChange={e => setClientSearch(e.target.value)}
-                  className="input w-full mb-2 text-white"
+                  className="input w-full mb-2 text-white text-sm"
                 />
                 <div className="max-h-32 overflow-y-auto border rounded mb-2">
                   {clients.filter(c =>
@@ -395,10 +519,11 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
                   ).map(client => (
                     <div
                       key={client.id}
-                      className={`p-2 cursor-pointer hover:bg-muted ${selectedClient && selectedClient.id === client.id ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
+                      className={`p-2 cursor-pointer hover:bg-muted text-sm ${selectedClient && selectedClient.id === client.id ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
                       onClick={() => handleClientSelect(client)}
                     >
-                      {client.name} <span className="text-xs text-muted-foreground">({client.email})</span>
+                      <div className="font-medium">{client.name}</div>
+                      <div className="text-xs text-muted-foreground break-all">({client.email})</div>
                     </div>
                   ))}
                   <div className="p-2 text-xs text-muted-foreground cursor-pointer" onClick={handleManualEntry}>
@@ -408,31 +533,31 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
               </div>
             ) : (
               <div className="space-y-2">
-                <label className="block">Client Name *</label>
-                <input className="input w-full text-white" value={manualClient.name} onChange={e => setManualClient({ ...manualClient, name: e.target.value })} />
-                <label className="block">Email *</label>
-                <input className="input w-full text-white" value={manualClient.email} onChange={e => setManualClient({ ...manualClient, email: e.target.value })} />
-                <label className="block">Contact Person</label>
-                <input className="input w-full text-white" value={manualClient.contact} onChange={e => setManualClient({ ...manualClient, contact: e.target.value })} />
-                <label className="block">Billing Address</label>
-                <textarea className="input w-full text-white" value={manualClient.address} onChange={e => setManualClient({ ...manualClient, address: e.target.value })} />
+                <label className="block text-sm">Client Name *</label>
+                <input className="input w-full text-white text-sm" value={manualClient.name} onChange={e => setManualClient({ ...manualClient, name: e.target.value })} />
+                <label className="block text-sm">Email *</label>
+                <input className="input w-full text-white text-sm" value={manualClient.email} onChange={e => setManualClient({ ...manualClient, email: e.target.value })} />
+                <label className="block text-sm">Contact Person</label>
+                <input className="input w-full text-white text-sm" value={manualClient.contact} onChange={e => setManualClient({ ...manualClient, contact: e.target.value })} />
+                <label className="block text-sm">Billing Address</label>
+                <textarea className="input w-full text-white text-sm" value={manualClient.address} onChange={e => setManualClient({ ...manualClient, address: e.target.value })} />
               </div>
             )}
-            <label className="block mt-2">Email</label>
+            <label className="block mt-2 text-sm">Email</label>
             <input
-              className="input w-full text-white"
+              className="input w-full text-white text-sm"
               value={manualClient.email}
               onChange={e => setManualClient({ ...manualClient, email: e.target.value })}
             />
-            <label className="block mt-2">Contact Person</label>
+            <label className="block mt-2 text-sm">Contact Person</label>
             <input
-              className="input w-full text-white"
+              className="input w-full text-white text-sm"
               value={manualClient.contact}
               onChange={e => setManualClient({ ...manualClient, contact: e.target.value })}
             />
-            <label className="block mt-2">Billing Address</label>
+            <label className="block mt-2 text-sm">Billing Address</label>
             <textarea
-              className="input w-full text-white"
+              className="input w-full text-white text-sm"
               value={manualClient.address}
               onChange={e => setManualClient({ ...manualClient, address: e.target.value })}
             />
@@ -440,12 +565,12 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
 
           {/* 2. Invoice Details */}
           <section>
-            <h3 className="font-semibold mb-2">Invoice Details</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">Invoice Details</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block">Invoice Number</label>
+                <label className="block text-sm">Invoice Number</label>
                 <input 
-                  className="input w-full text-white cursor-not-allowed" 
+                  className="input w-full text-white cursor-not-allowed text-sm" 
                   value={invoiceNumber} 
                   readOnly
                   placeholder="Generating..."
@@ -453,20 +578,20 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
                 <p className="text-xs text-gray-500 mt-1">Automatically generated</p>
               </div>
               <div>
-                <label className="block">Invoice Date</label>
-                <input type="date" className="input w-full text-white" value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} />
+                <label className="block text-sm">Invoice Date</label>
+                <input type="date" className="input w-full text-white text-sm" value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} />
               </div>
               <div>
-                <label className="block">Due Date *</label>
-                <input type="date" className="input w-full text-white" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-                <div className="flex space-x-2 mt-1">
-                  <Button size="xs" variant="outline" onClick={() => handlePresetDue(7)} className="text-white">+7 days</Button>
-                  <Button size="xs" variant="outline" onClick={() => handlePresetDue(14)} className="text-white">+14 days</Button>
+                <label className="block text-sm">Due Date *</label>
+                <input type="date" className="input w-full text-white text-sm" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <Button size="xs" variant="outline" onClick={() => handlePresetDue(7)} className="text-white text-xs">+7 days</Button>
+                  <Button size="xs" variant="outline" onClick={() => handlePresetDue(14)} className="text-white text-xs">+14 days</Button>
                 </div>
               </div>
               <div>
-                <label className="block">Currency</label>
-                <select className="input w-full text-white" value={currency} onChange={e => {
+                <label className="block text-sm">Currency</label>
+                <select className="input w-full text-white text-sm" value={currency} onChange={e => {
                   setCurrency(e.target.value);
                   setLineItems(items => items.map(item => ({ ...item, currency: e.target.value })));
                 }}>
@@ -481,12 +606,12 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
                 </select>
               </div>
               <div>
-                <label className="block">Terms</label>
-                <input className="input w-full text-white" value={terms} onChange={e => setTerms(e.target.value)} />
+                <label className="block text-sm">Terms</label>
+                <input className="input w-full text-white text-sm" value={terms} onChange={e => setTerms(e.target.value)} />
               </div>
-              <div className="col-span-2">
-                <label className="block">Notes</label>
-                <textarea className="input w-full text-white" value={notes} onChange={e => setNotes(e.target.value)} />
+              <div className="col-span-1 sm:col-span-2">
+                <label className="block text-sm">Notes</label>
+                <textarea className="input w-full text-white text-sm" value={notes} onChange={e => setNotes(e.target.value)} />
               </div>
             </div>
           </section>
@@ -506,7 +631,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
                         <div
                           key={project._id}
                           className={`p-3 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
-                            selectedProject?._id === project._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                            currentSelectedProject?._id === project._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                           }`}
                           onClick={() => handleProjectSelect(project)}
                         >
@@ -534,24 +659,24 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
                   )}
                 </div>
 
-                {selectedProject && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium">Selected Project: {selectedProject.name}</h4>
+                {currentSelectedProject && (
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 mb-3">
+                      <h4 className="font-medium text-sm sm:text-base break-words">Selected Project: {currentSelectedProject.name}</h4>
                       <Button 
                         size="sm" 
                         variant="outline" 
                         onClick={handleManualModeToggle}
-                        className="text-xs text-white"
+                        className="text-xs text-white w-full sm:w-auto"
                       >
                         {useManualMode ? 'Switch to Task Mode' : 'Manual Mode'}
                       </Button>
                     </div>
-                                         <div className="text-sm text-gray-600">
-                       <p><strong>Status:</strong> {selectedProject.status}</p>
-                       <p><strong>Due Date:</strong> {selectedProject.dueDate ? new Date(selectedProject.dueDate).toLocaleDateString() : 'Not set'}</p>
-                       <p><strong>Hourly Rate:</strong> {currency} {selectedProject.hourlyRate || user?.hourlyRate || 50}/hr</p>
-                     </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p><strong>Status:</strong> {currentSelectedProject.status}</p>
+                      <p><strong>Due Date:</strong> {currentSelectedProject.dueDate ? new Date(currentSelectedProject.dueDate).toLocaleDateString() : 'Not set'}</p>
+                      <p><strong>Hourly Rate:</strong> {currency} {currentSelectedProject.hourlyRate || user?.hourlyRate || 50}/hr</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -562,16 +687,16 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
           <section>
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold">
-                {selectedProject && !useManualMode ? 'Breakdown Invoice By Tasks' : 'Line Items'}
+                {currentSelectedProject && !useManualMode ? 'Breakdown Invoice By Tasks' : 'Line Items'}
               </h3>
-              {selectedProject && projectTasks.length > 0 && !useManualMode && (
+              {currentSelectedProject && projectTasks.length > 0 && !useManualMode && (
                 <div className="text-sm text-gray-500">
                   {projectTasks.length} task{projectTasks.length !== 1 ? 's' : ''} from project
                 </div>
               )}
             </div>
 
-            {selectedProject && !useManualMode ? (
+            {currentSelectedProject && !useManualMode ? (
               <div>
                 {loadingTasks ? (
                   <div className="text-center py-8">
@@ -581,71 +706,71 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
                   <div className="space-y-4">
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <p className="text-sm text-blue-700">
-                        Tasks from "{selectedProject.name}" have been pre-filled. You can edit quantities, rates, and add custom items.
+                        Tasks from "{currentSelectedProject.name}" have been pre-filled. You can edit quantities, rates, and add custom items.
                       </p>
                     </div>
                     
                     <div className="overflow-x-auto">
-                      <table className="w-full">
+                      <table className="w-full min-w-[600px]">
                         <thead>
                           <tr className="border-b border-gray-200">
-                            <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Type</th>
-                            <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Description</th>
-                            <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Qty</th>
-                            <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Rate</th>
-                            <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Total</th>
-                            <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Actions</th>
+                            <th className="text-left py-2 px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-700">Type</th>
+                            <th className="text-left py-2 px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-700">Description</th>
+                            <th className="text-left py-2 px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-700">Qty</th>
+                            <th className="text-left py-2 px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-700">Rate</th>
+                            <th className="text-left py-2 px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-700">Total</th>
+                            <th className="text-left py-2 px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-700">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {lineItems.map((item, idx) => (
                             <tr key={idx} className="border-b border-gray-100">
-                              <td className="py-2 px-2">
+                              <td className="py-2 px-1 sm:px-2">
                                 {item.isCustom ? (
-                                  <span className="text-xs text-gray-500 italic">Custom Item</span>
+                                  <span className="text-xs text-gray-500 italic">Custom</span>
                                 ) : (
-                                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                  <span className="text-xs text-blue-600 bg-blue-50 px-1 sm:px-2 py-1 rounded">
                                     Task
                                   </span>
                                 )}
                               </td>
-                              <td className="py-2 px-2">
+                              <td className="py-2 px-1 sm:px-2">
                                 <input 
-                                  className="input w-full text-white text-sm" 
+                                  className="input w-full text-white text-xs sm:text-sm" 
                                   value={item.description} 
                                   onChange={e => handleLineItemChange(idx, 'description', e.target.value)}
                                   placeholder={item.isCustom ? "Enter custom item description" : "Task description"}
                                 />
                               </td>
-                              <td className="py-2 px-2">
+                              <td className="py-2 px-1 sm:px-2">
                                 <input 
                                   type="number" 
-                                  className="input w-16 text-white text-sm" 
+                                  className="input w-12 sm:w-16 text-white text-xs sm:text-sm" 
                                   value={item.quantity} 
                                   min={1} 
                                   onChange={e => handleLineItemChange(idx, 'quantity', e.target.value)} 
                                 />
                               </td>
-                              <td className="py-2 px-2">
+                              <td className="py-2 px-1 sm:px-2">
                                 <input 
                                   type="number" 
-                                  className="input w-20 text-white text-sm" 
+                                  className="input w-16 sm:w-20 text-white text-xs sm:text-sm" 
                                   value={item.rate} 
                                   min={0} 
                                   onChange={e => handleLineItemChange(idx, 'rate', e.target.value)} 
                                 />
                               </td>
-                              <td className="py-2 px-2 text-sm font-medium">
+                              <td className="py-2 px-1 sm:px-2 text-xs sm:text-sm font-medium">
                                 {currency} {((item.quantity || 1) * (item.rate || 1)).toFixed(2)}
                               </td>
-                              <td className="py-2 px-2">
+                              <td className="py-2 px-1 sm:px-2">
                                 <button
                                   onClick={() => removeLineItem(idx)}
                                   className={`${lineItems.length > 1 ? 'text-red-500 hover:text-red-700' : 'text-gray-300 cursor-not-allowed'}`}
                                   title={lineItems.length > 1 ? (item.isCustom ? "Remove custom item" : "Remove task item") : "Cannot remove the last item"}
                                   disabled={lineItems.length <= 1}
                                 >
-                                  <Minus className="h-4 w-4" />
+                                  <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </button>
                               </td>
                             </tr>
@@ -806,9 +931,9 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [] 
           {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
         </div>
         {/* Footer */}
-        <div className="flex justify-end space-x-2 px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <Button variant="outline" onClick={onClose} disabled={saving} className="text-white">Cancel</Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
+        <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <Button variant="outline" onClick={onClose} disabled={saving} className="text-white w-full sm:w-auto">Cancel</Button>
+          <Button variant="primary" onClick={handleSave} disabled={saving} className="w-full sm:w-auto">{saving ? 'Saving...' : 'Save'}</Button>
         </div>
       </div>
     </div>
