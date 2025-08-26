@@ -1,6 +1,5 @@
 const User = require("../models/User");
 const Client = require("../models/Client");
-const Booking = require("../models/Booking");
 const logger = require("../utils/logger");
 
 // @desc    Get onboarding status
@@ -176,79 +175,7 @@ const addFirstClient = async (req, res) => {
   }
 };
 
-// @desc    Complete step 3 - Optional First Booking
-// @route   POST /api/onboarding/booking
-// @access  Private
-const createFirstBooking = async (req, res) => {
-  try {
-    const { clientId, service, date, startTime, duration, rate, notes } =
-      req.body;
 
-    // Validate required fields
-    if (!clientId || !service || !date || !startTime || !duration) {
-      return res.status(400).json({
-        message: "Client, service, date, start time, and duration are required",
-      });
-    }
-
-    // Verify client belongs to user
-    const client = await Client.findOne({
-      _id: clientId,
-      userId: req.user._id,
-    });
-    if (!client) {
-      return res.status(404).json({ message: "Client not found" });
-    }
-
-    // Calculate start and end times
-    const startDateTime = new Date(`${date}T${startTime}`);
-    const endDateTime = new Date(startDateTime.getTime() + duration * 60000); // duration in minutes
-
-    // Get client rate if not provided
-    const bookingRate = rate || client.rate || 0;
-
-    // Calculate total amount
-    const durationHours = duration / 60;
-    const totalAmount = bookingRate * durationHours;
-
-    // Create booking
-    const booking = await Booking.create({
-      userId: req.user._id,
-      clientId,
-      title: service,
-      description: notes,
-      serviceType: service,
-      startDate: startDateTime,
-      endDate: endDateTime,
-      duration,
-      rate: bookingRate,
-      totalAmount,
-      location: { type: "virtual" },
-    });
-
-    // Update user onboarding progress
-    const user = await User.findById(req.user._id);
-    if (!user.onboarding.completedSteps.includes(3)) {
-      user.onboarding.completedSteps.push(3);
-    }
-    user.onboarding.currentStep = 3;
-    user.onboarding.isCompleted = true;
-
-    await user.save();
-
-    logger.info(`First booking created for user: ${user.email}`);
-
-    res.status(201).json({
-      success: true,
-      message: "Booking created successfully",
-      booking,
-      onboarding: user.onboarding,
-    });
-  } catch (error) {
-    logger.error("Create first booking error:", error);
-    res.status(500).json({ message: "Server error during booking creation" });
-  }
-};
 
 // @desc    Skip step 3 and complete onboarding
 // @route   POST /api/onboarding/complete
@@ -281,7 +208,7 @@ const completeOnboarding = async (req, res) => {
   }
 };
 
-// @desc    Get user's clients for booking step
+// @desc    Get user's clients
 // @route   GET /api/onboarding/clients
 // @access  Private
 const getUserClients = async (req, res) => {
@@ -305,7 +232,6 @@ module.exports = {
   completeProfileSetup,
   addFirstClient,
   skipClientCreation,
-  createFirstBooking,
   completeOnboarding,
   getUserClients,
 };

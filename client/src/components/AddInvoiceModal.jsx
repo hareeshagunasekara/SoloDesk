@@ -18,7 +18,7 @@ const defaultLineItem = (currency = 'USD') => ({
   isCustom: false, // Track if this is a custom item not tied to a task
 });
 
-const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [], selectedProject = null }) => {
+const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [], selectedProject = null, invoiceToEdit = null }) => {
   const { user, isAuthenticated, token } = useAuth();
   const userCurrency = user?.preferredCurrency || 'USD';
 
@@ -84,6 +84,64 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
     setError(null);
   };
 
+  // Function to populate form with existing invoice data
+  const populateFormWithInvoice = (invoice) => {
+    if (!invoice) return;
+
+    // Set basic invoice details
+    setInvoiceNumber(invoice.number || '');
+    setInvoiceDate(invoice.issueDate ? new Date(invoice.issueDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
+    setDueDate(invoice.dueDate ? new Date(invoice.dueDate).toISOString().slice(0, 10) : '');
+    setCurrency(invoice.currency || userCurrency);
+    setTaxPercentage(invoice.tax || 10);
+    setDiscountAmount(invoice.discount || 0);
+    setNotes(invoice.notes || '');
+    setTerms(invoice.terms || 'Net 30');
+
+    // Set client information
+    if (invoice.clientEmail) {
+      // Try to find existing client
+      const existingClient = clients.find(c => c.email === invoice.clientEmail);
+      if (existingClient) {
+        setSelectedClient(existingClient);
+        setClientSearch(existingClient.name || existingClient.email);
+        setUseManualEntry(false);
+      } else {
+        // Use manual entry for client
+        setManualClient({
+          name: invoice.client || '',
+          email: invoice.clientEmail || '',
+          contact: '',
+          address: ''
+        });
+        setUseManualEntry(true);
+      }
+    }
+
+    // Set line items
+    if (invoice.items && invoice.items.length > 0) {
+      setLineItems(invoice.items.map(item => ({
+        project: item.project || '',
+        description: item.description || '',
+        quantity: item.quantity || 1,
+        rate: item.rate || 0,
+        currency: item.currency || invoice.currency || userCurrency,
+        taskId: item.taskId || null,
+        isCustom: !item.taskId // If no taskId, it's a custom item
+      })));
+    } else {
+      setLineItems([defaultLineItem(invoice.currency || userCurrency)]);
+    }
+
+    // Set project if available
+    if (invoice.projectId) {
+      const project = projects.find(p => p._id === invoice.projectId || p.id === invoice.projectId);
+      if (project) {
+        setCurrentSelectedProject(project);
+      }
+    }
+  };
+
   useEffect(() => {
     setCurrency(userCurrency);
     setLineItems((items) => items.map(item => ({ ...item, currency: userCurrency })));
@@ -102,7 +160,14 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
       }
       
       resetForm();
-      generateInvoiceNumber();
+      
+      // If editing an invoice, populate the form
+      if (invoiceToEdit) {
+        populateFormWithInvoice(invoiceToEdit);
+      } else {
+        // Only generate new invoice number if not editing
+        generateInvoiceNumber();
+      }
       
       // If a project is selected, pre-populate the form
       if (selectedProject) {
@@ -138,7 +203,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
         }
       }
     }
-  }, [isOpen, selectedProject, isAuthenticated]);
+  }, [isOpen, selectedProject, isAuthenticated, invoiceToEdit]);
 
   // Fetch client projects when client is selected
   useEffect(() => {
@@ -409,7 +474,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
         discount: calcDiscount(),
         total: calcTotal(),
         currency: currency,
-        status: 'draft',
+        status: invoiceToEdit ? invoiceToEdit.status : 'draft', // Preserve status when editing
         dueDate: new Date(dueDate),
         issueDate: invoiceDate ? new Date(invoiceDate) : new Date(),
         items: lineItems
@@ -438,19 +503,34 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      const response = await invoicesAPI.create(invoicePayload);
-      
-      // Show success message
-      toast.success(`Invoice ${invoiceNumber} created successfully!`, {
-        duration: 4000,
-        position: 'top-right',
-        style: {
-          background: '#10B981',
-          color: '#fff',
-          borderRadius: '8px',
-          padding: '12px 16px',
-        },
-      });
+      let response;
+      if (invoiceToEdit) {
+        // Update existing invoice
+        response = await invoicesAPI.update(invoiceToEdit.id, invoicePayload);
+        toast.success(`Invoice ${invoiceNumber} updated successfully!`, {
+          duration: 4000,
+          position: 'top-right',
+          style: {
+            background: '#10B981',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '12px 16px',
+          },
+        });
+      } else {
+        // Create new invoice
+        response = await invoicesAPI.create(invoicePayload);
+        toast.success(`Invoice ${invoiceNumber} created successfully!`, {
+          duration: 4000,
+          position: 'top-right',
+          style: {
+            background: '#10B981',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '12px 16px',
+          },
+        });
+      }
       
       if (onSave) onSave(response.data || response);
       
@@ -475,7 +555,8 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
           setError('Invalid data provided. Please check your input.');
         }
       } else {
-        setError(err.response?.data?.message || 'Failed to create invoice. Please try again.');
+        const action = invoiceToEdit ? 'update' : 'create';
+        setError(err.response?.data?.message || `Failed to ${action} invoice. Please try again.`);
       }
     } finally {
       setSaving(false);
@@ -489,7 +570,9 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden border border-gray-200">
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Add New Invoice</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            {invoiceToEdit ? `Edit Invoice ${invoiceToEdit.number}` : 'Add New Invoice'}
+          </h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -570,12 +653,15 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
               <div>
                 <label className="block text-sm">Invoice Number</label>
                 <input 
-                  className="input w-full text-white cursor-not-allowed text-sm" 
+                  className={`input w-full text-white text-sm ${invoiceToEdit ? '' : 'cursor-not-allowed'}`}
                   value={invoiceNumber} 
-                  readOnly
-                  placeholder="Generating..."
+                  readOnly={!invoiceToEdit}
+                  onChange={invoiceToEdit ? (e) => setInvoiceNumber(e.target.value) : undefined}
+                  placeholder={invoiceToEdit ? "Enter invoice number" : "Generating..."}
                 />
-                <p className="text-xs text-gray-500 mt-1">Automatically generated</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {invoiceToEdit ? 'You can edit the invoice number' : 'Automatically generated'}
+                </p>
               </div>
               <div>
                 <label className="block text-sm">Invoice Date</label>
@@ -868,7 +954,7 @@ const AddInvoiceModal = ({ isOpen, onClose, onSave, clients = [], projects = [],
                   size="sm" 
                   variant="outline" 
                   onClick={addLineItem}
-                  className="flex items-center gap-2 mt-3"
+                  className="flex items-center gap-2 mt-3 text-white"
                 >
                   <Plus className="h-4 w-4" />
                   Add Item

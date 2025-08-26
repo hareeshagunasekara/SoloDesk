@@ -226,7 +226,6 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
       case 'overdue': return 'bg-red-100 text-red-800';
       case 'draft': return 'bg-gray-100 text-gray-800';
       case 'sent': return 'bg-blue-100 text-blue-800';
-      case 'partially_paid': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };

@@ -77,14 +77,6 @@ const InvoicePreviewModal = ({ invoice, isOpen, onClose, onSend, onDownload, onE
           textColor: 'text-blue-700',
           borderColor: 'border-blue-200'
         };
-      case 'partially_paid':
-        return {
-          icon: <DollarSign className="h-4 w-4" />,
-          label: 'PARTIALLY PAID',
-          bgColor: 'bg-orange-100',
-          textColor: 'text-orange-700',
-          borderColor: 'border-orange-200'
-        };
       default:
         return {
           icon: <FileText className="h-4 w-4" />,
@@ -428,22 +420,7 @@ const InvoicePreviewModal = ({ invoice, isOpen, onClose, onSend, onDownload, onE
               </div>
             )}
 
-            {/* Payment Information */}
-            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-              <h4 className="font-semibold text-gray-900 mb-3">Payment Information</h4>
-              <div className="text-center py-4">
-                <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium bg-yellow-100 text-yellow-700 border border-yellow-200 mb-3">
-                  <Clock className="h-4 w-4" />
-                  <span>Payment Pending</span>
-                </div>
-                <p className="text-gray-600 text-sm">
-                  Payment has not been received yet. Please process payment by the due date.
-                </p>
-                <div className="mt-3 text-sm text-gray-500">
-                  <span className="font-medium">Due Date:</span> {formatDate(invoice.dueDate)}
-                </div>
-              </div>
-            </div>
+
 
             {/* Actions */}
             <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 mt-8">

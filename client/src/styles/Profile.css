@@ -1,14 +1,14 @@
 /* Profile Page Styles */
 :root {
-  --primary-bg: #210B2C;
-  --secondary-bg: #2A0F3A;
-  --accent-purple: #BC96E6;
-  --accent-yellow: #FFD166;
-  --accent-red: #FF6B6B;
-  --accent-purple-10: rgba(188, 150, 230, 0.1);
-  --accent-purple-20: rgba(188, 150, 230, 0.2);
-  --accent-yellow-10: rgba(255, 209, 102, 0.1);
-  --accent-yellow-20: rgba(255, 209, 102, 0.2);
+  --primary-bg: #101828;
+  --secondary-bg: #1e2939;
+  --accent-gray: #6a7282;
+  --accent-light: #99a1af;
+  --accent-dark: #4a5565;
+  --accent-gray-10: rgba(106, 114, 130, 0.1);
+  --accent-gray-20: rgba(106, 114, 130, 0.2);
+  --accent-light-10: rgba(153, 161, 175, 0.1);
+  --accent-light-20: rgba(153, 161, 175, 0.2);
   --white: #ffffff;
   --white-10: rgba(255, 255, 255, 0.1);
   --white-15: rgba(255, 255, 255, 0.15);
@@ -927,7 +927,7 @@
   border-radius: 9999px;
   height: 3rem;
   width: 3rem;
-  border-bottom: 2px solid var(--accent-purple);
+  border-bottom: 2px solid var(--accent-gray);
   margin: 0 auto;
 }
 

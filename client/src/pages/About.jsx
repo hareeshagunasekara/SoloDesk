@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import PublicLayout from '../layouts/PublicLayout';
 import { 
   Users, 
-  Calendar, 
   CreditCard, 
   CheckSquare, 
   BarChart3, 
@@ -28,11 +27,6 @@ const About = () => {
   ];
 
   const features = [
-    {
-      icon: <Calendar className="h-8 w-8" />,
-      title: "Smart Scheduling",
-      description: "Seamless booking with calendar sync, availability, buffers, and reminders."
-    },
     {
       icon: <Users className="h-8 w-8" />,
       title: "Intelligent Client Management",
@@ -198,7 +192,7 @@ const About = () => {
                 className="bg-primary-50 border border-primary-200 rounded-xl p-6"
               >
                 <div className="text-primary-600 mb-4">
-                  <Calendar className="h-8 w-8 mx-auto" />
+                  <BarChart3 className="h-8 w-8 mx-auto" />
                 </div>
                 <h3 className="font-semibold text-primary-900 mb-2">Scattered Tools</h3>
                 <p className="text-primary-600">Managing bookings in Calendly, clients in Excel, and payments in PayPal creates chaos.</p>

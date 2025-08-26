@@ -12,7 +12,6 @@ import {
   Mail, 
   Phone, 
   Tag, 
-  Calendar, 
   Clock, 
   FileText,
   CheckCircle,
@@ -25,7 +24,6 @@ import { getTimezoneDisplayName } from '../utils/timezoneUtils';
 const steps = [
   { id: 1, title: 'Profile & Business Setup', icon: <User className="h-6 w-6" />, description: 'Set up your branding and preferences' },
   { id: 2, title: 'Add Your First Client', icon: <Users className="h-6 w-6" />, description: 'Create your first client profile' },
-  { id: 3, title: 'First Booking (Optional)', icon: <Calendar className="h-6 w-6" />, description: 'Schedule your first appointment' }
 ];
 
 const Onboarding = () => {

@@ -3,12 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
-  Calendar,
   BarChart3,
   Wrench,
   UserPlus,
   MapPin,
-  Settings,
   ArrowRight,
   Sparkles,
   Star,
@@ -63,13 +61,6 @@ const Home = () => {
     console.log('Hero animation completed!');
   };
   const features = [
-    {
-      icon: <Calendar className="h-8 w-8" />,
-      title: 'Smart Scheduling',
-      description: 'Let bookings run themselves — with availability, timezones, buffers, and reminders baked in.',
-      color: 'from-gray-600/20 to-gray-700/20',
-      borderColor: 'border-gray-600/30',
-    },
     {
       icon: <BarChart3 className="h-8 w-8" />,
       title: 'Visual Insights',

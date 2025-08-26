@@ -45,6 +45,7 @@ const Invoices = () => {
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [clientsError, setClientsError] = useState(null);
+  const [invoiceToEdit, setInvoiceToEdit] = useState(null);
 
   // Remove debug logging since it's no longer needed
 
@@ -134,6 +135,8 @@ const Invoices = () => {
     if (isLoading || !Array.isArray(invoices)) {
       return {
         totalInvoiced: 0,
+        draftCount: 0,
+        pendingCount: 0,
         paidCount: 0,
         overdueCount: 0,
         unpaidBalance: 0,
@@ -142,6 +145,8 @@ const Invoices = () => {
     }
 
     const totalInvoiced = invoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+    const draftInvoices = invoices.filter(invoice => invoice.status === 'draft');
+    const pendingInvoices = invoices.filter(invoice => invoice.status === 'pending');
     const paidInvoices = invoices.filter(invoice => invoice.status === 'paid');
     const overdueInvoices = invoices.filter(invoice => invoice.status === 'overdue');
     const unpaidBalance = invoices
@@ -150,6 +155,8 @@ const Invoices = () => {
 
     return {
       totalInvoiced,
+      draftCount: draftInvoices.length,
+      pendingCount: pendingInvoices.length,
       paidCount: paidInvoices.length,
       overdueCount: overdueInvoices.length,
       unpaidBalance,
@@ -339,8 +346,6 @@ const Invoices = () => {
                   <option value="all">All Statuses</option>
                   <option value="draft">Draft</option>
                   <option value="pending">Pending</option>
-                  <option value="sent">Sent</option>
-                  <option value="partially_paid">Partially Paid</option>
                   <option value="paid">Paid</option>
                   <option value="overdue">Overdue</option>
                 </select>
@@ -386,8 +391,6 @@ const Invoices = () => {
                   <option value="all">All Statuses</option>
                   <option value="draft">Draft</option>
                   <option value="pending">Pending</option>
-                  <option value="sent">Sent</option>
-                  <option value="partially_paid">Partially Paid</option>
                   <option value="paid">Paid</option>
                   <option value="overdue">Overdue</option>
                 </select>
@@ -408,7 +411,8 @@ const Invoices = () => {
             onDelete={handleDeleteInvoice}
             onEdit={(invoice) => {
               // Handle edit functionality
-              console.log('Edit invoice:', invoice);
+              setInvoiceToEdit(invoice);
+              setShowAddInvoiceModal(true);
             }}
             onStatusUpdate={() => {
               // Refetch invoices after status update
@@ -448,10 +452,12 @@ const Invoices = () => {
         onClose={() => {
           setShowAddInvoiceModal(false);
           setSelectedProjectForInvoice(null);
+          setInvoiceToEdit(null);
         }}
         onSave={() => {
           setShowAddInvoiceModal(false);
           setSelectedProjectForInvoice(null);
+          setInvoiceToEdit(null);
           // Refetch invoices after successful save
           refetch();
           // Refresh project preview modal to update available projects
@@ -462,6 +468,7 @@ const Invoices = () => {
         clients={clients}
         projects={projects}
         selectedProject={selectedProjectForInvoice}
+        invoiceToEdit={invoiceToEdit}
       />
 
       {/* Project Preview Modal */}

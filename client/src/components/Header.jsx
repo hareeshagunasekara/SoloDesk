@@ -1,17 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import Button from './Button';
 import logo from '../assets/logo.png';
 import { 
   X, 
   Menu, 
   User, 
-  Settings, 
   LogOut, 
   ChevronDown, 
   LayoutDashboard,
-  Calendar,
   Users,
   FileText,
   CreditCard,
@@ -22,6 +21,7 @@ import {
 
 const Header = ({ className = '' }) => {
   const { isAuthenticated, user, logout } = useAuth();
+  const { notifications, unreadCount, markNotificationsAsRead, markAllNotificationsAsRead } = useNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -83,13 +83,66 @@ const Header = ({ className = '' }) => {
     return user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'User';
   };
 
+  // Notification helper functions
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'welcome':
+        return Bell;
+      case 'project_due_soon':
+      case 'project_overdue':
+        return FileText;
+      case 'task_due_soon':
+      case 'task_overdue':
+        return Clock;
+      case 'payment_received':
+        return CreditCard;
+      case 'invoice_sent':
+        return FileText;
+      case 'client_added':
+        return Users;
+      case 'project_completed':
+        return FileText;
+      case 'task_completed':
+        return Clock;
+      case 'reminder':
+        return Bell;
+      default:
+        return Bell;
+    }
+  };
+
+  const getNotificationColor = (type) => {
+    switch (type) {
+      case 'welcome':
+        return 'text-blue-500';
+      case 'project_due_soon':
+      case 'project_overdue':
+        return 'text-orange-500';
+      case 'task_due_soon':
+      case 'task_overdue':
+        return 'text-red-500';
+      case 'payment_received':
+        return 'text-green-500';
+      case 'invoice_sent':
+        return 'text-blue-500';
+      case 'client_added':
+        return 'text-purple-500';
+      case 'project_completed':
+        return 'text-green-500';
+      case 'task_completed':
+        return 'text-green-500';
+      case 'reminder':
+        return 'text-yellow-500';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
   // Dashboard navigation items
   const dashboardItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', color: 'text-gray-600' },
-    { icon: Calendar, label: 'Calendar', href: '/calendar', color: 'text-gray-600' },
     { icon: Users, label: 'Clients', href: '/clients', color: 'text-gray-600' },
     { icon: FileText, label: 'Projects', href: '/projects', color: 'text-gray-600' },
-    { icon: Clock, label: 'Time Tracking', href: '/time-tracking', color: 'text-gray-600' },
     { icon: CreditCard, label: 'Invoices', href: '/invoices', color: 'text-gray-600' },
   ];
 
@@ -151,7 +204,11 @@ const Header = ({ className = '' }) => {
                   className="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-[#1e2939]/10 hover:to-[#364153]/10 transition-all duration-300 group border border-[#e5e7eb]/40 hover:border-[#1e2939]/30 shadow-sm hover:shadow-md"
                 >
                   <Bell className="h-5 w-5 text-[#1e2939] group-hover:text-[#364153] transition-colors duration-300" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse shadow-lg"></span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center text-xs font-semibold text-white shadow-lg animate-pulse">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-br from-[#1e2939]/15 to-[#364153]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
                 </button>
                 
@@ -159,32 +216,69 @@ const Header = ({ className = '' }) => {
                 {isNotificationsOpen && (
                   <div className="absolute right-0 top-full mt-2 w-80 bg-gradient-to-br from-[#f9fafb]/95 via-[#f3f4f6]/90 to-[#f9fafb]/95 backdrop-blur-2xl border border-[#e5e7eb]/30 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden">
                     <div className="p-4 border-b border-[#e5e7eb]/20 bg-gradient-to-r from-[#1e2939] via-[#364153] to-[#1e2939]">
-                      <h3 className="text-[#f9fafb] font-semibold flex items-center">
-                        <Bell className="h-4 w-4 mr-2" />
-                        Notifications
-                      </h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[#f9fafb] font-semibold flex items-center">
+                          <Bell className="h-4 w-4 mr-2" />
+                          Notifications
+                        </h3>
+                        {unreadCount > 0 && (
+                          <button 
+                            onClick={() => {
+                              markAllNotificationsAsRead();
+                              setIsNotificationsOpen(false);
+                            }}
+                            className="text-xs text-[#f9fafb]/80 hover:text-[#f9fafb] transition-colors duration-200"
+                          >
+                            Mark all as read
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="max-h-64 overflow-y-auto bg-gradient-to-br from-[#f9fafb]/95 via-[#f3f4f6]/90 to-[#f9fafb]/95">
-                      <div className="p-4 hover:bg-gradient-to-r hover:from-[#1e2939]/5 hover:to-[#364153]/5 transition-colors duration-200 border-b border-[#e5e7eb]/20">
-                        <div className="flex items-start space-x-3">
-                          <div className="h-2 w-2 bg-gradient-to-r from-[#99a1af] to-[#6a7282] rounded-full mt-2 flex-shrink-0 shadow-sm"></div>
-                          <div className="flex-1">
-                            <p className="text-[#1e2939] text-sm font-medium">Welcome to SoloDesk!</p>
-                            <p className="text-[#1e2939]/80 text-sm mt-1">Complete your onboarding to get started with your freelance business.</p>
-                            <p className="text-[#6a7282] text-xs mt-2">2 minutes ago</p>
-                          </div>
+                      {notifications.length > 0 ? (
+                        notifications.map((notification) => {
+                          const Icon = getNotificationIcon(notification.type);
+                          return (
+                            <div
+                              key={notification._id}
+                              onClick={() => {
+                                if (!notification.isRead) {
+                                  markNotificationsAsRead([notification._id]);
+                                }
+                                setIsNotificationsOpen(false);
+                              }}
+                              className="p-4 hover:bg-gradient-to-r hover:from-[#1e2939]/5 hover:to-[#364153]/5 transition-colors duration-200 border-b border-[#e5e7eb]/20 cursor-pointer"
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className={`h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 ${!notification.isRead && "bg-blue-100"}`}>
+                                  <Icon className={`h-4 w-4 ${getNotificationColor(notification.type)}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2">
+                                    <p className="text-[#1e2939] text-sm font-medium truncate">
+                                      {notification.title}
+                                    </p>
+                                    {!notification.isRead && (
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                    )}
+                                  </div>
+                                  <p className="text-[#1e2939]/80 text-sm mt-1 line-clamp-2">
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-[#6a7282] text-xs mt-2">
+                                    {notification.timeAgo}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="p-8 text-center">
+                          <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">No notifications yet</p>
                         </div>
-                      </div>
-                      <div className="p-4 hover:bg-gradient-to-r hover:from-[#1e2939]/5 hover:to-[#364153]/5 transition-colors duration-200">
-                        <div className="flex items-start space-x-3">
-                          <div className="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0 shadow-sm"></div>
-                          <div className="flex-1">
-                            <p className="text-[#1e2939] text-sm font-medium">Profile Setup Complete</p>
-                            <p className="text-[#1e2939]/80 text-sm mt-1">Your business profile has been successfully configured.</p>
-                            <p className="text-[#6a7282] text-xs mt-2">1 hour ago</p>
-                          </div>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -266,15 +360,6 @@ const Header = ({ className = '' }) => {
                         <span className="text-[#1e2939] font-medium group-hover:text-[#1e2939] transition-colors duration-200">Profile Settings</span>
                       </Link>
                       
-                      <Link
-                        to="/settings"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                        className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-[#1e2939]/5 hover:to-[#364153]/5 transition-all duration-200 group"
-                      >
-                        <Settings className="h-4 w-4 text-[#6a7282] group-hover:text-[#1e2939] transition-colors duration-200" />
-                        <span className="text-[#1e2939] font-medium group-hover:text-[#1e2939] transition-colors duration-200">Account Settings</span>
-                      </Link>
-                      
                       <div className="border-t border-[#e5e7eb]/20 mt-2 pt-2">
                         <button
                           onClick={handleLogout}
@@ -311,7 +396,7 @@ const Header = ({ className = '' }) => {
 
         {/* Mobile menu button */}
         <button 
-          className="md:hidden p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-[#1e2939]/10 hover:to-[#364153]/10 transition-all duration-300 border border-[#e5e7eb]/40 hover:border-[#1e2939]/30 shadow-sm hover:shadow-md"
+          className="relative md:hidden p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-[#1e2939]/10 hover:to-[#364153]/10 transition-all duration-300 border border-[#e5e7eb]/40 hover:border-[#1e2939]/30 shadow-sm hover:shadow-md"
           onClick={toggleMobileMenu}
           aria-label="Toggle mobile menu"
         >
@@ -319,6 +404,11 @@ const Header = ({ className = '' }) => {
             <X className="h-5 w-5 text-[#1e2939]" />
           ) : (
             <Menu className="h-5 w-5 text-[#1e2939]" />
+          )}
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs font-semibold text-white shadow-lg animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
           )}
         </button>
       </div>

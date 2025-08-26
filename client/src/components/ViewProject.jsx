@@ -721,13 +721,7 @@ const ViewProject = ({
                   </button>
                 )}
                 
-                <button
-                  onClick={onDownload}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-                >
-                  <Download className="h-4 w-4" />
-                  Download Summary
-                </button>
+
                 
                 <button
                   onClick={handleDeleteProjectClick}
@@ -1244,7 +1238,7 @@ const ViewProject = ({
                                   <CheckCircle className="h-12 w-12 text-gray-300 mb-4" />
                                   <p className="text-sm">No tasks found for this project</p>
                                   <button
-                                    onClick={onAddTask}
+                                    onClick={handleOpenAddTask}
                                     className="mt-4 flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
                                   >
                                     <Plus className="h-4 w-4" />

@@ -15,10 +15,12 @@ import {
   DollarSign,
   User,
   Building2,
-  ChevronDown
+  ChevronDown,
+  Receipt
 } from 'lucide-react';
 import Button from './Button';
-import { invoicesAPI } from '../services/api';
+import { invoicesAPI, api } from '../services/api';
+import toast from 'react-hot-toast';
 
 const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEdit, isLoading = false, error = null, onStatusUpdate, onCreateInvoice }) => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -29,7 +31,20 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusUpdateSuccess, setStatusUpdateSuccess] = useState(false);
   const [pdfDownloading, setPdfDownloading] = useState({});
+  const [sendingEmail, setSendingEmail] = useState({});
+  const [localInvoiceUpdates, setLocalInvoiceUpdates] = useState({});
   const statusDropdownRef = useRef(null);
+  
+  // Receipt modal state
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [invoiceForReceipt, setInvoiceForReceipt] = useState(null);
+  const [receiptData, setReceiptData] = useState({
+    paymentMethod: 'manual',
+    paymentDate: new Date().toISOString().split('T')[0],
+    notes: ''
+  });
+  const [creatingReceipt, setCreatingReceipt] = useState(false);
+  const [sendingReceipt, setSendingReceipt] = useState({});
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -82,6 +97,31 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
   const handleStatusUpdate = async (invoiceId, newStatus) => {
     setUpdatingStatus(true);
     setStatusUpdateSuccess(false);
+    
+    // Find the current invoice
+    const currentInvoice = invoices.find(inv => inv.id === invoiceId);
+    if (!currentInvoice) return;
+    
+    // If status is being changed to "paid", show receipt modal
+    if (newStatus === 'paid' && currentInvoice.status !== 'paid') {
+      setInvoiceForReceipt(currentInvoice);
+      setReceiptData({
+        paymentMethod: 'manual',
+        paymentDate: new Date().toISOString().split('T')[0],
+        notes: ''
+      });
+      setShowReceiptModal(true);
+      setStatusDropdownOpen(false);
+      setUpdatingStatus(false);
+      return;
+    }
+    
+    // Optimistic update
+    setLocalInvoiceUpdates(prev => ({
+      ...prev,
+      [invoiceId]: { ...currentInvoice, status: newStatus }
+    }));
+    
     try {
       await invoicesAPI.update(invoiceId, { status: newStatus });
       // Call the parent callback to refresh the data
@@ -94,6 +134,12 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
       setTimeout(() => setStatusUpdateSuccess(false), 3000);
     } catch (error) {
       console.error('Error updating invoice status:', error);
+      // Revert optimistic update on error
+      setLocalInvoiceUpdates(prev => {
+        const newUpdates = { ...prev };
+        delete newUpdates[invoiceId];
+        return newUpdates;
+      });
       // You might want to show a toast notification here
     } finally {
       setUpdatingStatus(false);
@@ -119,11 +165,147 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
     }
   };
 
+  const handleCreateReceipt = async () => {
+    if (!invoiceForReceipt) return;
+    
+    setCreatingReceipt(true);
+    
+    try {
+      console.log('Creating receipt for invoice:', invoiceForReceipt.id);
+      console.log('Payment data:', receiptData);
+      console.log('Token:', localStorage.getItem('token') ? 'exists' : 'missing');
+      
+      const response = await api.post('/receipts', {
+        invoiceId: invoiceForReceipt.id,
+        paymentData: receiptData
+      });
+
+      const data = response.data;
+      console.log('Receipt creation response:', data);
+      
+      if (data.success) {
+        // Update invoice status to paid
+        await invoicesAPI.update(invoiceForReceipt.id, { status: 'paid' });
+        
+        // Update local state
+        setLocalInvoiceUpdates(prev => ({
+          ...prev,
+          [invoiceForReceipt.id]: { ...invoiceForReceipt, status: 'paid' }
+        }));
+        
+        // Call parent callback to refresh data
+        if (onStatusUpdate) {
+          onStatusUpdate();
+        }
+        
+        toast.success('Receipt created successfully!');
+        setShowReceiptModal(false);
+        setInvoiceForReceipt(null);
+      } else {
+        toast.error(data.message || 'Failed to create receipt');
+      }
+    } catch (error) {
+      console.error('Error creating receipt:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      toast.error(error.response?.data?.message || 'Error creating receipt. Please try again.');
+    } finally {
+      setCreatingReceipt(false);
+    }
+  };
+
+  const handleSendReceipt = async (invoiceId, invoice) => {
+    setSendingReceipt(prev => ({ ...prev, [invoiceId]: true }));
+    
+    try {
+      console.log('Sending receipt for invoice:', invoiceId);
+      
+      // First, find the receipt for this invoice
+      const receiptResponse = await api.get(`/receipts/invoice/${invoiceId}`);
+
+      const receiptData = receiptResponse.data;
+      console.log('Receipt lookup response:', receiptData);
+      
+      if (!receiptData.success || !receiptData.data || receiptData.data.length === 0) {
+        toast.error('No receipt found for this invoice. Please create a receipt first.');
+        return;
+      }
+
+      const receipt = receiptData.data[0]; // Get the first receipt for this invoice
+      console.log('Found receipt:', receipt._id);
+
+      // Send receipt email
+      const sendResponse = await api.post(`/receipts/${receipt._id}/send`);
+      console.log('Send receipt response:', sendResponse.data);
+
+      const sendData = sendResponse.data;
+      
+      if (sendData.success) {
+        toast.success('Receipt sent successfully!');
+      } else {
+        toast.error(sendData.message || 'Failed to send receipt');
+      }
+    } catch (error) {
+      console.error('Error sending receipt:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      toast.error(error.response?.data?.message || 'Error sending receipt. Please try again.');
+    } finally {
+      setSendingReceipt(prev => ({ ...prev, [invoiceId]: false }));
+    }
+  };
+
+  const handleSendEmail = async (invoiceId, invoice) => {
+    setSendingEmail(prev => ({ ...prev, [invoiceId]: true }));
+    
+    // Optimistic update - immediately update the status in the UI
+    setLocalInvoiceUpdates(prev => ({
+      ...prev,
+      [invoiceId]: { ...invoice, status: 'pending' }
+    }));
+    
+    try {
+      const response = await invoicesAPI.send(invoiceId);
+      
+      // Check if response has data property (axios response structure)
+      const responseData = response.data || response;
+      
+      if (responseData.success) {
+        toast.success('Invoice sent successfully!');
+        
+        // Call the parent callback to refresh the data
+        if (onStatusUpdate) {
+          onStatusUpdate();
+        }
+      } else {
+        // Revert optimistic update on failure
+        setLocalInvoiceUpdates(prev => {
+          const newUpdates = { ...prev };
+          delete newUpdates[invoiceId];
+          return newUpdates;
+        });
+        toast.error(responseData.message || 'Failed to send invoice. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Error sending invoice. Please check your connection and try again.';
+      
+      // Revert optimistic update on error
+      setLocalInvoiceUpdates(prev => {
+        const newUpdates = { ...prev };
+        delete newUpdates[invoiceId];
+        return newUpdates;
+      });
+      
+      toast.error(errorMessage);
+    } finally {
+      setSendingEmail(prev => ({ ...prev, [invoiceId]: false }));
+    }
+  };
+
   const getStatusOptions = () => [
     { value: 'draft', label: 'Draft', icon: <FileText className="h-4 w-4" />, color: 'text-gray-600' },
     { value: 'pending', label: 'Pending', icon: <Clock className="h-4 w-4" />, color: 'text-yellow-600' },
-    { value: 'sent', label: 'Sent', icon: <Mail className="h-4 w-4" />, color: 'text-blue-600' },
-    { value: 'partially_paid', label: 'Partially Paid', icon: <DollarSign className="h-4 w-4" />, color: 'text-orange-600' },
     { value: 'paid', label: 'Paid', icon: <CheckCircle className="h-4 w-4" />, color: 'text-green-600' },
     { value: 'overdue', label: 'Overdue', icon: <AlertCircle className="h-4 w-4" />, color: 'text-red-600' },
   ];
@@ -284,8 +466,10 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
   return (
     <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       {invoices.map((invoice) => {
-        const statusConfig = getStatusConfig(invoice.status);
-        const daysUntilDue = getDaysUntilDue(invoice.dueDate);
+        // Use local updates if available, otherwise use original invoice
+        const updatedInvoice = localInvoiceUpdates[invoice.id] || invoice;
+        const statusConfig = getStatusConfig(updatedInvoice.status);
+        const daysUntilDue = getDaysUntilDue(updatedInvoice.dueDate);
 
         return (
           <div 
@@ -297,7 +481,7 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0 mb-4">
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-2">
-                    <h3 className="font-semibold text-gray-900 text-base sm:text-lg break-all">{invoice.number}</h3>
+                    <h3 className="font-semibold text-gray-900 text-base sm:text-lg break-all">{updatedInvoice.number}</h3>
                     <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.textColor} ${statusConfig.borderColor}`}>
                       {statusConfig.icon}
                       <span>{statusConfig.label}</span>
@@ -305,24 +489,24 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
                   </div>
                   
                   <div className="space-y-1">
-                    {invoice.project && (
+                    {updatedInvoice.project && (
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Building2 className="h-4 w-4 flex-shrink-0" />
-                        <span className="break-all">{invoice.project}</span>
+                        <span className="break-all">{updatedInvoice.project}</span>
                       </div>
                     )}
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <User className="h-4 w-4 flex-shrink-0" />
-                      <span className="break-all">{invoice.clientEmail}</span>
+                      <span className="break-all">{updatedInvoice.clientEmail}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="text-left sm:text-right">
                   <div className="font-bold text-gray-900 text-lg sm:text-xl">
-                    {formatCurrency(invoice.amount, invoice.currency)}
+                    {formatCurrency(updatedInvoice.amount, updatedInvoice.currency)}
                   </div>
-                  <div className={`text-sm ${daysUntilDue <= 7 && invoice.status !== 'paid' ? 'text-red-600' : 'text-gray-500'}`}>
+                  <div className={`text-sm ${daysUntilDue <= 7 && updatedInvoice.status !== 'paid' ? 'text-red-600' : 'text-gray-500'}`}>
                     {getDaysText(daysUntilDue)}
                   </div>
                 </div>
@@ -332,11 +516,11 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                 <div className="flex items-center space-x-2 text-gray-600">
                   <Calendar className="h-4 w-4 flex-shrink-0" />
-                  <span>Due: {formatDate(invoice.dueDate)}</span>
+                  <span>Due: {formatDate(updatedInvoice.dueDate)}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-gray-600">
                   <DollarSign className="h-4 w-4 flex-shrink-0" />
-                  <span>Total: {formatCurrency(invoice.total, invoice.currency)}</span>
+                  <span>Total: {formatCurrency(updatedInvoice.total, updatedInvoice.currency)}</span>
                 </div>
               </div>
             </div>
@@ -349,25 +533,50 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
                     variant="outline"
                     size="sm"
                     icon={<Eye className="h-3 w-3" />}
-                    onClick={() => onView(invoice)}
+                    onClick={() => onView(updatedInvoice)}
                     className="text-white border-gray-300 hover:border-gray-400 text-xs px-2 py-1 flex-1 sm:flex-none"
                   >
                     View
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    icon={<Mail className="h-3 w-3" />}
-                    onClick={() => onSend(invoice.id)}
-                    disabled={invoice.status === 'paid'}
-                    className={`text-xs px-2 py-1 flex-1 sm:flex-none ${
-                      invoice.status === 'paid' 
-                        ? 'text-gray-400 border-gray-200 cursor-not-allowed' 
-                        : 'text-white border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {invoice.status === 'draft' ? 'Send' : 'Remind'}
-                  </Button>
+                  {updatedInvoice.status === 'paid' ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={sendingReceipt[invoice.id] ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-500"></div>
+                      ) : (
+                        <Receipt className="h-3 w-3" />
+                      )}
+                      onClick={() => handleSendReceipt(invoice.id, updatedInvoice)}
+                      disabled={sendingReceipt[invoice.id]}
+                      className={`text-xs px-2 py-1 flex-1 sm:flex-none transition-all duration-200 ${
+                        sendingReceipt[invoice.id]
+                          ? 'text-gray-400 border-gray-200 cursor-not-allowed' 
+                          : 'text-white border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      {sendingReceipt[invoice.id] ? 'Sending...' : 'Receipt'}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={sendingEmail[invoice.id] ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-500"></div>
+                      ) : (
+                        <Mail className="h-3 w-3" />
+                      )}
+                      onClick={() => handleSendEmail(invoice.id, updatedInvoice)}
+                      disabled={sendingEmail[invoice.id]}
+                      className={`text-xs px-2 py-1 flex-1 sm:flex-none transition-all duration-200 ${
+                        sendingEmail[invoice.id]
+                          ? 'text-gray-400 border-gray-200 cursor-not-allowed' 
+                          : 'text-white border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      {sendingEmail[invoice.id] ? 'Sending...' : (updatedInvoice.status === 'draft' ? 'Send' : 'Remind')}
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -376,7 +585,7 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
                     ) : (
                       <Download className="h-3 w-3" />
                     )}
-                    onClick={() => handlePdfDownload(invoice.id, invoice)}
+                    onClick={() => handlePdfDownload(invoice.id, updatedInvoice)}
                     disabled={pdfDownloading[invoice.id]}
                     className={`text-xs px-2 py-1 flex-1 sm:flex-none transition-all duration-200 ${
                       pdfDownloading[invoice.id]
@@ -392,7 +601,7 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
                   variant="ghost"
                   size="sm"
                   icon={<MoreHorizontal className="h-3 w-3" />}
-                  onClick={() => openModal(invoice)}
+                  onClick={() => openModal(updatedInvoice)}
                   className="text-gray-500 hover:text-gray-700 text-xs px-2 py-1 w-full sm:w-auto"
                 >
                   More
@@ -637,6 +846,128 @@ const InvoiceCard = ({ invoices = [], onView, onSend, onDownload, onDelete, onEd
                       className="text-white border-red-500 hover:border-red-600 bg-red-500 hover:bg-red-600 font-medium"
                     >
                       Delete Invoice
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Receipt Creation Modal */}
+            {showReceiptModal && invoiceForReceipt && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[95vh] overflow-y-auto">
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                        <Receipt className="h-5 w-5 text-green-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Create Receipt
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setShowReceiptModal(false)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {/* Modal Content */}
+                  <div className="p-6 space-y-6">
+                    {/* Invoice Info */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Invoice Information</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Invoice Number:</span>
+                          <span className="font-medium text-gray-900">{invoiceForReceipt.number}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Client:</span>
+                          <span className="font-medium text-gray-900">{invoiceForReceipt.clientEmail}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Amount:</span>
+                          <span className="font-medium text-gray-900">{formatCurrency(invoiceForReceipt.amount, invoiceForReceipt.currency)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Receipt Form */}
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Payment Method
+                        </label>
+                        <select
+                          value={receiptData.paymentMethod}
+                          onChange={(e) => setReceiptData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="manual">Manual Payment</option>
+                          <option value="cash">Cash</option>
+                          <option value="check">Check</option>
+                          <option value="bank_transfer">Bank Transfer</option>
+                          <option value="credit_card">Credit Card</option>
+                          <option value="debit_card">Debit Card</option>
+                          <option value="paypal">PayPal</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Payment Date
+                        </label>
+                        <input
+                          type="date"
+                          value={receiptData.paymentDate}
+                          onChange={(e) => setReceiptData(prev => ({ ...prev, paymentDate: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Notes (Optional)
+                        </label>
+                        <textarea
+                          value={receiptData.notes}
+                          onChange={(e) => setReceiptData(prev => ({ ...prev, notes: e.target.value }))}
+                          rows="3"
+                          placeholder="Add any additional notes about the payment..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modal Actions */}
+                  <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowReceiptModal(false)}
+                      disabled={creatingReceipt}
+                      className="text-white border-gray-300 hover:border-gray-400"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={creatingReceipt ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-500"></div>
+                      ) : (
+                        <Receipt className="h-3 w-3" />
+                      )}
+                      onClick={handleCreateReceipt}
+                      disabled={creatingReceipt}
+                      className="text-white border-green-500 hover:border-green-600 bg-green-500 hover:bg-green-600 font-medium"
+                    >
+                      {creatingReceipt ? 'Creating...' : 'Create Receipt'}
                     </Button>
                   </div>
                 </div>

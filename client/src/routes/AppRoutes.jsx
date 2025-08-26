@@ -20,17 +20,11 @@ import Dashboard from '../pages/Dashboard';
 import Clients from '../pages/Clients';
 
 import Projects from '../pages/Projects';
-import Tasks from '../pages/Tasks';
-import TaskDetail from '../pages/TaskDetail';
-import Calendar from '../pages/Calendar';
 import Invoices from '../pages/Invoices';
 import InvoiceDetail from '../pages/InvoiceDetail';
-import Payments from '../pages/Payments';
-import TimeTracking from '../pages/TimeTracking';
 import Analytics from '../pages/Analytics';
 import AutoMessages from '../pages/AutoMessages';
 import Profile from '../pages/Profile';
-import Settings from '../pages/Settings';
 import NotFound from '../pages/NotFound';
 import Onboarding from '../pages/Onboarding';
 
@@ -146,36 +140,6 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/tasks"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <Tasks />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tasks/:id"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <TaskDetail />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/calendar"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <Calendar />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/invoices"
         element={
           <ProtectedRoute>
@@ -191,26 +155,6 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <SidebarLayout>
               <InvoiceDetail />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/payments"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <Payments />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/time-tracking"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <TimeTracking />
             </SidebarLayout>
           </ProtectedRoute>
         }
@@ -241,16 +185,6 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <SidebarLayout>
               <Profile />
-            </SidebarLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SidebarLayout>
-              <Settings />
             </SidebarLayout>
           </ProtectedRoute>
         }

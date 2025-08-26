@@ -22,7 +22,7 @@ const InvoiceSchema = new mongoose.Schema(
     currency: { type: String, default: "USD" },
     status: {
       type: String,
-      enum: ["draft", "pending", "paid", "overdue", "sent", "partially_paid"],
+      enum: ["draft", "pending", "paid", "overdue"],
       default: "draft",
     },
     dueDate: { type: Date, required: true },
