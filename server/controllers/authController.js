@@ -6,6 +6,7 @@ const {
   sendResetEmail,
   generateResetToken,
 } = require("../services/emailService");
+const { createWelcomeNotification } = require("../controllers/notificationController");
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -36,6 +37,9 @@ const register = async (req, res) => {
 
     // Update last login
     await user.updateLastLogin();
+
+    // Create welcome notification
+    await createWelcomeNotification(user._id);
 
     logger.info(`New user registered: ${email}`);
 

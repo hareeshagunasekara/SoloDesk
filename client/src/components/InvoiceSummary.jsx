@@ -1,15 +1,23 @@
 import React from 'react';
-import { DollarSign, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { DollarSign, CheckCircle, AlertCircle, Clock, FileText, Percent } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const InvoiceSummary = ({ stats }) => {
-  const { totalInvoiced, paidCount, overdueCount, unpaidBalance, totalCount } = stats;
-  const pendingCount = Math.max(0, totalCount - paidCount - overdueCount);
+  const { 
+    totalInvoiced, 
+    draftCount, 
+    pendingCount, 
+    paidCount, 
+    overdueCount, 
+    unpaidBalance, 
+    totalCount 
+  } = stats;
 
   const pieData = [
-    { name: 'Paid', value: paidCount, color: '#22c55e' },
-    { name: 'Pending', value: pendingCount, color: '#f59e0b' },
-    { name: 'Overdue', value: overdueCount, color: '#ef4444' }
+    { name: 'Draft', value: draftCount, color: '#6b7280', icon: <FileText className="h-4 w-4" /> },
+    { name: 'Pending', value: pendingCount, color: '#f59e0b', icon: <Clock className="h-4 w-4" /> },
+    { name: 'Paid', value: paidCount, color: '#22c55e', icon: <CheckCircle className="h-4 w-4" /> },
+    { name: 'Overdue', value: overdueCount, color: '#ef4444', icon: <AlertCircle className="h-4 w-4" /> }
   ];
 
   const formatCurrency = (amount) => {
@@ -106,7 +114,10 @@ const InvoiceSummary = ({ stats }) => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    formatter={(value, name) => [value, name]}
+                    labelFormatter={(label) => `${label} Invoices`}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -213,7 +224,10 @@ const InvoiceSummary = ({ stats }) => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => `${label} Invoices`}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

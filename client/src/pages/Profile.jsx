@@ -43,9 +43,14 @@ const Profile = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // Track active tab
+  const [activeTab, setActiveTab] = useState('profile');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  // Format last login date
+  
+  /**
+   * Formats the last login timestamp into a human-readable relative time string
+   * @param {Date|string} lastLoginDate - The timestamp of the last login
+   * @returns {string} Human-readable time difference (e.g., "2 hours ago", "Yesterday")
+   */
   const formatLastLogin = (lastLoginDate) => {
     if (!lastLoginDate) return 'Never';
     
@@ -72,7 +77,10 @@ const Profile = () => {
   };
   const [showClientPreviewModal, setShowClientPreviewModal] = useState(false);
 
-  // Track unsaved changes for each section
+  /**
+   * Tracks unsaved changes across different profile sections to enable
+   * section-specific save buttons and prevent data loss
+   */
   const [unsavedChanges, setUnsavedChanges] = useState({
     profile: false,
     logoSocials: false,
@@ -80,10 +88,15 @@ const Profile = () => {
     security: false
   });
 
-  // Track which fields are being edited
+  /**
+   * Tracks which form fields are currently in edit mode for inline editing
+   */
   const [editingFields, setEditingFields] = useState({});
 
-  // Form state
+  /**
+   * Main form state containing all user profile data including
+   * personal info, business details, social links, and preferences
+   */
   const [formData, setFormData] = useState({
     profilePicture: '',
     businessLogo: '',
@@ -114,14 +127,19 @@ const Profile = () => {
     }
   });
 
-  // Password change state
+  /**
+   * State for password change modal form data
+   */
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
-  // Tab configuration
+  /**
+   * Navigation tabs configuration for the profile settings interface
+   * Each tab represents a different section of user preferences
+   */
   const tabs = [
     {
       id: 'profile',
@@ -160,92 +178,46 @@ const Profile = () => {
     }
   ];
 
-  // Enhanced authentication check
+  /**
+   * Determines if the component is ready to fetch user profile data
+   * Ensures both token validity and authentication state are ready
+   * @returns {boolean} True if ready to fetch, false otherwise
+   */
   const isReadyToFetch = () => {
     const tokenValid = token && isTokenValid(token);
     const authReady = !authLoading && isAuthenticated;
-    console.log('=== Profile JWT Token Flow Check ===');
-    console.log('1. Token exists:', !!token);
-    console.log('2. Token valid:', tokenValid);
-    console.log('3. Auth loading:', authLoading);
-    console.log('4. Is authenticated:', isAuthenticated);
-    console.log('5. Auth ready:', authReady);
-    console.log('6. Final result:', tokenValid && authReady);
-    
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('7. Token payload:', {
-          userId: payload.userId,
-          exp: new Date(payload.exp * 1000).toLocaleString(),
-          iat: new Date(payload.iat * 1000).toLocaleString()
-        });
-      } catch (error) {
-        console.error('8. Token decode error:', error);
-      }
-    }
-    console.log('=====================================');
-    
     return tokenValid && authReady;
   };
 
-  // Fetch user profile with enhanced token validation
+  /**
+   * React Query hook for fetching user profile data with automatic
+   * retry logic and error handling for token expiration
+   */
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
-      console.log('=== Profile API Call ===');
-      console.log('1. Starting profile fetch...');
-      console.log('2. Token valid check:', isTokenValid(token));
-      console.log('3. Token preview:', token ? token.substring(0, 50) + '...' : 'none');
-      
       if (!isTokenValid(token)) {
-        console.error('4. Token validation failed - throwing error');
         throw new Error('Token is invalid or expired');
       }
       
-      console.log('4. Token valid - making API call');
       const result = await getUserProfile();
-      console.log('5. API call successful:', result);
-      console.log('6. API response data:', result.data);
-      console.log('7. API response user object:', result.data?.user);
-      console.log('8. API response lastLogin:', result.data?.user?.lastLogin);
-      console.log('9. API response formattedLastLogin:', result.data?.user?.formattedLastLogin);
-      console.log('10. Returning result.data:', result.data);
       return result.data;
     },
     enabled: isReadyToFetch(),
     retry: (failureCount, error) => {
-      console.log('=== Profile Query Retry ===');
-      console.log('Failure count:', failureCount);
-      console.log('Error:', error.message);
-      
       // Don't retry if token is invalid
       if (error.message === 'Token is invalid or expired') {
-        console.log('Not retrying - token is invalid');
         return false;
       }
       
-      const shouldRetry = failureCount < 2;
-      console.log('Should retry:', shouldRetry);
-      return shouldRetry;
+      return failureCount < 2;
     },
     onSuccess: (response) => {
-      console.log('=== Profile Query Success ===');
-      console.log('1. Profile response received:', response);
-      console.log('2. Response type:', typeof response);
-      console.log('3. Response keys:', Object.keys(response || {}));
-      
-      // Extract the actual data from the Axios response
       const data = response.data;
-      console.log('4. Extracted data:', data);
-      console.log('5. Data keys:', Object.keys(data || {}));
       
-      // Update form data with fetched profile
+      // Populate form with fetched user profile data
       if (data && data.user) {
-              console.log('6. Updating form data with user data...');
-      const userData = data.user;
-      console.log('7. User data lastLogin:', userData?.lastLogin);
-      console.log('8. User data formattedLastLogin:', userData?.formattedLastLogin);
+        const userData = data.user;
       
       setFormData(prev => ({
         ...prev,
@@ -258,7 +230,7 @@ const Profile = () => {
         website: userData?.website || '',
         bio: userData?.bio || '',
         freelancerType: userData?.freelancerType || '',
-        address: userData?.address || '',
+        address: formatAddress(userData?.address) || '',
         country: userData?.country || '',
         socialLinks: {
           linkedin: userData?.socialLinks?.linkedin || '',
@@ -276,35 +248,24 @@ const Profile = () => {
           serviceRate: typeof userData?.defaultServiceRate === 'number' ? userData.defaultServiceRate : 100,
           autoReminders: typeof userData?.autoReminders === 'boolean' ? userData.autoReminders : true
         }
-      }));
-      console.log('9. Form data updated successfully');
+              }));
       } else {
-        console.log('6. No user data found in response');
+        // No user data found in response
       }
     },
     onError: (error) => {
-      console.error('=== Profile Query Error ===');
-      console.error('1. Error details:', error);
-      console.error('2. Error message:', error.message);
-      console.error('3. Response status:', error.response?.status);
-      console.error('4. Response data:', error.response?.data);
-      console.error('5. Current state:', {
-        token: token ? 'exists' : 'missing',
-        tokenValid: isTokenValid(token),
-        isAuthenticated,
-        authLoading
-      });
-      
       // If token is invalid, redirect to login
       if (error.message === 'Token is invalid or expired' || error.response?.status === 401) {
-        console.error('6. Token invalid - redirecting to login');
         toast.error('Session expired. Please log in again.');
         logout();
       }
     }
   });
 
-  // Update profile mutation
+  /**
+   * Mutation for updating user profile information
+   * Handles success/error states and invalidates cached profile data
+   */
   const updateProfileMutation = useMutation({
     mutationFn: updateUserProfile,
     onSuccess: (data) => {
@@ -318,7 +279,9 @@ const Profile = () => {
     }
   });
 
-  // Change password mutation
+  /**
+   * Mutation for changing user password with validation
+   */
   const changePasswordMutation = useMutation({
     mutationFn: changePassword,
     onSuccess: () => {
@@ -331,7 +294,9 @@ const Profile = () => {
     }
   });
 
-  // Update avatar mutation
+  /**
+   * Mutation for updating user profile picture/avatar
+   */
   const updateAvatarMutation = useMutation({
     mutationFn: updateUserAvatar,
     onSuccess: (data) => {
@@ -344,7 +309,9 @@ const Profile = () => {
     }
   });
 
-  // Update logo mutation
+  /**
+   * Mutation for updating business logo
+   */
   const updateLogoMutation = useMutation({
     mutationFn: updateUserLogo,
     onSuccess: (data) => {
@@ -369,201 +336,64 @@ const Profile = () => {
     }
   });
 
-  // Debug function to check token status
-  const debugTokenStatus = () => {
-    const storedToken = localStorage.getItem('token');
-    // Remove debug logging since it's no longer needed
-    console.log('1. AuthContext token exists:', !!token);
-    console.log('2. localStorage token exists:', !!storedToken);
-    console.log('3. AuthContext token valid:', isTokenValid(token));
-    console.log('4. localStorage token valid:', isTokenValid(storedToken));
-    console.log('5. isAuthenticated:', isAuthenticated);
-    console.log('6. authLoading:', authLoading);
-    
-    // Detailed token analysis
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const now = Date.now() / 1000;
-        const timeUntilExpiry = payload.exp - now;
-        
-        console.log('7. Token Analysis:');
-        console.log('   - User ID:', payload.userId);
-        console.log('   - Issued at:', new Date(payload.iat * 1000).toLocaleString());
-        console.log('   - Expires at:', new Date(payload.exp * 1000).toLocaleString());
-        console.log('   - Time until expiry:', Math.floor(timeUntilExpiry / 60), 'minutes');
-        console.log('   - Is expired:', payload.exp < now);
-        console.log('   - Is expiring soon (< 5 min):', timeUntilExpiry < 300);
-      } catch (error) {
-        console.error('8. Token decode error:', error);
-      }
-    }
-    
-    // Compare tokens
-    if (token && storedToken) {
-      console.log('9. Token comparison:');
-      console.log('   - Tokens match:', token === storedToken);
-      console.log('   - AuthContext token length:', token.length);
-      console.log('   - localStorage token length:', storedToken.length);
-    }
-    
-    console.log('=====================================');
-  };
 
-  // Test API connection with detailed logging
-  const testAPIConnection = async () => {
-    console.log('=== API Connection Test ===');
-    console.log('1. Starting API connection test...');
-    console.log('2. Current token:', token ? 'exists' : 'missing');
-    console.log('3. Token valid:', isTokenValid(token));
-    
-    try {
-      console.log('4. Making API call to getUserProfile...');
-      const response = await getUserProfile();
-      console.log('5. API call successful!');
-      console.log('6. Response data:', response);
-      console.log('7. Response type:', typeof response);
-      console.log('8. Response keys:', Object.keys(response || {}));
-      toast.success('API connection working!');
-    } catch (error) {
-      console.error('5. API call failed!');
-      console.error('6. Error type:', error.constructor.name);
-      console.error('7. Error message:', error.message);
-      console.error('8. Response status:', error.response?.status);
-      console.error('9. Response data:', error.response?.data);
-      console.error('10. Request config:', error.config);
-      toast.error('API connection failed: ' + (error.response?.data?.message || error.message));
-    }
-    console.log('==============================');
-  };
 
-  // New function to analyze JWT token in detail
-  const analyzeJWTToken = () => {
-    console.log('=== JWT Token Analysis ===');
-    
-    if (!token) {
-      console.log('No token available for analysis');
-      return;
-    }
-    
-    try {
-      const parts = token.split('.');
-      console.log('1. Token structure:');
-      console.log('   - Parts count:', parts.length);
-      console.log('   - Header length:', parts[0]?.length || 0);
-      console.log('   - Payload length:', parts[1]?.length || 0);
-      console.log('   - Signature length:', parts[2]?.length || 0);
-      
-      // Decode header
-      const header = JSON.parse(atob(parts[0]));
-      console.log('2. Token header:', header);
-      
-      // Decode payload
-      const payload = JSON.parse(atob(parts[1]));
-      console.log('3. Token payload:', payload);
-      
-      // Time analysis
-      const now = Date.now() / 1000;
-      const timeUntilExpiry = payload.exp - now;
-      const timeSinceIssued = now - payload.iat;
-      
-      console.log('4. Time analysis:');
-      console.log('   - Current time:', new Date(now * 1000).toLocaleString());
-      console.log('   - Issued:', new Date(payload.iat * 1000).toLocaleString());
-      console.log('   - Expires:', new Date(payload.exp * 1000).toLocaleString());
-      console.log('   - Age:', Math.floor(timeSinceIssued / 60), 'minutes');
-      console.log('   - Time until expiry:', Math.floor(timeUntilExpiry / 60), 'minutes');
-      console.log('   - Is expired:', payload.exp < now);
-      console.log('   - Is expiring soon (< 5 min):', timeUntilExpiry < 300);
-      
-      // Validation results
-      console.log('5. Validation results:');
-      console.log('   - isTokenValid():', isTokenValid(token));
-      console.log('   - isTokenExpiringSoon(5 min):', isTokenExpiringSoon(token, 5));
-      console.log('   - isTokenExpiringSoon(10 min):', isTokenExpiringSoon(token, 10));
-      
-    } catch (error) {
-      console.error('Token analysis failed:', error);
-    }
-    
-    console.log('==========================');
-  };
 
-  // Handle token expiration and authentication
+
+
+
+  /**
+   * Authentication guard effect - redirects to login if user is not authenticated
+   * or if token is invalid/expired. Also warns users about expiring sessions.
+   */
   useEffect(() => {
-    console.log('=== Profile Authentication Check ===');
-    console.log('1. Token exists:', !!token);
-    console.log('2. Auth loading:', authLoading);
-    console.log('3. Is authenticated:', isAuthenticated);
-    debugTokenStatus();
-    
-    // Check if token exists and is valid
     if (!token && !authLoading) {
-      console.log('4. No token found, redirecting to login');
       window.location.href = '/login';
       return;
     }
 
-    // Check if token is valid
     if (token && !isTokenValid(token)) {
-      console.log('4. Token is invalid or expired, redirecting to login');
       window.location.href = '/login';
       return;
     }
 
-    // Check if token is expiring soon
     if (token && isTokenExpiringSoon(token, 5)) {
-      console.log('4. Token is expiring soon, showing warning');
       toast.warning('Your session will expire soon. Please save your work.');
     }
 
-    // Check if user is authenticated
     if (!isAuthenticated && !authLoading) {
-      console.log('4. User not authenticated, redirecting to login');
       window.location.href = '/login';
       return;
     }
-
-    console.log('5. Authentication check passed - user is authenticated');
-    console.log('==================================================');
   }, [token, isAuthenticated, authLoading]);
 
-  // Periodic token validation check
+  /**
+   * Periodic token validation to ensure session security
+   * Checks token validity every minute and handles expiration gracefully
+   */
   useEffect(() => {
     if (!token || authLoading) {
-      console.log('Periodic token check skipped - no token or auth loading');
       return;
     }
 
-    console.log('Setting up periodic token validation (every 60 seconds)');
-    
     const interval = setInterval(() => {
-      console.log('=== Periodic Token Check ===');
-      console.log('1. Checking token validity...');
-      
       if (!isTokenValid(token)) {
-        console.log('2. Token expired during session, redirecting to login');
         window.location.href = '/login';
       } else if (isTokenExpiringSoon(token, 2)) {
-        console.log('2. Token expiring very soon, showing urgent warning');
         toast.error('Your session is about to expire! Please save your work immediately.');
-      } else {
-        console.log('2. Token is still valid');
       }
-      console.log('============================');
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => {
-      console.log('Cleaning up periodic token validation');
       clearInterval(interval);
     };
   }, [token, authLoading]);
 
-  // Initialize form data when profile loads
+    /**
+   * Initializes form data when profile data is loaded from API or AuthContext
+   * Handles both successful API responses and fallback to cached user data
+   */
   useEffect(() => {
-    console.log('Profile useEffect triggered:', { profile, user });
-    
-    // Ensure we have valid data structures
     const defaultFormData = {
       profilePicture: '',
       businessLogo: '',
@@ -593,9 +423,10 @@ const Profile = () => {
       }
     };
     
-    // Use profile data from API if available
-    if (profile?.data?.user && typeof profile.data.user === 'object') {
-      const userData = profile.data.user;
+          // Use profile data from API if available
+      if ((profile?.data?.user && typeof profile.data.user === 'object') || 
+          (profile?.user && typeof profile.user === 'object')) {
+        const userData = profile?.data?.user || profile?.user;
       console.log('Setting form data with user data from API:', userData);
       setFormData({
         ...defaultFormData,
@@ -623,12 +454,12 @@ const Profile = () => {
           dateFormat: safeRender(userData?.dateFormat) || 'MM/DD/YYYY',
           timeFormat: safeRender(userData?.timeFormat) || '12h',
         },
-        freelancerType: safeRender(userData?.freelancerType) || '',
-        address: safeRender(userData?.address) || '',
+        freelancerType: userData?.freelancerType || '',
+        address: formatAddress(userData?.address) || '',
         country: safeRender(userData?.country) || ''
       });
     } 
-    // Fallback to user data from AuthContext if API call fails or user is already loaded
+    // Use cached user data as fallback when API data is not available
     else if (user && typeof user === 'object' && !profile) {
       console.log('Using user data from AuthContext as fallback:', user);
       setFormData({
@@ -657,16 +488,21 @@ const Profile = () => {
           dateFormat: safeRender(user?.dateFormat) || 'MM/DD/YYYY',
           timeFormat: safeRender(user?.timeFormat) || '12h',
         },
-        freelancerType: safeRender(user?.freelancerType) || '',
-        address: safeRender(user?.address) || '',
+        freelancerType: user?.freelancerType || '',
+        address: formatAddress(user?.address) || '',
         country: safeRender(user?.country) || ''
       });
     } else if (profile && !profile.user) {
-      console.log('Profile data structure:', profile);
+      // Profile data structure issue
     }
   }, [profile, user]);
 
-  // Helper function to safely render values
+  /**
+   * Safely renders form values by handling null, undefined, and object types
+   * Prevents rendering errors when displaying form data
+   * @param {any} value - The value to render
+   * @returns {string} Safe string representation of the value
+   */
   const safeRender = (value) => {
     if (value === null || value === undefined) return '';
     if (typeof value === 'object') return '';
@@ -674,7 +510,32 @@ const Profile = () => {
     return String(value);
   };
 
-  // Handle form changes
+  /**
+   * Converts address object to displayable string format
+   * Handles both string addresses and structured address objects
+   * @param {string|object} address - Address as string or object with street, city, state, etc.
+   * @returns {string} Formatted address string
+   */
+  const formatAddress = (address) => {
+    if (!address) return '';
+    if (typeof address === 'string') return address;
+    if (typeof address === 'object') {
+      const parts = [];
+      if (address.street) parts.push(address.street);
+      if (address.city) parts.push(address.city);
+      if (address.state) parts.push(address.state);
+      if (address.zipCode) parts.push(address.zipCode);
+      if (address.country) parts.push(address.country);
+      return parts.join(', ');
+    }
+    return '';
+  };
+
+  /**
+   * Updates form data and marks the current section as having unsaved changes
+   * @param {string} field - The field name to update
+   * @param {any} value - The new value for the field
+   */
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -684,6 +545,11 @@ const Profile = () => {
     setUnsavedChanges(prev => ({ ...prev, [activeTab]: true }));
   };
 
+  /**
+   * Updates social media links and marks the logo-socials section as changed
+   * @param {string} platform - The social platform (linkedin, twitter, etc.)
+   * @param {string} value - The URL value
+   */
   const handleSocialLinkChange = (platform, value) => {
     setFormData(prev => ({
       ...prev,
@@ -696,6 +562,11 @@ const Profile = () => {
     setUnsavedChanges(prev => ({ ...prev, logoSocials: true }));
   };
 
+  /**
+   * Updates business preferences and marks the preferences section as changed
+   * @param {string} field - The preference field name
+   * @param {any} value - The new preference value
+   */
   const handlePreferenceChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -708,26 +579,36 @@ const Profile = () => {
     setUnsavedChanges(prev => ({ ...prev, preferences: true }));
   };
 
-  // Handle double-click to edit
+  /**
+   * Enables inline editing mode for a specific field
+   * @param {string} fieldName - The field to enable editing for
+   */
   const handleDoubleClick = (fieldName) => {
     setEditingFields(prev => ({ ...prev, [fieldName]: true }));
   };
 
-  // Handle field blur (save on blur)
+  /**
+   * Disables inline editing mode for a specific field
+   * @param {string} fieldName - The field to disable editing for
+   */
   const handleFieldBlur = (fieldName) => {
     setEditingFields(prev => ({ ...prev, [fieldName]: false }));
   };
 
-  // Save specific section
+  /**
+   * Saves changes for a specific profile section with validation
+   * Validates URLs, business preferences, and other section-specific requirements
+   * @param {string} section - The section to save (profile, logoSocials, preferences, security)
+   */
   const handleSaveSection = (section) => {
-      // Validate LinkedIn URL if saving logo-socials section
+      // Validate social media URLs and website for logo-socials section
       if (section === 'logoSocials') {
         if (formData.socialLinks?.linkedin && !formData.socialLinks.linkedin.startsWith('https://')) {
           toast.error('LinkedIn URL must start with https://');
           return;
         }
         
-        // Validate other URLs if they have content
+        // Validate all social media URLs for proper HTTPS format
         const urlFields = ['twitter', 'instagram', 'facebook'];
         for (const field of urlFields) {
           const value = formData.socialLinks?.[field];
@@ -737,22 +618,22 @@ const Profile = () => {
           }
         }
         
-        // Validate website URL
+        // Validate business website URL
         if (formData.website && !formData.website.startsWith('https://')) {
           toast.error('Website URL must start with https://');
           return;
         }
       }
 
-      // Validate preferences if saving preferences section
+      // Validate business preferences for preferences section
       if (section === 'preferences') {
-        // Validate required hourly rate
+        // Ensure hourly rate is set and valid
         if (!formData.preferences?.serviceRate || formData.preferences.serviceRate <= 0) {
           toast.error('Hourly rate is required and must be greater than 0');
           return;
         }
         
-        // Validate currency is selected
+        // Ensure currency is selected
         if (!formData.preferences?.currency) {
           toast.error('Please select a currency');
           return;
@@ -780,7 +661,10 @@ const Profile = () => {
     setUnsavedChanges(prev => ({ ...prev, [section]: false }));
   };
 
-  // Save all changes
+  /**
+   * Saves all unsaved changes across all profile sections
+   * Triggers the profile update mutation with current form data
+   */
   const handleSave = () => {
     updateProfileMutation.mutate({
       fullName: formData.fullName,
@@ -808,8 +692,12 @@ const Profile = () => {
     });
   };
 
+  /**
+   * Cancels all unsaved changes and resets form data to original values
+   * Clears all editing states and unsaved change flags
+   */
   const handleCancel = () => {
-    // Reset form data to original values
+    // Reset form data to original values from API response
     if (profile?.user && typeof profile.user === 'object') {
       const userData = profile.user;
       setFormData({
@@ -822,7 +710,7 @@ const Profile = () => {
         website: userData?.website || '',
         bio: userData?.bio || '',
         freelancerType: userData?.freelancerType || '',
-        address: userData?.address || '',
+        address: formatAddress(userData?.address) || '',
         country: userData?.country || '',
         socialLinks: {
           linkedin: userData?.socialLinks?.linkedin || '',
@@ -852,21 +740,24 @@ const Profile = () => {
     setEditingFields({});
   };
 
-  // Handle password change
+  /**
+   * Handles password change with comprehensive validation
+   * Validates password length, confirmation match, and current password requirement
+   */
   const handlePasswordChange = () => {
-    // Validate password length
+    // Ensure new password meets minimum security requirements
     if (passwordData.newPassword.length < 8) {
       toast.error('New password must be at least 8 characters long');
       return;
     }
     
-    // Validate password confirmation
+    // Verify password confirmation matches
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('New passwords do not match');
       return;
     }
     
-    // Validate current password is provided
+    // Ensure current password is provided for security
     if (!passwordData.currentPassword) {
       toast.error('Current password is required');
       return;
@@ -878,7 +769,10 @@ const Profile = () => {
     });
   };
 
-  // Handle account deletion
+  /**
+   * Handles account deletion with confirmation validation
+   * Requires explicit "DELETE" confirmation to prevent accidental deletions
+   */
   const handleAccountDeletion = () => {
     if (deleteConfirmation !== 'DELETE') {
       toast.error('Please type "DELETE" to confirm account deletion');
@@ -890,7 +784,12 @@ const Profile = () => {
     setDeleteConfirmation('');
   };
 
-  // Handle file uploads
+  /**
+   * Handles file uploads for profile pictures and business logos
+   * Converts files to base64 and triggers appropriate update mutations
+   * @param {string} type - The upload type ('avatar' or 'logo')
+   * @param {File} file - The file to upload
+   */
   const handleFileUpload = (type, file) => {
     if (!file) return;
     
@@ -911,7 +810,7 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
-  // Show loading state while authentication is being checked
+  // Display loading state during authentication check
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -923,7 +822,7 @@ const Profile = () => {
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect unauthenticated users to login
   if (!isAuthenticated || !token) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -967,7 +866,7 @@ const Profile = () => {
     );
   }
 
-  // Don't render if user data is not available
+  // Prevent rendering without user data
   if (!user && !profile) {
     return (
       <div className="loading-container">
@@ -981,9 +880,8 @@ const Profile = () => {
 
 
 
-  // Ensure form data is properly initialized
+  // Validate form data structure before rendering
   if (!formData || typeof formData !== 'object') {
-    console.log('Form data not initialized:', formData);
     return (
       <div className="loading-container">
         <div className="loading-content">
@@ -994,7 +892,7 @@ const Profile = () => {
     );
   }
 
-  // Ensure nested objects exist
+  // Ensure required nested objects exist with default values
   if (!formData.socialLinks || typeof formData.socialLinks !== 'object') {
     formData.socialLinks = { linkedin: '', twitter: '', instagram: '', facebook: '', website: '' };
   }
@@ -1189,10 +1087,10 @@ const Profile = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-gray-800 font-medium">Freelancer Type</label>
+                <div className="form-field">
+                  <label className="form-label">Freelancer Type</label>
                   <div 
-                    className="relative cursor-pointer"
+                    className="form-input-container"
                     onDoubleClick={() => handleDoubleClick('freelancerType')}
                   >
                     {editingFields.freelancerType ? (
@@ -1201,13 +1099,13 @@ const Profile = () => {
                         value={formData.freelancerType}
                         onChange={(e) => handleInputChange('freelancerType', e.target.value)}
                         onBlur={() => handleFieldBlur('freelancerType')}
-                        className="w-full px-3 py-2 bg-white/90 border border-gray-300 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-200 text-sm"
+                        className="form-input"
                         placeholder="Add your role"
                         autoFocus
                       />
                     ) : (
-                      <div className="w-full px-3 py-2 bg-white/90 border border-gray-300 rounded-xl text-gray-800 min-h-[44px] flex items-center text-sm">
-                        {safeRender(formData.freelancerType) || 'Double-click to edit'}
+                      <div className="form-display" id="freelancer-type-display">
+                        {formData.freelancerType || 'Double-click to edit'}
                       </div>
                     )}
                   </div>

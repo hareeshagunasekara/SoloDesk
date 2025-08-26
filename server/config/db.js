@@ -14,11 +14,11 @@ const connectDB = async () => {
       },
     );
 
-    console.log(`📦 MongoDB connected: ${conn.connection.host}`);
+    console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error("❌ MongoDB connection error:", error.message);
+    console.error(" MongoDB connection error:", error.message);
     console.log(
-      "⚠️  Server will continue without database connection for development",
+      "Server will continue without database connection for development",
     );
   }
 };

@@ -5,7 +5,6 @@ const {
   completeProfileSetup,
   addFirstClient,
   skipClientCreation,
-  createFirstBooking,
   completeOnboarding,
   getUserClients,
 } = require("../controllers/onboardingController");
@@ -26,13 +25,12 @@ router.post("/client", addFirstClient);
 // Step 2: Skip Client Creation
 router.post("/skip-client", skipClientCreation);
 
-// Step 3: Optional First Booking
-router.post("/booking", createFirstBooking);
+
 
 // Complete onboarding (skip step 3)
 router.post("/complete", completeOnboarding);
 
-// Get user's clients for booking step
+// Get user's clients
 router.get("/clients", getUserClients);
 
 module.exports = router;

@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { dashboardAPI } from '../services/api'
-import { cn, formatCurrency, formatDate } from '../utils/cn'
+import { cn, formatCurrency, formatDate, formatRelativeTime } from '../utils/cn'
 import Button from '../components/Button'
 import LoadingSpinner from '../components/LoadingSpinner'
 import {
@@ -13,15 +13,29 @@ import {
   CheckSquare,
   DollarSign,
   Clock,
-  Calendar,
   Plus,
   ArrowRight,
   Activity,
   Target,
   Award,
+  FileText,
+  Receipt,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Clock as ClockIcon,
+  UserPlus,
+  FilePlus,
+  Play,
+  BarChart3,
+  PieChart,
+  LineChart
 } from 'lucide-react'
 
 const Dashboard = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState('month')
+
+  // Fetch dashboard data
   const { data: stats, isLoading: statsLoading } = useQuery(
     'dashboard-stats',
     dashboardAPI.getStats,
@@ -46,102 +60,56 @@ const Dashboard = () => {
     }
   )
 
-  const mockStats = {
-    totalRevenue: 45250,
-    revenueChange: 12.5,
-    activeClients: 24,
-    clientsChange: 8.2,
-    activeProjects: 18,
-    projectsChange: -3.1,
-    completedTasks: 156,
-    tasksChange: 15.7,
-    totalHours: 342,
-    hoursChange: 22.3,
-    pendingInvoices: 8,
-    invoicesChange: -5.2,
-  }
+  const { data: projectProgress, isLoading: progressLoading } = useQuery(
+    'dashboard-progress',
+    dashboardAPI.getProjectProgress,
+    {
+      staleTime: 5 * 60 * 1000,
+    }
+  )
 
-  const mockRecentActivity = [
+  const { data: taskSummary, isLoading: taskLoading } = useQuery(
+    'dashboard-tasks',
+    dashboardAPI.getTaskSummary,
     {
-      id: 1,
-      type: 'project',
-      title: 'Website Redesign',
-      description: 'Project completed successfully',
-      time: '2 hours ago',
-      status: 'completed',
-    },
-    {
-      id: 2,
-      type: 'invoice',
-      title: 'Invoice #INV-2024-001',
-      description: 'Payment received from TechCorp',
-      time: '4 hours ago',
-      status: 'paid',
-    },
-    {
-      id: 3,
-      type: 'client',
-      title: 'New Client Added',
-      description: 'Design Studio joined as a new client',
-      time: '1 day ago',
-      status: 'new',
-    },
-    {
-      id: 4,
-      type: 'task',
-      title: 'Logo Design',
-      description: 'Task marked as completed',
-      time: '2 days ago',
-      status: 'completed',
-    },
-  ]
+      staleTime: 5 * 60 * 1000,
+    }
+  )
 
-  const mockUpcomingDeadlines = [
+  const { data: clientMetrics, isLoading: clientLoading } = useQuery(
+    'dashboard-clients',
+    dashboardAPI.getClientMetrics,
     {
-      id: 1,
-      title: 'Brand Identity Design',
-      client: 'StartupXYZ',
-      dueDate: '2024-01-15',
-      priority: 'high',
-    },
-    {
-      id: 2,
-      title: 'Website Development',
-      client: 'TechCorp',
-      dueDate: '2024-01-18',
-      priority: 'medium',
-    },
-    {
-      id: 3,
-      title: 'Marketing Materials',
-      client: 'Design Studio',
-      dueDate: '2024-01-20',
-      priority: 'low',
-    },
-  ]
+      staleTime: 10 * 60 * 1000, // 10 minutes
+    }
+  )
 
-  const StatCard = ({ title, value, change, icon: Icon, color = 'primary' }) => (
+  // Stat Card Component
+  const StatCard = ({ title, value, change, icon: Icon, color = 'primary', subtitle }) => (
     <div className="stat-card">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex-1">
           <p className="stat-label">{title}</p>
           <p className="stat-value">{value}</p>
-          <div className="flex items-center mt-2">
-            {change >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-success mr-1" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-error mr-1" />
-            )}
-            <span
-              className={cn(
-                'stat-change',
-                change >= 0 ? 'stat-change-positive' : 'stat-change-negative'
+          {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+          {change !== undefined && (
+            <div className="flex items-center mt-2">
+              {change >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-success mr-1" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-error mr-1" />
               )}
-            >
-              {Math.abs(change)}%
-            </span>
-            <span className="text-xs text-muted-foreground ml-1">vs last month</span>
-          </div>
+              <span
+                className={cn(
+                  'stat-change',
+                  change >= 0 ? 'stat-change-positive' : 'stat-change-negative'
+                )}
+              >
+                {Math.abs(change)}%
+              </span>
+              <span className="text-xs text-muted-foreground ml-1">vs last month</span>
+            </div>
+          )}
         </div>
         <div className={cn('p-3 rounded-lg', `bg-${color}/10`)}>
           <Icon className={cn('h-6 w-6', `text-${color}`)} />
@@ -150,6 +118,7 @@ const Dashboard = () => {
     </div>
   )
 
+  // Activity Item Component
   const ActivityItem = ({ activity }) => {
     const getActivityIcon = (type) => {
       switch (type) {
@@ -161,6 +130,8 @@ const Dashboard = () => {
           return Users
         case 'task':
           return CheckSquare
+        case 'notification':
+          return Activity
         default:
           return Activity
       }
@@ -170,17 +141,42 @@ const Dashboard = () => {
       switch (status) {
         case 'completed':
         case 'paid':
+        case 'read':
           return 'success'
         case 'new':
+        case 'active':
           return 'accent'
         case 'pending':
+        case 'unread':
           return 'warning'
+        case 'overdue':
+        case 'draft':
+          return 'error'
         default:
           return 'muted'
       }
     }
 
+    const getStatusIcon = (status) => {
+      switch (status) {
+        case 'completed':
+        case 'paid':
+        case 'read':
+          return CheckCircle
+        case 'pending':
+        case 'unread':
+          return ClockIcon
+        case 'overdue':
+          return AlertCircle
+        case 'draft':
+          return FileText
+        default:
+          return Activity
+      }
+    }
+
     const Icon = getActivityIcon(activity.type)
+    const StatusIcon = getStatusIcon(activity.status)
 
     return (
       <div className="notification-item">
@@ -188,18 +184,23 @@ const Dashboard = () => {
           <Icon className={cn('h-4 w-4', `text-${getStatusColor(activity.status)}`)} />
         </div>
         <div className="notification-content">
-          <p className="notification-title">{activity.title}</p>
+          <div className="flex items-center justify-between">
+            <p className="notification-title">{activity.title}</p>
+            <StatusIcon className={cn('h-4 w-4', `text-${getStatusColor(activity.status)}`)} />
+          </div>
           <p className="notification-message">{activity.description}</p>
-          <p className="notification-time">{activity.time}</p>
+          <p className="notification-time">{formatRelativeTime(activity.time)}</p>
         </div>
       </div>
     )
   }
 
+  // Deadline Item Component
   const DeadlineItem = ({ deadline }) => {
     const getPriorityColor = (priority) => {
       switch (priority) {
         case 'high':
+        case 'urgent':
           return 'error'
         case 'medium':
           return 'warning'
@@ -210,7 +211,22 @@ const Dashboard = () => {
       }
     }
 
-    const daysUntil = Math.ceil(
+    const getPriorityIcon = (priority) => {
+      switch (priority) {
+        case 'high':
+        case 'urgent':
+          return AlertCircle
+        case 'medium':
+          return ClockIcon
+        case 'low':
+          return CheckCircle
+        default:
+          return ClockIcon
+      }
+    }
+
+    const PriorityIcon = getPriorityIcon(deadline.priority)
+    const daysUntil = deadline.daysUntil || Math.ceil(
       (new Date(deadline.dueDate) - new Date()) / (1000 * 60 * 60 * 24)
     )
 
@@ -219,8 +235,12 @@ const Dashboard = () => {
         <div className="flex items-center space-x-3">
           <div className={cn('w-2 h-2 rounded-full', `bg-${getPriorityColor(deadline.priority)}`)} />
           <div className="flex-1">
-            <p className="task-title">{deadline.title}</p>
+            <div className="flex items-center space-x-2">
+              <PriorityIcon className={cn('h-4 w-4', `text-${getPriorityColor(deadline.priority)}`)} />
+              <p className="task-title">{deadline.title}</p>
+            </div>
             <p className="text-xs text-muted-foreground">{deadline.client}</p>
+            <p className="text-xs text-muted-foreground capitalize">{deadline.type}</p>
           </div>
         </div>
         <div className="text-right">
@@ -235,6 +255,69 @@ const Dashboard = () => {
     )
   }
 
+  // Project Progress Item Component
+  const ProjectProgressItem = ({ project }) => {
+    const getStatusColor = (status) => {
+      switch (status) {
+        case 'In Progress':
+          return 'warning'
+        case 'Completed':
+          return 'success'
+        case 'On Hold':
+          return 'error'
+        default:
+          return 'muted'
+      }
+    }
+
+    const daysUntil = Math.ceil((new Date(project.dueDate) - new Date()) / (1000 * 60 * 60 * 24))
+
+    return (
+      <div className="task-item">
+        <div className="flex items-center space-x-3">
+          <div className={cn('w-2 h-2 rounded-full', `bg-${getStatusColor(project.status)}`)} />
+          <div className="flex-1">
+            <p className="task-title">{project.name}</p>
+            <p className="text-xs text-muted-foreground">{project.client}</p>
+            <div className="flex items-center space-x-2 mt-1">
+              <div className="flex-1 bg-muted rounded-full h-2">
+                <div 
+                  className={cn('h-2 rounded-full transition-all', `bg-${getStatusColor(project.status)}`)}
+                  style={{ width: `${project.progress}%` }}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">{project.progress}%</span>
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-medium text-card-foreground capitalize">
+            {project.status.toLowerCase()}
+          </p>
+          <p className={cn('text-xs', daysUntil <= 7 ? 'text-error' : 'text-muted-foreground')}>
+            {daysUntil <= 0 ? 'Overdue' : `${daysUntil} days left`}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Quick Action Component
+  const QuickAction = ({ title, icon: Icon, href, variant = 'outline' }) => (
+    <Link to={href}>
+      <Button
+        variant={variant}
+        size="sm"
+        fullWidth
+        icon={<Icon className="h-4 w-4" />}
+        iconPosition="left"
+        className="justify-start"
+      >
+        {title}
+      </Button>
+    </Link>
+  )
+
   if (statsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -242,6 +325,13 @@ const Dashboard = () => {
       </div>
     )
   }
+
+  const statsData = stats?.data || {}
+  const activityData = recentActivity?.data || []
+  const deadlinesData = upcomingDeadlines?.data || []
+  const progressData = projectProgress?.data || []
+  const taskData = taskSummary?.data || {}
+  const clientData = clientMetrics?.data || {}
 
   return (
     <div className="space-y-6">
@@ -254,12 +344,11 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" icon={<Calendar className="h-4 w-4" />}>
-            View Calendar
-          </Button>
-          <Button icon={<Plus className="h-4 w-4" />}>
-            New Project
-          </Button>
+          <Link to="/projects/new">
+            <Button icon={<Plus className="h-4 w-4" />}>
+              New Project
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -267,45 +356,44 @@ const Dashboard = () => {
       <div className="dashboard-grid">
         <StatCard
           title="Total Revenue"
-          value={formatCurrency(mockStats.totalRevenue)}
-          change={mockStats.revenueChange}
+          value={formatCurrency(statsData.totalRevenue || 0)}
+          change={statsData.revenueChange}
           icon={DollarSign}
           color="success"
+          subtitle="All time earnings"
         />
         <StatCard
           title="Active Clients"
-          value={mockStats.activeClients}
-          change={mockStats.clientsChange}
+          value={statsData.totalClients || 0}
+          change={statsData.clientsChange}
           icon={Users}
           color="accent"
+          subtitle="Currently active"
         />
         <StatCard
           title="Active Projects"
-          value={mockStats.activeProjects}
-          change={mockStats.projectsChange}
+          value={statsData.activeProjects || 0}
+          change={statsData.projectsChange}
           icon={FolderOpen}
           color="primary"
+          subtitle="In progress"
         />
+
         <StatCard
-          title="Completed Tasks"
-          value={mockStats.completedTasks}
-          change={mockStats.tasksChange}
-          icon={CheckSquare}
-          color="success"
-        />
-        <StatCard
-          title="Total Hours"
-          value={`${mockStats.totalHours}h`}
-          change={mockStats.hoursChange}
-          icon={Clock}
-          color="warning"
-        />
-        <StatCard
-          title="Pending Invoices"
-          value={mockStats.pendingInvoices}
-          change={mockStats.invoicesChange}
-          icon={DollarSign}
+          title="Outstanding Invoices"
+          value={statsData.outstandingInvoices || 0}
+          change={statsData.invoicesChange}
+          icon={FileText}
           color="error"
+          subtitle="Pending payments"
+        />
+        <StatCard
+          title="Pending Tasks"
+          value={statsData.pendingTasks || 0}
+          change={statsData.tasksChange}
+          icon={CheckSquare}
+          color="warning"
+          subtitle="To be completed"
         />
       </div>
 
@@ -324,28 +412,72 @@ const Dashboard = () => {
                 </div>
                 <Link
                   to="/activity"
-                  className="text-sm text-accent hover:text-accent/80 transition-colors"
+                  className="text-sm text-accent hover:text-accent/80 transition-colors flex items-center"
                 >
                   View all
+                  <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
             </div>
             <div className="card-content">
               {activityLoading ? (
                 <LoadingSpinner />
-              ) : (
+              ) : activityData.length > 0 ? (
                 <div className="space-y-0">
-                  {mockRecentActivity.map((activity) => (
+                  {activityData.map((activity) => (
                     <ActivityItem key={activity.id} activity={activity} />
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No recent activity</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Project Progress */}
+          <div className="card mt-6">
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="card-title">Project Progress</h3>
+                  <p className="card-description">
+                    Active projects and their completion status
+                  </p>
+                </div>
+                <Link
+                  to="/projects"
+                  className="text-sm text-accent hover:text-accent/80 transition-colors flex items-center"
+                >
+                  View all
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
+              </div>
+            </div>
+            <div className="card-content">
+              {progressLoading ? (
+                <LoadingSpinner />
+              ) : progressData.length > 0 ? (
+                <div className="space-y-0">
+                  {progressData.map((project) => (
+                    <ProjectProgressItem key={project.id} project={project} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No active projects</p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Upcoming Deadlines */}
-        <div>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Upcoming Deadlines */}
           <div className="card">
             <div className="card-header">
               <div className="flex items-center justify-between">
@@ -355,62 +487,135 @@ const Dashboard = () => {
                     Projects and tasks due soon
                   </p>
                 </div>
-                <Link
-                  to="/tasks"
-                  className="text-sm text-accent hover:text-accent/80 transition-colors"
-                >
-                  View all
-                </Link>
               </div>
             </div>
             <div className="card-content">
               {deadlinesLoading ? (
                 <LoadingSpinner />
-              ) : (
+              ) : deadlinesData.length > 0 ? (
                 <div className="space-y-0">
-                  {mockUpcomingDeadlines.map((deadline) => (
+                  {deadlinesData.map((deadline) => (
                     <DeadlineItem key={deadline.id} deadline={deadline} />
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No upcoming deadlines</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Task Summary */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Task Summary</h3>
+            </div>
+            <div className="card-content">
+              {taskLoading ? (
+                <LoadingSpinner />
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Total Tasks</span>
+                    <span className="font-medium">{taskData.totalTasks || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Completed</span>
+                    <span className="font-medium text-success">{taskData.completedTasks || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Pending</span>
+                    <span className="font-medium text-warning">{taskData.pendingTasks || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Overdue</span>
+                    <span className="font-medium text-error">{taskData.overdueTasks || 0}</span>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Completion Rate</span>
+                      <span className="font-medium">{taskData.completionRate || 0}%</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="card mt-6">
+          <div className="card">
             <div className="card-header">
               <h3 className="card-title">Quick Actions</h3>
             </div>
             <div className="card-content space-y-3">
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                icon={<Plus className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                New Client
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                icon={<DollarSign className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                Create Invoice
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                icon={<Clock className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                Start Timer
-              </Button>
+              <QuickAction
+                title="+ New Client"
+                icon={UserPlus}
+                href="/clients/new"
+              />
+              <QuickAction
+                title="+ Create Invoice"
+                icon={FilePlus}
+                href="/invoices/new"
+              />
+              <QuickAction
+                title="+ Start Project"
+                icon={Play}
+                href="/projects/new"
+              />
+              <QuickAction
+                title="+ Add Task"
+                icon={CheckSquare}
+                href="/tasks/new"
+              />
             </div>
           </div>
+
+          {/* Client Metrics */}
+          {clientData.totalClients > 0 && (
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Client Overview</h3>
+              </div>
+              <div className="card-content">
+                {clientLoading ? (
+                  <LoadingSpinner />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Total Clients</span>
+                      <span className="font-medium">{clientData.totalClients}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Active Clients</span>
+                      <span className="font-medium text-success">{clientData.activeClients}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">New This Month</span>
+                      <span className="font-medium text-accent">{clientData.newClientsThisMonth}</span>
+                    </div>
+                    {clientData.topClients && clientData.topClients.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-sm font-medium mb-2">Top Clients</p>
+                        <div className="space-y-2">
+                          {clientData.topClients.slice(0, 3).map((client) => (
+                            <div key={client.id} className="flex items-center justify-between text-sm">
+                              <span className="truncate">{client.name}</span>
+                              <span className="text-muted-foreground">
+                                {formatCurrency(client.totalRevenue)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

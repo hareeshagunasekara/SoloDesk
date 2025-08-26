@@ -71,16 +71,10 @@ const NotFound = () => {
               Projects
             </Link>
             <Link
-              to="/tasks"
+              to="/invoices"
               className="text-accent hover:text-accent/80 transition-colors"
             >
-              Tasks
-            </Link>
-            <Link
-              to="/calendar"
-              className="text-accent hover:text-accent/80 transition-colors"
-            >
-              Calendar
+              Invoices
             </Link>
           </div>
         </div>

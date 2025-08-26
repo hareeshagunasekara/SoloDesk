@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { cn } from '../utils/cn';
 import Button from '../components/Button';
 import logo from '../assets/logo_light.png';
@@ -9,11 +10,9 @@ import {
   Users,
   FolderOpen,
   CheckSquare,
-  Calendar,
   FileText,
   CreditCard,
   Clock,
-  Settings,
   User,
   LogOut,
   Menu,
@@ -30,46 +29,9 @@ const SidebarLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, markNotificationsAsRead, markAllNotificationsAsRead } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Mock notifications data
-  const notifications = [
-    {
-      id: 1,
-      type: 'booking',
-      title: 'New Booking',
-      message: 'Design Studio booked a consultation for tomorrow',
-      time: '2 minutes ago',
-      unread: true,
-    },
-    {
-      id: 2,
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'Invoice #INV-2024-001 has been paid',
-      time: '1 hour ago',
-      unread: true,
-    },
-    {
-      id: 3,
-      type: 'project',
-      title: 'Project Update',
-      message: 'Website redesign project is 75% complete',
-      time: '3 hours ago',
-      unread: false,
-    },
-    {
-      id: 4,
-      type: 'client',
-      title: 'New Client',
-      message: 'TechCorp has been added as a new client',
-      time: '1 day ago',
-      unread: false,
-    },
-  ];
-
-  const unreadCount = notifications.filter(n => n.unread).length;
 
   const navigation = [
     {
@@ -92,13 +54,6 @@ const SidebarLayout = ({ children }) => {
       icon: FolderOpen,
       description: 'Manage projects, track progress, deadlines',
       current: location.pathname.startsWith('/projects'),
-    },
-    {
-      name: 'Calendar',
-      href: '/calendar',
-      icon: Calendar,
-      description: 'FullCalendar bookings (drag-reschedule)',
-      current: location.pathname === '/calendar',
     },
     {
       name: 'Invoices',
@@ -144,14 +99,26 @@ const SidebarLayout = ({ children }) => {
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'booking':
-        return Calendar;
-      case 'payment':
-        return CreditCard;
-      case 'project':
+      case 'welcome':
+        return Bell;
+      case 'project_due_soon':
+      case 'project_overdue':
         return FolderOpen;
-      case 'client':
+      case 'task_due_soon':
+      case 'task_overdue':
+        return CheckSquare;
+      case 'payment_received':
+        return CreditCard;
+      case 'invoice_sent':
+        return FileText;
+      case 'client_added':
         return Users;
+      case 'project_completed':
+        return FolderOpen;
+      case 'task_completed':
+        return CheckSquare;
+      case 'reminder':
+        return Clock;
       default:
         return Bell;
     }
@@ -159,14 +126,26 @@ const SidebarLayout = ({ children }) => {
 
   const getNotificationColor = (type) => {
     switch (type) {
-      case 'booking':
+      case 'welcome':
         return 'text-blue-500';
-      case 'payment':
-        return 'text-green-500';
-      case 'project':
-        return 'text-purple-500';
-      case 'client':
+      case 'project_due_soon':
+      case 'project_overdue':
         return 'text-orange-500';
+      case 'task_due_soon':
+      case 'task_overdue':
+        return 'text-red-500';
+      case 'payment_received':
+        return 'text-green-500';
+      case 'invoice_sent':
+        return 'text-blue-500';
+      case 'client_added':
+        return 'text-purple-500';
+      case 'project_completed':
+        return 'text-green-500';
+      case 'task_completed':
+        return 'text-green-500';
+      case 'reminder':
+        return 'text-yellow-500';
       default:
         return 'text-gray-500';
     }
@@ -289,14 +268,6 @@ const SidebarLayout = ({ children }) => {
                 <User className="mr-3 h-4 w-4" />
                 Profile
               </Link>
-              <Link
-                to="/settings"
-                className="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gradient-to-r hover:from-gray-700/30 hover:to-gray-600/20 hover:text-gray-200 rounded-lg transition-all duration-300 hover:shadow-md"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <Settings className="mr-3 h-4 w-4" />
-                Settings
-              </Link>
               <button
                 onClick={handleLogout}
                 className="flex w-full items-center px-3 py-2 text-sm text-gray-400 hover:bg-gradient-to-r hover:from-red-900/20 hover:to-red-800/20 hover:text-red-300 rounded-lg transition-all duration-300 hover:shadow-md"
@@ -374,9 +345,17 @@ const SidebarLayout = ({ children }) => {
                             <Bell className="h-4 w-4 mr-2" />
                             Notifications
                           </h3>
-                          <button className="text-xs text-gray-300 hover:text-gray-200 transition-colors duration-200">
-                            Mark all as read
-                          </button>
+                          {unreadCount > 0 && (
+                            <button 
+                              onClick={() => {
+                                markAllNotificationsAsRead();
+                                setNotificationsOpen(false);
+                              }}
+                              className="text-xs text-gray-300 hover:text-gray-200 transition-colors duration-200"
+                            >
+                              Mark all as read
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -388,16 +367,22 @@ const SidebarLayout = ({ children }) => {
                               const Icon = getNotificationIcon(notification.type);
                               return (
                                 <div
-                                  key={notification.id}
+                                  key={notification._id}
+                                  onClick={() => {
+                                    if (!notification.isRead) {
+                                      markNotificationsAsRead([notification._id]);
+                                    }
+                                    setNotificationsOpen(false);
+                                  }}
                                   className={cn(
                                     "px-4 py-3 hover:bg-gradient-to-r hover:from-gray-200/50 hover:to-gray-300/50 transition-all duration-200 cursor-pointer border-b border-gray-200/20",
-                                    notification.unread && "bg-blue-50/30"
+                                    !notification.isRead && "bg-blue-50/30"
                                   )}
                                 >
                                   <div className="flex items-start space-x-3">
                                     <div className={cn(
                                       "flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center",
-                                      notification.unread && "bg-blue-100"
+                                      !notification.isRead && "bg-blue-100"
                                     )}>
                                       <Icon className={cn("h-4 w-4", getNotificationColor(notification.type))} />
                                     </div>
@@ -406,7 +391,7 @@ const SidebarLayout = ({ children }) => {
                                         <p className="text-sm font-medium text-gray-800 truncate">
                                           {notification.title}
                                         </p>
-                                        {notification.unread && (
+                                        {!notification.isRead && (
                                           <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                                         )}
                                       </div>
@@ -414,7 +399,7 @@ const SidebarLayout = ({ children }) => {
                                         {notification.message}
                                       </p>
                                       <p className="text-xs text-gray-400 mt-1">
-                                        {notification.time}
+                                        {notification.timeAgo}
                                       </p>
                                     </div>
                                   </div>

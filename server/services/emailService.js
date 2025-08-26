@@ -599,6 +599,70 @@ const sendClientWelcomeEmail = async (clientData, userData) => {
   }
 };
 
+// Send invoice email
+const sendInvoiceEmail = async (clientEmail, subject, html, user, invoice, emailTemplate = null) => {
+  try {
+    const transporter = createTransporter();
+
+    const mailOptions = {
+      from: `"${user.businessName || 'SoloDesk'}" <${process.env.EMAIL_USER}>`,
+      to: clientEmail,
+      subject: subject,
+      html: html
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Invoice email sent successfully:", info.messageId);
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending invoice email:", error);
+    
+    // Provide more specific error messages
+    if (error.code === 'EAUTH') {
+      throw new Error("Email authentication failed. Please check your email credentials.");
+    } else if (error.code === 'ECONNECTION') {
+      throw new Error("Failed to connect to email server. Please check your internet connection.");
+    } else if (error.code === 'ETIMEDOUT') {
+      throw new Error("Email server connection timed out. Please try again.");
+    } else {
+      throw new Error(`Failed to send invoice email: ${error.message}`);
+    }
+  }
+};
+
+// Send receipt email
+const sendReceiptEmail = async (clientEmail, subject, html, user, receipt, emailTemplate = null) => {
+  try {
+    const transporter = createTransporter();
+
+    const mailOptions = {
+      from: `"${user.businessName || 'SoloDesk'}" <${process.env.EMAIL_USER}>`,
+      to: clientEmail,
+      subject: subject,
+      html: html
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Receipt email sent successfully:", info.messageId);
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending receipt email:", error);
+    
+    // Provide more specific error messages
+    if (error.code === 'EAUTH') {
+      throw new Error("Email authentication failed. Please check your email credentials.");
+    } else if (error.code === 'ECONNECTION') {
+      throw new Error("Failed to connect to email server. Please check your internet connection.");
+    } else if (error.code === 'ETIMEDOUT') {
+      throw new Error("Email server connection timed out. Please try again.");
+    } else {
+      throw new Error(`Failed to send receipt email: ${error.message}`);
+    }
+  }
+};
+
 // Verify email configuration
 const verifyEmailConfig = async () => {
   try {
@@ -616,6 +680,8 @@ module.exports = {
   sendResetEmail,
   sendWelcomeEmail,
   sendClientWelcomeEmail,
+  sendInvoiceEmail,
+  sendReceiptEmail,
   generateResetToken,
   verifyEmailConfig,
   getUserDetailsForEmail,

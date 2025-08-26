@@ -302,4 +302,5 @@ export const fileAPI = {
   getByType: (type) => api.get(`/files/${type}`),
 }
 
+export { api }
 export default api 

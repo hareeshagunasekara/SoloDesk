@@ -669,7 +669,9 @@ const testFormattedLastLogin = async (req, res) => {
 // @access  Private
 const getEmailTemplateData = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('firstName lastName email phone businessName website');
+    const user = await User.findById(req.user._id).select(
+      'firstName lastName email phone businessName website logo avatar address bio country preferredCurrency freelancerType invoicePrefix paymentTerms autoReminders dateFormat timeFormat socialLinks'
+    );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -678,12 +680,46 @@ const getEmailTemplateData = async (req, res) => {
     res.json({
       success: true,
       data: {
+        // Personal Information
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
+        
+        // Business Information
         businessName: user.businessName || 'SoloDesk',
         website: user.website || '',
+        logo: user.logo || null,
+        avatar: user.avatar || null,
+        bio: user.bio || '',
+        freelancerType: user.freelancerType || '',
+        
+        // Address Information
+        address: user.address || {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: ''
+        },
+        country: user.country || '',
+        
+        // Business Preferences
+        preferredCurrency: user.preferredCurrency || 'USD',
+        invoicePrefix: user.invoicePrefix || 'INV',
+        paymentTerms: user.paymentTerms || '30',
+        autoReminders: user.autoReminders !== undefined ? user.autoReminders : true,
+        dateFormat: user.dateFormat || 'MM/DD/YYYY',
+        timeFormat: user.timeFormat || '12h',
+        
+        // Social Links
+        socialLinks: user.socialLinks || {
+          linkedin: '',
+          instagram: '',
+          twitter: '',
+          facebook: '',
+          website: ''
+        }
       },
     });
   } catch (error) {

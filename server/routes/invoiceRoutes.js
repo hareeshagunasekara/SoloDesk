@@ -4,7 +4,10 @@ const router = express.Router();
 const invoiceController = require("../controllers/invoiceController");
 const { auth } = require("../middlewares/authMiddleware");
 
-// All routes require authentication
+// Public download route (no auth required)
+router.get("/:id/download", invoiceController.downloadInvoice);
+
+// All other routes require authentication
 router.use(auth);
 
 // Validation rules for creating/updating invoices
@@ -52,6 +55,5 @@ router.delete("/:id", invoiceController.deleteInvoice);
 // Actions
 router.post("/:id/send", invoiceController.sendInvoice);
 router.put("/:id/paid", invoiceController.markAsPaid);
-router.get("/:id/download", invoiceController.downloadInvoice);
 
 module.exports = router;
