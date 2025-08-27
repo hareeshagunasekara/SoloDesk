@@ -20,16 +20,14 @@ const getStats = async (req, res) => {
       totalRevenue,
       lastMonthRevenue
     ] = await Promise.all([
-      // Total Clients (Active status)
+      // Total Clients (All statuses)
       Client.countDocuments({ 
-        createdBy: userId, 
-        status: 'Active' 
+        createdBy: userId
       }),
       
-      // Active Projects (In Progress status)
+      // Total Projects (All statuses, not archived)
       Project.countDocuments({ 
         createdBy: userId, 
-        status: 'In Progress',
         isArchived: false 
       }),
       
@@ -82,7 +80,6 @@ const getStats = async (req, res) => {
     // Get additional stats for comparison
     const lastMonthClients = await Client.countDocuments({
       createdBy: userId,
-      status: 'Active',
       createdAt: {
         $gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
         $lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -91,7 +88,6 @@ const getStats = async (req, res) => {
 
     const currentMonthClients = await Client.countDocuments({
       createdBy: userId,
-      status: 'Active',
       createdAt: {
         $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       }
@@ -101,20 +97,88 @@ const getStats = async (req, res) => {
       ? ((currentMonthClients - lastMonthClients) / lastMonthClients) * 100 
       : 0;
 
+    // Calculate project changes
+    const lastMonthProjects = await Project.countDocuments({
+      createdBy: userId,
+      isArchived: false,
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+        $lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      }
+    });
+
+    const currentMonthProjects = await Project.countDocuments({
+      createdBy: userId,
+      isArchived: false,
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      }
+    });
+
+    const projectsChange = lastMonthProjects > 0 
+      ? ((currentMonthProjects - lastMonthProjects) / lastMonthProjects) * 100 
+      : 0;
+
+    // Calculate task changes
+    const lastMonthTasks = await Task.countDocuments({
+      createdBy: userId,
+      completed: false,
+      isArchived: false,
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+        $lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      }
+    });
+
+    const currentMonthTasks = await Task.countDocuments({
+      createdBy: userId,
+      completed: false,
+      isArchived: false,
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      }
+    });
+
+    const tasksChange = lastMonthTasks > 0 
+      ? ((currentMonthTasks - lastMonthTasks) / lastMonthTasks) * 100 
+      : 0;
+
+    // Calculate invoice changes
+    const lastMonthInvoices = await Invoice.countDocuments({
+      createdBy: userId,
+      status: 'pending',
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+        $lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      }
+    });
+
+    const currentMonthInvoices = await Invoice.countDocuments({
+      createdBy: userId,
+      status: 'pending',
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      }
+    });
+
+    const invoicesChange = lastMonthInvoices > 0 
+      ? ((currentMonthInvoices - lastMonthInvoices) / lastMonthInvoices) * 100 
+      : 0;
+
     res.json({
       success: true,
       data: {
         totalClients,
-        activeProjects,
+        totalProjects: activeProjects, // Rename for clarity
         outstandingInvoices,
         totalReceipts,
         pendingTasks,
         totalRevenue: currentRevenue,
         revenueChange: Math.round(revenueChange * 100) / 100,
         clientsChange: Math.round(clientsChange * 100) / 100,
-        projectsChange: 0, // Will be calculated based on project creation trends
-        tasksChange: 0, // Will be calculated based on task completion trends
-        invoicesChange: 0 // Will be calculated based on invoice trends
+        projectsChange: Math.round(projectsChange * 100) / 100,
+        tasksChange: Math.round(tasksChange * 100) / 100,
+        invoicesChange: Math.round(invoicesChange * 100) / 100
       }
     });
   } catch (error) {
@@ -515,7 +579,8 @@ const getClientMetrics = async (req, res) => {
             as: 'client'
           }
         },
-        { $unwind: '$client' }
+        { $unwind: '$client' },
+        { $match: { 'client.name': { $exists: true } } }
       ])
     ]);
 
@@ -527,7 +592,7 @@ const getClientMetrics = async (req, res) => {
         newClientsThisMonth,
         topClients: topClients.map(client => ({
           id: client._id,
-          name: client.client.name,
+          name: client.client?.name || 'Unknown Client',
           totalRevenue: client.totalRevenue,
           paymentCount: client.paymentCount
         }))
