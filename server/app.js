@@ -17,6 +17,7 @@ const receiptRoutes = require("./routes/receiptRoutes");
 const autoMessagesRoutes = require("./routes/autoMessagesRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 
 const app = express();
@@ -53,6 +54,7 @@ app.use("/api/receipts", receiptRoutes);
 app.use("/api/auto-messages", autoMessagesRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/files", fileRoutes);
 
 // Simple API endpoint
