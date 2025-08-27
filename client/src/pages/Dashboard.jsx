@@ -368,11 +368,12 @@ const Dashboard = () => {
                 </p>
               </div>
               <div className="flex items-center space-x-3">
-                <Link to="/projects/new">
-                  <Button icon={<Plus className="h-4 w-4" />}>
-                    New Project
-                  </Button>
-                </Link>
+                <Button 
+                  icon={<Plus className="h-4 w-4" />}
+                  onClick={() => setShowAddProjectModal(true)}
+                >
+                  New Project
+                </Button>
               </div>
             </div>
           </div>
