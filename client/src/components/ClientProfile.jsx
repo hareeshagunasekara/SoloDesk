@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   Building2, 
@@ -36,12 +37,13 @@ import {
   Loader2
 } from 'lucide-react';
 import Button from './Button';
-import { clientsAPI } from '../services/api';
+import { clientsAPI, fileAPI } from '../services/api';
 import AddProjectModal from './AddProjectModal';
 import ViewProject from './ViewProject';
 import AddInvoiceModal from './AddInvoiceModal';
 
 const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingField, setEditingField] = useState(null);
@@ -69,6 +71,13 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
 
   // AddInvoiceModal state
   const [showAddInvoiceModal, setShowAddInvoiceModal] = useState(false);
+
+  // Notes state
+  const [newNote, setNewNote] = useState('');
+  const [addingNote, setAddingNote] = useState(false);
+
+  // Files state
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   // Update local state when client prop changes
   useEffect(() => {
@@ -127,29 +136,89 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
     }
   };
 
-  // Mock data for sections that aren't set up yet
-  const mockData = {
-    invoices: [
-      { id: 1, number: 'INV-001', amount: 2500, status: 'Paid', dueDate: '2024-02-15', paidDate: '2024-02-10' },
-      { id: 2, number: 'INV-002', amount: 3000, status: 'Overdue', dueDate: '2024-02-28', paidDate: null },
-      { id: 3, number: 'INV-003', amount: 5000, status: 'Pending', dueDate: '2024-03-15', paidDate: null }
-    ],
-    communications: [
-      { id: 1, type: 'meeting', title: 'Project Kickoff', date: '2024-02-15', notes: 'Discussed project requirements and timeline' },
-      { id: 2, type: 'email', title: 'Design Feedback', date: '2024-02-20', notes: 'Client provided feedback on initial designs' },
-      { id: 3, type: 'call', title: 'Status Update', date: '2024-02-25', notes: 'Weekly progress update call' }
-    ],
-    attachments: [
-      { id: 1, name: 'contract.pdf', type: 'application/pdf', size: '2.5 MB', uploadedAt: '2024-01-15' },
-      { id: 2, name: 'brand-guidelines.pdf', type: 'application/pdf', size: '1.8 MB', uploadedAt: '2024-01-20' },
-      { id: 3, name: 'logo-design.ai', type: 'application/illustrator', size: '15.2 MB', uploadedAt: '2024-02-01' }
-    ],
-    notes: [
-      { id: 1, content: 'Client prefers weekly updates via email', createdAt: '2024-01-15', author: 'John Doe' },
-      { id: 2, content: 'Budget increased for additional features', createdAt: '2024-02-01', author: 'Jane Smith' },
-      { id: 3, content: 'Client mentioned potential referral', createdAt: '2024-02-15', author: 'John Doe' }
-    ]
+  // Add note to client
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !client?._id) return;
+
+    setAddingNote(true);
+    try {
+      const response = await clientsAPI.addNote(client._id, newNote.trim());
+      if (response.data?.success) {
+        // Update the client's notes in local state
+        setUpdatedClient(prev => ({
+          ...prev,
+          notes: [...(prev.notes || []), response.data.data]
+        }));
+        setNewNote('');
+      }
+    } catch (error) {
+      console.error('Error adding note:', error);
+    } finally {
+      setAddingNote(false);
+    }
   };
+
+  // Handle file upload
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file || !client?._id) return;
+
+    setUploadingFile(true);
+    try {
+      // First upload the file to get a URL
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'client-attachment');
+
+      const uploadResponse = await fileAPI.upload(file, 'client-attachment');
+      
+      if (uploadResponse.data?.success) {
+        // Then add the attachment to the client
+        const attachmentData = {
+          filename: uploadResponse.data.filename,
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          url: uploadResponse.data.url
+        };
+
+        const response = await clientsAPI.addAttachment(client._id, attachmentData);
+        if (response.data?.success) {
+          // Update the client's attachments in local state
+          setUpdatedClient(prev => ({
+            ...prev,
+            attachments: [...(prev.attachments || []), response.data.data]
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    } finally {
+      setUploadingFile(false);
+      // Reset the file input
+      event.target.value = '';
+    }
+  };
+
+  // Remove attachment
+  const handleRemoveAttachment = async (attachmentId) => {
+    if (!client?._id) return;
+
+    try {
+      const response = await clientsAPI.removeAttachment(client._id, attachmentId);
+      if (response.data?.success) {
+        // Update the client's attachments in local state
+        setUpdatedClient(prev => ({
+          ...prev,
+          attachments: prev.attachments.filter(att => att._id !== attachmentId)
+        }));
+      }
+    } catch (error) {
+      console.error('Error removing attachment:', error);
+    }
+  };
+
+
 
   const getFileIcon = (mimeType) => {
     if (mimeType.startsWith('image/')) return <FileImage className="h-4 w-4" />;
@@ -347,7 +416,6 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
     { id: 'overview', label: 'Overview', icon: User },
     { id: 'projects', label: 'Projects', icon: FolderOpen },
     { id: 'invoices', label: 'Invoices', icon: DollarSign },
-    { id: 'communications', label: 'Communication', icon: MessageSquare },
     { id: 'files', label: 'Files', icon: Paperclip },
     { id: 'notes', label: 'Notes', icon: FileText }
   ];
@@ -1137,7 +1205,15 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                               </div>
                               <div className="text-right flex-shrink-0">
                                 <div className="text-base sm:text-lg font-bold text-gray-900">{formatCurrency(invoice.total, invoice.currency)}</div>
-                                <Button variant="outline" size="sm" className="mt-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="mt-2 text-white"
+                                  onClick={() => {
+                                    onClose(); // Close the client profile modal
+                                    navigate('/invoices'); // Navigate to invoices page
+                                  }}
+                                >
                                   View Details
                                 </Button>
                               </div>
@@ -1174,52 +1250,7 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                 </div>
               )}
 
-              {activeTab === 'communications' && (
-                <div className="space-y-6">
-                  {/* Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
-                      </div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Communication</h3>
-                    </div>
-                    <Button size="sm" icon={<Plus className="h-4 w-4" />}>
-                      Add Note
-                    </Button>
-                  </div>
 
-                  {/* Communication Timeline */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-6 border border-gray-300">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                        <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600" />
-                      </div>
-                      <h4 className="text-sm sm:text-base font-semibold text-gray-900">Communication Timeline</h4>
-                    </div>
-
-                    <div className="space-y-4">
-                      {mockData.communications.map((comm) => (
-                        <div key={comm.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
-                          <div className="flex items-start gap-3 sm:gap-4">
-                            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-2">
-                                <h5 className="text-sm sm:text-base font-semibold text-gray-900">{comm.title}</h5>
-                                <span className="text-xs sm:text-sm text-gray-500">{new Date(comm.date).toLocaleDateString()}</span>
-                                <span className="text-xs text-gray-400 uppercase tracking-wide">{comm.type}</span>
-                              </div>
-                              <p className="text-xs sm:text-sm text-gray-700">{comm.notes}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {activeTab === 'files' && (
                 <div className="space-y-6">
@@ -1231,9 +1262,25 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold text-gray-900">Files</h3>
                     </div>
-                    <Button size="sm" icon={<Upload className="h-4 w-4" />}>
-                      Upload Files
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        id="file-upload"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                        accept="*/*"
+                      />
+                      <label htmlFor="file-upload">
+                        <Button 
+                          size="sm" 
+                          icon={<Upload className="h-4 w-4" />}
+                          disabled={uploadingFile}
+                          className="cursor-pointer"
+                        >
+                          {uploadingFile ? 'Uploading...' : 'Upload Files'}
+                        </Button>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Files List */}
@@ -1246,30 +1293,50 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
 
                     <div className="space-y-4">
-                      {mockData.attachments.map((file) => (
-                        <div key={file.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center flex-shrink-0">
-                              {getFileIcon(file.type)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h5 className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{file.name}</h5>
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-500">
-                                <span>{formatFileSize(file.size)}</span>
-                                <span>Uploaded {new Date(file.uploadedAt).toLocaleDateString()}</span>
+                      {updatedClient.attachments && updatedClient.attachments.length > 0 ? (
+                        updatedClient.attachments.map((file) => (
+                          <div key={file._id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center flex-shrink-0">
+                                {getFileIcon(file.mimeType)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h5 className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{file.originalName}</h5>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-500">
+                                  <span>{formatFileSize(file.size)}</span>
+                                  <span>Uploaded {new Date(file.uploadedAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <a href={file.url} download={file.originalName}>
+                                  <Button variant="outline" size="sm" icon={<Download className="h-4 w-4" />}>
+                                    Download
+                                  </Button>
+                                </a>
+                                <a href={file.url} target="_blank" rel="noopener noreferrer">
+                                  <Button variant="outline" size="sm" icon={<ExternalLink className="h-4 w-4" />}>
+                                    View
+                                  </Button>
+                                </a>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  icon={<Trash2 className="h-4 w-4" />}
+                                  onClick={() => handleRemoveAttachment(file._id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  Remove
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <Button variant="outline" size="sm" icon={<Download className="h-4 w-4" />}>
-                                Download
-                              </Button>
-                              <Button variant="outline" size="sm" icon={<ExternalLink className="h-4 w-4" />}>
-                                View
-                              </Button>
-                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <Paperclip className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">No files attached to this client</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1285,9 +1352,29 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold text-gray-900">Notes</h3>
                     </div>
-                    <Button size="sm" icon={<Plus className="h-4 w-4" />}>
-                      Add Note
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        placeholder="Enter note content..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleAddNote();
+                          }
+                        }}
+                      />
+                      <Button 
+                        size="sm" 
+                        icon={<Plus className="h-4 w-4" />}
+                        onClick={handleAddNote}
+                        disabled={addingNote || !newNote.trim()}
+                      >
+                        {addingNote ? 'Adding...' : 'Add Note'}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Notes List */}
@@ -1300,25 +1387,23 @@ const ClientProfile = ({ client, onClose, onEdit, initialEditMode = false }) => 
                     </div>
 
                     <div className="space-y-4">
-                      {mockData.notes.map((note) => (
-                        <div key={note.id} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs sm:text-sm font-medium text-gray-900">{note.author}</span>
-                              <span className="text-xs text-gray-500">{new Date(note.createdAt).toLocaleDateString()}</span>
+                      {updatedClient.notes && updatedClient.notes.length > 0 ? (
+                        updatedClient.notes.map((note, index) => (
+                          <div key={note._id || index} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-300">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">{new Date(note.createdAt).toLocaleDateString()}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <Button variant="outline" size="sm" icon={<Edit className="h-4 w-4" />}>
-                                Edit
-                              </Button>
-                              <Button variant="outline" size="sm" icon={<Trash2 className="h-4 w-4" />}>
-                                Delete
-                              </Button>
-                            </div>
+                            <p className="text-xs sm:text-sm text-gray-700">{note.content}</p>
                           </div>
-                          <p className="text-xs sm:text-sm text-gray-700">{note.content}</p>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">No notes for this client</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </div>

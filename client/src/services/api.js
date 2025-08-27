@@ -108,6 +108,8 @@ export const clientsAPI = {
   getInvoices: (id) => api.get(`/clients/${id}/invoices`),
   addNote: (id, content) => api.post(`/clients/${id}/notes`, { content }),
   updateLastContacted: (id, lastContacted) => api.patch(`/clients/${id}/last-contacted`, { lastContacted }),
+  addAttachment: (id, attachmentData) => api.post(`/clients/${id}/attachments`, attachmentData),
+  removeAttachment: (id, attachmentId) => api.delete(`/clients/${id}/attachments/${attachmentId}`),
   getStats: () => api.get('/clients/stats'),
   importFromCSV: (formData) => api.post('/clients/import/csv', formData, {
     headers: {

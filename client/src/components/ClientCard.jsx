@@ -35,12 +35,14 @@ import {
 } from 'lucide-react';
 import { clientService } from '../services/clientService';
 import ClientProfile from './ClientProfile';
+import AddInvoiceModal from './AddInvoiceModal';
 
 const ClientCard = ({ client, onViewProfile, onEdit, onAddNote, onSendInvoice, onArchive, onDelete, onDuplicate, onExportPDF, onStatusChange }) => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profileEditMode, setProfileEditMode] = useState(false);
+  const [showAddInvoiceModal, setShowAddInvoiceModal] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -345,7 +347,7 @@ const ClientCard = ({ client, onViewProfile, onEdit, onAddNote, onSendInvoice, o
           
           {/* Invoice Button */}
           <button
-            onClick={() => onSendInvoice && onSendInvoice(client._id)}
+            onClick={() => setShowAddInvoiceModal(true)}
             className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200/80 rounded-xl transition-all duration-200 hover:scale-105"
             title="Create Invoice"
           >
@@ -354,7 +356,7 @@ const ClientCard = ({ client, onViewProfile, onEdit, onAddNote, onSendInvoice, o
           
           {/* Archive Button */}
           <button
-            onClick={() => onArchive && onArchive(client._id)}
+            onClick={() => handleStatusChange('Archived')}
             className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200/80 rounded-xl transition-all duration-200 hover:scale-105"
             title="Archive Client"
           >
@@ -727,6 +729,30 @@ const ClientCard = ({ client, onViewProfile, onEdit, onAddNote, onSendInvoice, o
               showToast('Failed to update client. Please try again.', 'error');
             }
           }}
+        />
+      )}
+
+      {/* Add Invoice Modal */}
+      {showAddInvoiceModal && (
+        <AddInvoiceModal
+          isOpen={showAddInvoiceModal}
+          onClose={() => setShowAddInvoiceModal(false)}
+          onSave={async (invoiceData) => {
+            try {
+              // The modal will handle the API call internally
+              setShowAddInvoiceModal(false);
+              showToast('Invoice created successfully!', 'success');
+              // Optionally refresh the page or update the client list
+              if (window.location.reload) {
+                window.location.reload();
+              }
+            } catch (error) {
+              console.error('Error creating invoice:', error);
+              showToast('Failed to create invoice. Please try again.', 'error');
+            }
+          }}
+          clients={[client]} // Pass the current client
+          selectedProject={null}
         />
       )}
     </>
