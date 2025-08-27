@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import AddClientModal from '../components/AddClientModal';
 import ClientCard from '../components/ClientCard';
-import { Plus, Search, Filter, ChevronDown, Users, FileText, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, ChevronDown, Users, Loader2 } from 'lucide-react';
 import clientService from '../services/clientService';
 import { useAuth } from '../context/AuthContext';
 
@@ -127,14 +127,6 @@ const Clients = () => {
                 >
                   <Users className="h-4 w-4" />
                   New Client
-                </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-card-foreground hover:bg-muted rounded-md transition-colors">
-                  <FileText className="h-4 w-4" />
-                  Import from CSV
-                </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-card-foreground hover:bg-muted rounded-md transition-colors">
-                  <Users className="h-4 w-4" />
-                  Import from Google Contacts
                 </button>
               </div>
             </div>

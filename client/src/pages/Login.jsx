@@ -97,14 +97,9 @@ const Login = () => {
         console.log('6. User stored in localStorage:', !!storedUser);
         console.log('7. Token preview:', storedToken ? storedToken.substring(0, 50) + '...' : 'none');
         
-        // Handle navigation based on onboarding status
-        if (!result.user.onboarding?.isCompleted) {
-          console.log('8. Redirecting to onboarding...');
-          navigate('/onboarding');
-        } else {
-          console.log('8. Redirecting to dashboard...');
-          navigate('/dashboard');
-        }
+        // Redirect to dashboard after successful login
+        console.log('8. Redirecting to dashboard...');
+        navigate('/dashboard');
       } else {
         console.log('4. Login failed:', result.error);
         console.log('4a. Error message (lowercase):', result.error?.toLowerCase());

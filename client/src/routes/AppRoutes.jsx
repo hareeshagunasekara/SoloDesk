@@ -26,7 +26,7 @@ import Analytics from '../pages/Analytics';
 import AutoMessages from '../pages/AutoMessages';
 import Profile from '../pages/Profile';
 import NotFound from '../pages/NotFound';
-import Onboarding from '../pages/Onboarding';
+
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -189,14 +189,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/onboarding"
-        element={
-          <ProtectedRoute>
-            <Onboarding />
-          </ProtectedRoute>
-        }
-      />
+
 
       {/* 404 Route */}
       <Route path="*" element={<NotFound />} />

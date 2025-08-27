@@ -26,49 +26,49 @@ const About = () => {
     { number: "Secure", label: "Platform", icon: Globe },
   ];
 
-  const features = [
+  const whatItOffers = [
+    {
+      icon: <BarChart3 className="h-8 w-8" />,
+      title: "Centralized Dashboard",
+      description: "Centralized dashboard for daily activities"
+    },
     {
       icon: <Users className="h-8 w-8" />,
-      title: "Intelligent Client Management",
-      description: "Every detail in one sleek view — from contacts to conversations."
+      title: "Client & Project Management",
+      description: "Client & project management tools"
     },
     {
       icon: <CreditCard className="h-8 w-8" />,
-      title: "Streamlined Payments",
-      description: "Send branded invoices, track payments, and keep cash flow smooth."
-    },
-    {
-      icon: <CheckSquare className="h-8 w-8" />,
-      title: "Task & Project Management",
-      description: "Organize projects, set milestones, and hit every deadline."
+      title: "Easy Invoicing",
+      description: "Easy invoicing and payment tracking"
     },
     {
       icon: <BarChart3 className="h-8 w-8" />,
-      title: "Real-Time Insights",
-      description: "Visual reports on revenue, peak performance, and client trends."
+      title: "Analytics",
+      description: "Analytics to measure growth"
     },
     {
       icon: <Zap className="h-8 w-8" />,
-      title: "Light Automation",
-      description: "Automated follow-ups and task triggers — because your time is premium."
+      title: "Automated Reminders",
+      description: "Automated reminders & emails"
     }
   ];
 
-  const benefits = [
+  const whyChooseSoloDesk = [
     {
       icon: <Zap className="h-8 w-8" />,
-      title: "Save Time",
-      description: "Spend less time managing, more time creating and delivering."
+      title: "Lightweight and User-friendly",
+      description: "Lightweight and user-friendly"
     },
     {
       icon: <Target className="h-8 w-8" />,
-      title: "Stay Organized",
-      description: "Everything — clients, projects, payments — under one digital roof."
+      title: "Saves Time",
+      description: "Saves time by reducing manual work"
     },
     {
       icon: <Award className="h-8 w-8" />,
-      title: "Look Professional",
-      description: "Branded touchpoints. Clean interface. Confidence with every click."
+      title: "Helps You Grow",
+      description: "Helps you grow your business with insights"
     }
   ];
 
@@ -166,7 +166,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Problem Section */}
+      {/* Who It's For Section */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6">
           <motion.div
@@ -177,10 +177,10 @@ const About = () => {
             className="max-w-4xl mx-auto text-center"
           >
             <h2 className="text-4xl font-bold text-primary-900 mb-6">
-              From Chaos to Clarity
+              Who It's For
             </h2>
             <p className="text-xl text-primary-600 mb-12 leading-relaxed">
-              Let's face it — juggling tools, tasks, and timelines isn't sustainable. You're managing bookings in one app, tracking clients in another, and chasing payments through a third. The result? Disconnection. Distraction. Missed opportunities.
+              SoloDesk is designed for independent professionals who want to streamline their business operations.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -192,10 +192,10 @@ const About = () => {
                 className="bg-primary-50 border border-primary-200 rounded-xl p-6"
               >
                 <div className="text-primary-600 mb-4">
-                  <BarChart3 className="h-8 w-8 mx-auto" />
+                  <Users className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold text-primary-900 mb-2">Scattered Tools</h3>
-                <p className="text-primary-600">Managing bookings in Calendly, clients in Excel, and payments in PayPal creates chaos.</p>
+                <h3 className="font-semibold text-primary-900 mb-2">Freelancers</h3>
+                <p className="text-primary-600">Designers, developers, consultants, and creative professionals.</p>
               </motion.div>
 
               <motion.div
@@ -206,10 +206,10 @@ const About = () => {
                 className="bg-primary-50 border border-primary-200 rounded-xl p-6"
               >
                 <div className="text-primary-600 mb-4">
-                  <Users className="h-8 w-8 mx-auto" />
+                  <Target className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold text-primary-900 mb-2">Lost Opportunities</h3>
-                <p className="text-primary-600">Missing follow-ups and forgetting client details leads to lost business.</p>
+                <h3 className="font-semibold text-primary-900 mb-2">Small Business Owners</h3>
+                <p className="text-primary-600">Entrepreneurs running their own businesses and startups.</p>
               </motion.div>
 
               <motion.div
@@ -220,17 +220,17 @@ const About = () => {
                 className="bg-primary-50 border border-primary-200 rounded-xl p-6"
               >
                 <div className="text-primary-600 mb-4">
-                  <BarChart3 className="h-8 w-8 mx-auto" />
+                  <Award className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold text-primary-900 mb-2">No Visibility</h3>
-                <p className="text-primary-600">Without proper tracking, you can't see what's working or where to improve.</p>
+                <h3 className="font-semibold text-primary-900 mb-2">Independent Professionals</h3>
+                <p className="text-primary-600">Solo practitioners and consultants managing their own practice.</p>
               </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Solution Section */}
+      {/* What It Offers Section */}
       <section className="py-24 bg-gradient-to-br from-primary-50 to-primary-100">
         <div className="container mx-auto px-6">
           <motion.div
@@ -241,15 +241,15 @@ const About = () => {
             className="max-w-4xl mx-auto text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-primary-900 mb-6">
-              Meet SoloDesk
+              What It Offers
             </h2>
             <p className="text-xl text-primary-600 leading-relaxed">
-              A smarter way to run your business — all in one place.
+              Everything you need to manage your business efficiently in one place.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {features.map((feature, index) => (
+            {whatItOffers.map((feature, index) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
@@ -316,7 +316,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Why Choose SoloDesk Section */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6">
           <motion.div
@@ -327,15 +327,15 @@ const About = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              The Results Speak for Themselves
+              Why Choose SoloDesk
             </h2>
             <p className="text-xl text-gray-600">
-              Everything you need to run your freelance business more efficiently
+              Built specifically for independent professionals who want to run their business efficiently
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {benefits.map((benefit, index) => (
+            {whyChooseSoloDesk.map((benefit, index) => (
               <motion.div
                 key={benefit.title}
                 initial={{ opacity: 0, y: 20 }}
@@ -356,6 +356,26 @@ const About = () => {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Vision/Future Section */}
+      <section className="py-24 bg-gradient-to-br from-primary-50 to-primary-100">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            <h2 className="text-4xl font-bold text-primary-900 mb-6">
+              Our Vision
+            </h2>
+            <p className="text-xl text-primary-600 leading-relaxed">
+              We're continuously improving SoloDesk with new features like calendar sync, team collaboration, and advanced reporting.
+            </p>
+          </motion.div>
         </div>
       </section>
 
